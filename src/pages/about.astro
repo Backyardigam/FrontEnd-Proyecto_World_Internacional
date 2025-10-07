@@ -1,0 +1,39 @@
+---
+import '../styles/global.css'
+const pagetitle= "sobre MI";
+
+const identity= {
+    nombre:"Benjamin Pari",
+    country:"Peru",
+    ocuppation:"Practicante",
+    hobbies:["escribir", "hablar","respirar"]
+};
+const skills=["Html","CSS","React","Astro"] 
+const cat = true;
+const finished = false;
+const goal= 3;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{pagetitle}</title>
+	</head>
+	<body>
+        <a href="/">Inicio</a>
+        <a href="/about/">Sobre mi</a>
+        <a href="/servicios/">servicios</a>
+		<h1>Astro</h1>
+        <p class="border-4 border-x-yellow-300 border-zinc-600">Aprendiendo Astro</p>
+        {cat && <p>Estoy feliz de aprender Astro</p>}
+        {finished && <p>He terminado este tutorial</p>}
+        {goal === 3 ? <p>Mi objetivo es acabar ete tutorias</p> : <p>El diablo aun no acabo</p>}
+        <p>Mis habilidades son:</p>
+        <ul>
+            {skills.map((skill)=> <li class="skill">{skill}</li>)}
+        </ul>
+	</body>
+</html>
