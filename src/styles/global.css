@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@font-face {
+    font-family: 'RedHatDisplay';
+    src: url('../assets/RedHatDisplay-VariableFont_wght.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 700;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Baloo';
+    src: url('../assets/Baloo2-VariableFont_wght.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 700;
+    font-display: swap;
+} 
+@theme{
+    --color-rojo-f: #ff4444;
+    --color-naranja-c: #ff8833;
+    --color-naranja-f: #ff5533;
+    /* fuentes */
+    --font-redhat: 'RedHatDisplay', system-ui, sans-serif;
+    --font-baloo: 'Baloo';
+}

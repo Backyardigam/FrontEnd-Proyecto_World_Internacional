@@ -1,0 +1,40 @@
+---
+import Logo from "./iconos/Logo.astro";
+import CartIcon from "./iconos/CartIcon.astro";
+
+// clases de los enlaces de navegacion en el header para no repetir codigo
+const navLinkClasses = "hover:underline underline-offset-4";
+---
+
+<header class="w-full bg-white shadow-sm sticky top-0 z-50 rounded-b-xl">
+  <div
+    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
+  >
+    <Logo logocolor="fill-black"/>
+
+    <!-- Manejo de hamburguesa en omviles -->
+    <nav class="hidden md:flex gap-10 text-black">
+      <a href="/" class={navLinkClasses}>Inicio</a>
+      <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
+      <a href="/#Nosotros" class={navLinkClasses}>Nosotros</a>
+      <a href="/#footer" class={navLinkClasses}>Contáctanos</a>
+    </nav>
+
+    <div class="flex gap-6 items-center ">
+      <a 
+        href="/carrito" 
+        aria-label="Ver carrito de compras"
+        class="hover:scale-110 hover:bg-naranja-f transition w-20 h-auto aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
+      >
+        <CartIcon />
+      </a>
+      <!-- selector de idioma (opcional) -->
+      <label for="lang-select" class="sr-only">Seleccionar idioma</label>
+      <select name="lang" id="lang-select" class="rounded border-gray-300">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+      </select>
+      <a href="/login" class="justify-center items-center flex">Iniciar Sesión</a>
+    </div>
+  </div>
+</header>
