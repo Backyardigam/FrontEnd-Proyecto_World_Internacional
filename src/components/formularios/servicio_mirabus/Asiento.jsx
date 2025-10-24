@@ -17,7 +17,7 @@ const Asiento = React.memo(({ num_asiento, className, ...props }) => {
           stroke="currentColor"
         />
       </svg>
-      <span className="absolute -translate-x-2/3 -translate-y-9/7 text-sm">{num_asiento}</span>
+      <span className="absolute -translate-x-2/3 -translate-y-4/3 text-sm">{num_asiento}</span>
     </>
   );
 });

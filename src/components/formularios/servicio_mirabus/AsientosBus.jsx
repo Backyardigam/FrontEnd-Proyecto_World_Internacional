@@ -5,8 +5,7 @@ export default function AsientoBus() {
   // estado de los asientos, formato que se recibe desde el backend
 
   const initialSeats = [
-    // Array de prueba con 30 asientos. Layout: 5 filas (y), 8 columnas (x).
-    // Distribución: 2 asientos - pasillo - 2 asientos - pasillo - 2 asientos.
+    // Array de prueba con 31 asientos. Layout: filas (y),columnas (x).
     // Fila 1
     { id: "01", x: 1, y: 1, status: "available" },
     { id: "02", x: 2, y: 1, status: "available" },
@@ -42,13 +41,12 @@ export default function AsientoBus() {
     { id: "28", x: 5, y: 5, status: "available" },
     { id: "29", x: 7, y: 5, status: "occupied" },
     { id: "30", x: 8, y: 5, status: "occupied" },
-    { id: "29", x: 12, y: 5, status: "occupied" },
   ];
 
   const [seats, setSeats] = useState(initialSeats); // Estado para los asientos
   const [grid, setGrid] = useState([]); // Estado para la matriz del bus
   const ws = useRef(null); //conexión WebSocket
-
+  
   useEffect(() => {
     if (seats.length === 0) return;
 
