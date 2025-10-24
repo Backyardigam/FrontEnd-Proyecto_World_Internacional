@@ -2,6 +2,7 @@
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import "../styles/global.css";
+import AsientoBus from "../components/formularios/servicio_mirabus/AsientosBus";
 ---
 
 <html lang="en">
@@ -16,5 +17,6 @@ import "../styles/global.css";
 		<Header />
 		<main>Si aplica</main>
 		<Footer></Footer>
+		<AsientoBus client:load/>
 	</body>
 </html>

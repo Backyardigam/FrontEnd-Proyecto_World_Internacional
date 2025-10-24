@@ -1,4 +1,6 @@
 ---
+//IMPORTANTE RECUERDA BORRAR LOS COMENTARIOS EN EL HTML
+
 import Logo from "./iconos/Logo.astro";
 import CartIcon from "./iconos/CartIcon.astro";
 
@@ -12,7 +14,7 @@ const navLinkClasses = "hover:underline underline-offset-4";
   >
     <Logo logocolor="fill-black"/>
 
-    <!-- Manejo de hamburguesa en omviles -->
+    <!-- manejo de hamburguesa en omviles -->
     <nav class="hidden md:flex gap-10 text-black">
       <a href="/" class={navLinkClasses}>Inicio</a>
       <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
@@ -28,12 +30,12 @@ const navLinkClasses = "hover:underline underline-offset-4";
       >
         <CartIcon />
       </a>
-      <!-- selector de idioma (opcional) -->
+      <!-- selector de idioma (esto recien esta por verse) -->
       <label for="lang-select" class="sr-only">Seleccionar idioma</label>
-      <select name="lang" id="lang-select" class="rounded border-gray-300">
+      <!-- <select name="lang" id="lang-select" class="rounded border-gray-300">
         <option value="es">ES</option>
         <option value="en">EN</option>
-      </select>
+      </select> -->
       <a href="/login" class="justify-center items-center flex">Iniciar Sesión</a>
     </div>
   </div>
