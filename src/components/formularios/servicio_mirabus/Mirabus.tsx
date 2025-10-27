@@ -8,13 +8,13 @@ export default function Mirabus(){
         // Array de prueba con 36 asientos. Layout: filas (y),columnas (x).
         // Fila 1
         { id: "01", x: 1, y: 1, status: "available" },
-        { id: "02", x: 2, y: 1, status: "reserved" },
-        { id: "03", x: 3, y: 1, status: "reserved" },
+        { id: "02", x: 2, y: 1, status: "available" },
+        { id: "03", x: 3, y: 1, status: "available" },
         { id: "04", x: 4, y: 1, status: "available" },
         { id: "05", x: 5, y: 1, status: "available" },
         { id: "06", x: 6, y: 1, status: "available" },
-        { id: "07", x: 7, y: 1, status: "available" },
-        { id: "08", x: 8, y: 1, status: "available" },
+        { id: "07", x: 7, y: 1, status: "reserved" },
+        { id: "08", x: 8, y: 1, status: "reserved" },
         { id: "09", x: 9, y: 1, status: "available" },
         // Fila 2
         { id: "10", x: 1, y: 2, status: "available" },
@@ -53,24 +53,37 @@ export default function Mirabus(){
 
     // --- Lógica de validación de contigüidad ---
 
-    // Función auxiliar para obtener adyacentes (copiada/adaptada de AsientoBus para usarla aquí)
+    // Función auxiliar para obtener adyacentes, permitiendo cruzar pasillos.
     const getAdjacentSeats = useCallback((seat: Seat, allSeats: Seat[]): Seat[] => {
-        const horizontal = allSeats.filter(s => s.y === seat.y && Math.abs(s.x - seat.x) === 1);
+        const horizontal = allSeats.filter(
+            s => s.y === seat.y && Math.abs(s.x - seat.x) === 1
+        );
+
         const seatsInSameColumn = allSeats.filter(s => s.x === seat.x);
-        const seatAbove = seatsInSameColumn.filter(s => s.y > seat.y).sort((a, b) => a.y - b.y)[0];
-        const seatBelow = seatsInSameColumn.filter(s => s.y < seat.y).sort((a, b) => b.y - a.y)[0];
-        const vertical = [seatAbove, seatBelow].filter(Boolean) as Seat[];
+
+        const seatAbove = seatsInSameColumn
+            .filter(s => s.y > seat.y)
+            .sort((a, b) => a.y - b.y)[0];
+
+        const seatBelow = seatsInSameColumn
+            .filter(s => s.y < seat.y)
+            .sort((a, b) => b.y - a.y)[0];
+
+        const vertical = [];
+        if (seatAbove) vertical.push(seatAbove);
+        if (seatBelow) vertical.push(seatBelow);
+
         return [...horizontal, ...vertical];
     }, []);
 
-    // Verifica si un conjunto de asientos forma un único bloque contiguo.
+    // REGLA 1: Valida que todos los asientos seleccionados formen un único bloque.
     const areSeatsContiguous = useCallback((selectedSeats: Seat[]): boolean => {
         if (selectedSeats.length <= 1) {
-            return true; // 0 o 1 asiento siempre es un bloque contiguo.
+            return true;
         }
 
         const visited = new Set<string>();
-        const queue: Seat[] = [selectedSeats[0]]; // Empezamos desde el primer asiento
+        const queue: Seat[] = [selectedSeats[0]];
         visited.add(selectedSeats[0].id);
 
         while (queue.length > 0) {
@@ -84,44 +97,39 @@ export default function Mirabus(){
                 }
             }
         }
-
-        // Si el número de asientos visitados es igual al total de seleccionados, son contiguos.
         return visited.size === selectedSeats.length;
     }, [getAdjacentSeats]);
 
-
     // Esta función ahora maneja la lógica para actualizar el estado de los asientos.
     const seatSelectHandler = useCallback((seatId: string) => {
-        console.log("Seat selected:", seatId);
+        console.log("Intentando seleccionar:", seatId);
 
         setSeats(currentSeats => {
             const seatToToggle = currentSeats.find(s => s.id === seatId);
             if (!seatToToggle) return currentSeats;
 
             const isSelecting = seatToToggle.status !== 'selected';
-            let newSeats: Seat[];
 
-            if (isSelecting) {
-                // Al seleccionar, simplemente cambiamos el estado.
-                newSeats = currentSeats.map(seat =>
-                    seat.id === seatId ? { ...seat, status: 'selected' as SeatStatus } : seat
-                );
-            } else {
-                // Al deseleccionar, aplicamos la validación.
-                const remainingSelected = currentSeats.filter(
-                    s => s.status === 'selected' && s.id !== seatId
-                );
-
-                if (!areSeatsContiguous(remainingSelected)) {
-                    console.warn("Acción bloqueada: La deselección rompería el bloque de asientos.");
-                    return currentSeats; // No se actualiza el estado, la acción se ignora.
+            // 1. Crear un estado hipotético con el asiento añadido o quitado.
+            const hypotheticalSeats = currentSeats.map(seat => {
+                if (seat.id === seatId) {
+                    const newStatus = isSelecting ? 'selected' : 'available';
+                    return { ...seat, status: newStatus as SeatStatus };
                 }
+                return seat;
+            });
 
-                newSeats = currentSeats.map(seat =>
-                    seat.id === seatId ? { ...seat, status: 'available' as SeatStatus } : seat
-                );
+            // 2. Validar si el estado hipotético es un rectángulo.
+            const newSelection = hypotheticalSeats.filter(s => s.status === 'selected');
+
+            // Aplicar Regla 1: Contigüidad
+            if (!areSeatsContiguous(newSelection)) {
+                console.warn(`Acción bloqueada: La selección debe formar un único bloque.`);
+                return currentSeats; // La acción no es válida, se revierte.
             }
-            return newSeats;
+
+            // 3. Si es válida, aplicar el cambio.
+            return hypotheticalSeats;
         });
     }, [areSeatsContiguous]);
 
