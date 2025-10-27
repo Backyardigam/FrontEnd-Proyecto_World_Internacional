@@ -53,12 +53,14 @@ export default function Mirabus(){
 
     // --- Lógica de validación de contigüidad ---
 
-    // Función auxiliar para obtener adyacentes con lógica estricta.
+    // Función auxiliar para obtener adyacentes (copiada/adaptada de AsientoBus para usarla aquí)
     const getAdjacentSeats = useCallback((seat: Seat, allSeats: Seat[]): Seat[] => {
-        return allSeats.filter(s =>
-            (s.y === seat.y && Math.abs(s.x - seat.x) === 1) || // Adyacencia horizontal
-            (s.x === seat.x && Math.abs(s.y - seat.y) === 1)    // Adyacencia vertical estricta
-        );
+        const horizontal = allSeats.filter(s => s.y === seat.y && Math.abs(s.x - seat.x) === 1);
+        const seatsInSameColumn = allSeats.filter(s => s.x === seat.x);
+        const seatAbove = seatsInSameColumn.filter(s => s.y > seat.y).sort((a, b) => a.y - b.y)[0];
+        const seatBelow = seatsInSameColumn.filter(s => s.y < seat.y).sort((a, b) => b.y - a.y)[0];
+        const vertical = [seatAbove, seatBelow].filter(Boolean) as Seat[];
+        return [...horizontal, ...vertical];
     }, []);
 
     // Verifica si un conjunto de asientos forma un único bloque contiguo.
@@ -87,21 +89,6 @@ export default function Mirabus(){
         return visited.size === selectedSeats.length;
     }, [getAdjacentSeats]);
 
-    // Verifica si un asiento ha quedado "atrapado" o "ahogado".
-    const isSeatTrapped = useCallback((seat: Seat, allSeats: Seat[]): boolean => {
-        if (seat.status !== 'available') {
-            return false;
-        }
-        const neighbors = getAdjacentSeats(seat, allSeats);
-        // Si no tiene vecinos (asiento aislado), no puede estar atrapado.
-        if (neighbors.length === 0) {
-            return false;
-        }
-        // Está atrapado si TODOS sus vecinos están en un estado no seleccionable.
-        return neighbors.every(
-            n => n.status === 'selected' || n.status === 'occupied' || n.status === 'reserved'
-        );
-    }, [getAdjacentSeats]);
 
     // Esta función ahora maneja la lógica para actualizar el estado de los asientos.
     const seatSelectHandler = useCallback((seatId: string) => {
@@ -119,14 +106,6 @@ export default function Mirabus(){
                 newSeats = currentSeats.map(seat =>
                     seat.id === seatId ? { ...seat, status: 'selected' as SeatStatus } : seat
                 );
-
-                // Validar si la nueva selección atrapa a algún asiento.
-                const trappedSeat = newSeats.find(s => isSeatTrapped(s, newSeats));
-                if (trappedSeat) {
-                    console.warn(`Acción bloqueada: La selección del asiento ${seatId} atraparía al asiento ${trappedSeat.id}.`);
-                    return currentSeats; // Revertir la acción
-                }
-
             } else {
                 // Al deseleccionar, aplicamos la validación.
                 const remainingSelected = currentSeats.filter(
@@ -144,7 +123,7 @@ export default function Mirabus(){
             }
             return newSeats;
         });
-    }, [areSeatsContiguous, isSeatTrapped]);
+    }, [areSeatsContiguous]);
 
     // El JSX debe estar en la misma línea que 'return' o envuelto en paréntesis.
     return (
