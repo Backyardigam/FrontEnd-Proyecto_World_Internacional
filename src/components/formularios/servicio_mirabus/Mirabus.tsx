@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import AsientoBus from "./AsientosBus";
 import type { Seat, SeatStatus } from "./AsientosBus";
 //componente encargado de preparar la conexion a ws
@@ -52,7 +52,7 @@ export default function Mirabus(){
     const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
 
     // --- Lógica de validación de contigüidad ---
-
+    
     // Función auxiliar para obtener adyacentes, permitiendo cruzar pasillos.
     const getAdjacentSeats = useCallback((seat: Seat, allSeats: Seat[]): Seat[] => {
         const horizontal = allSeats.filter(
@@ -76,6 +76,17 @@ export default function Mirabus(){
         return [...horizontal, ...vertical];
     }, []);
 
+    // ENFOQUE DE GRAFO: Pre-calculamos el mapa de adyacencias de todo el bus UNA SOLA VEZ.
+    const seatAdjacencyMap = useMemo(() => {
+        const map = new Map<string, string[]>();
+        initialSeatsData.forEach(seat => {
+            const neighbors = getAdjacentSeats(seat, initialSeatsData);
+            map.set(seat.id, neighbors.map(n => n.id));
+        });
+        return map;
+    }, [getAdjacentSeats, initialSeatsData]); // initialSeatsData es estable, por lo que esto solo se ejecuta una vez.
+
+
     // REGLA 1: Valida que todos los asientos seleccionados formen un único bloque.
     const areSeatsContiguous = useCallback((selectedSeats: Seat[]): boolean => {
         if (selectedSeats.length <= 1) {
@@ -88,7 +99,10 @@ export default function Mirabus(){
 
         while (queue.length > 0) {
             const current = queue.shift()!;
-            const neighbors = getAdjacentSeats(current, selectedSeats);
+            const neighborIds = seatAdjacencyMap.get(current.id) || [];
+            
+            // Filtramos para obtener solo los vecinos que también están en la selección actual.
+            const neighbors = selectedSeats.filter(s => neighborIds.includes(s.id));
 
             for (const neighbor of neighbors) {
                 if (!visited.has(neighbor.id)) {
@@ -98,7 +112,18 @@ export default function Mirabus(){
             }
         }
         return visited.size === selectedSeats.length;
-    }, [getAdjacentSeats]);
+    }, [seatAdjacencyMap]);
+
+    // REGLA 2: Valida que al deseleccionar no se parta el bloque en dos.
+    const wouldSplitBlock = useCallback((seatIdToDeselect: string, currentSelection: Seat[]): boolean => {
+        if (currentSelection.length <= 2) {
+            return false; // No se puede partir un bloque de 2 o menos asientos.
+        }
+        const remainingSelection = currentSelection.filter(s => s.id !== seatIdToDeselect);
+        // Si los asientos restantes no son contiguos, la deselección partiría el bloque.
+        return !areSeatsContiguous(remainingSelection);
+    }, [areSeatsContiguous]);
+
 
     // Esta función ahora maneja la lógica para actualizar el estado de los asientos.
     const seatSelectHandler = useCallback((seatId: string) => {
@@ -119,19 +144,28 @@ export default function Mirabus(){
                 return seat;
             });
 
-            // 2. Validar si el estado hipotético es un rectángulo.
+            // 2. Validar el estado hipotético.
             const newSelection = hypotheticalSeats.filter(s => s.status === 'selected');
 
-            // Aplicar Regla 1: Contigüidad
-            if (!areSeatsContiguous(newSelection)) {
-                console.warn(`Acción bloqueada: La selección debe formar un único bloque.`);
-                return currentSeats; // La acción no es válida, se revierte.
+            if (isSelecting) {
+                // Al seleccionar, solo verificamos que el nuevo bloque sea contiguo.
+                if (!areSeatsContiguous(newSelection)) {
+                    console.warn(`Acción bloqueada: La selección debe formar un único bloque.`);
+                    return currentSeats;
+                }
+            } else {
+                // Al deseleccionar, verificamos si la acción parte el bloque.
+                const currentSelection = currentSeats.filter(s => s.status === 'selected');
+                if (wouldSplitBlock(seatId, currentSelection)) {
+                    console.warn(`Acción bloqueada: No se puede deseleccionar un asiento que parte el bloque.`);
+                    return currentSeats;
+                }
             }
 
             // 3. Si es válida, aplicar el cambio.
             return hypotheticalSeats;
         });
-    }, [areSeatsContiguous]);
+    }, [areSeatsContiguous, wouldSplitBlock]);
 
     // El JSX debe estar en la misma línea que 'return' o envuelto en paréntesis.
     return (
