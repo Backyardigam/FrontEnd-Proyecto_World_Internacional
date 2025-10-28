@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from "react";
 import AsientoBus from "./AsientosBus";
-import type { Seat, SeatStatus } from "./seatUtils/interfaceBus"; // Importar desde el archivo compartido
-import { useSeatSelectionLogic } from "./seatUtils/useSeatSelectionLogic"; // Importar el hook de lógica
-import { getAdjacentSeats } from "./seatUtils/seatFunctions"; // Importar la función de utilidad pura
+import { FechaHorarioSelector } from "./FechaHorarioSelector";
+import type { Seat, SeatStatus } from "./seatUtils/interfaceBus";
+import { useSeatSelectionLogic } from "./seatUtils/useSeatSelectionLogic";
+import { getAdjacentSeats } from "./seatUtils/seatFunctions";
 
 export default function Mirabus() {
   // Datos iniciales de los asientos.

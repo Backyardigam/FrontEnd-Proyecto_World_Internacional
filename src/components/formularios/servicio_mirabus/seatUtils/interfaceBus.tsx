@@ -1,5 +1,6 @@
 export type SeatStatus =
   | "available"
+  | "pending"
   | "selected"
   | "occupied"
   | "reserved"
