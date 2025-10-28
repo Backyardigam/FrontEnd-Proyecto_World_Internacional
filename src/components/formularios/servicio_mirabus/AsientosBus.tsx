@@ -1,21 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Asiento from "./Asiento";
-
-// Los tipos se pueden mover a un archivo compartido (ej: types.ts) para ser usados
-// tanto aquí como en los componentes padres.
-export type SeatStatus =
-  | "available"
-  | "selected"
-  | "occupied"
-  | "reserved"
-  | "blocked";
-
-export interface Seat {
-  id: string;
-  x: number;
-  y: number;
-  status: SeatStatus;
-}
+import type { Seat } from "./seatUtils/interfaceBus";
 
 interface AsientoBusProps {
   seats: Seat[];
@@ -26,91 +11,24 @@ export default function AsientoBus({ seats, onSeatSelect }: AsientoBusProps) {
   // Este estado local SÍ es necesario para la UI. Contendrá los asientos
   const [grid, setGrid] = useState<(Seat | null)[][]>([]); // Solo necesitamos el estado de la cuadrícula final
 
-  // --- Lógica de selección de asientos ---
-
-  const getAdjacentSeats = useCallback(
-    (seat: Seat, allSeats: Seat[]): Seat[] => {
-      //Funcion que lista los asientos adyacentes de los seleccionados
-      //adyacencia horizontal
-      const horizontal = allSeats.filter(
-        (s) => s.y === seat.y && Math.abs(s.x - seat.x) === 1
-      );
-
-      //adyacencia vertical
-      const seatsInSameColumn = allSeats.filter((s) => s.x === seat.x);
-
-      // encuentra el asiento más cercano hacia arriba (menor 'y' mayor que el actual)
-      const seatAbove = seatsInSameColumn
-        .filter((s) => s.y > seat.y)
-        .sort((a, b) => a.y - b.y)[0];
-
-      // encuentra el asiento más cercano hacia abajo (mayor 'y' menor que el actual)
-      const seatBelow = seatsInSameColumn
-        .filter((s) => s.y < seat.y)
-        .sort((a, b) => b.y - a.y)[0];
-
-      const vertical = [];
-      if (seatAbove) {
-        vertical.push(seatAbove);
-      }
-      if (seatBelow) {
-        vertical.push(seatBelow);
-      }
-
-      return [...horizontal, ...vertical];
-    },
-    []
-  );
-
-  // Efecto unificado: se ejecuta cuando los 'seats' de las props cambian.
-  // Calcula los estados de UI (bloqueo) y construye la cuadrícula en un solo paso.
+  // Este efecto ahora solo construye la cuadrícula visual a partir de los asientos que recibe.
+  // La lógica de qué asientos están 'bloqueados' ya no vive aquí.
   useEffect(() => {
     if (seats.length === 0) {
       setGrid([]);
       return;
     }
 
-    // 1. Calcular los asientos a mostrar con la lógica de bloqueo/disponibilidad
-    const selectedSeats = seats.filter((s) => s.status === "selected");
-    let finalDisplaySeats: Seat[];
-
-    if (selectedSeats.length === 0) {
-      // Si no hay nada seleccionado, todos los asientos 'blocked' vuelven a 'available'.
-      finalDisplaySeats = seats.map((s) =>
-        s.status === "blocked" ? { ...s, status: "available" } : s
-      );
-    } else {
-      // Si hay seleccionados, calculamos los adyacentes y bloqueamos el resto.
-      const allowedSeatIds = new Set(
-        selectedSeats
-          .flatMap((sel) => getAdjacentSeats(sel, seats))
-          .filter((s) => s.status !== "occupied" && s.status !== "reserved")
-          .map((s) => s.id)
-      );
-
-      finalDisplaySeats = seats.map((s): Seat => {
-        if (
-          s.status === "occupied" ||
-          s.status === "reserved" ||
-          s.status === "selected"
-        ) {
-          return s;
-        }
-        const newStatus = allowedSeatIds.has(s.id) ? "available" : "blocked";
-        return { ...s, status: newStatus };
-      });
-    }
-
-    // 2. Construir la cuadrícula visual a partir de los asientos calculados.
-    const maxRows = Math.max(...finalDisplaySeats.map((s) => s.y));
-    const maxCols = Math.max(...finalDisplaySeats.map((s) => s.x));
+    // Construir la cuadrícula visual a partir de los asientos recibidos en las props.
+    const maxRows = Math.max(...seats.map((s) => s.y));
+    const maxCols = Math.max(...seats.map((s) => s.x));
     const newGrid = Array(maxRows).fill(null).map((): (Seat | null)[] => Array(maxCols).fill(null));
-    finalDisplaySeats.forEach((seat) => {
+    seats.forEach((seat) => {
       if (seat.y > 0 && seat.x > 0) newGrid[seat.y - 1][seat.x - 1] = seat;
     });
 
     setGrid(newGrid);
-  }, [seats, getAdjacentSeats]);
+  }, [seats]);
 
   return (
     <>

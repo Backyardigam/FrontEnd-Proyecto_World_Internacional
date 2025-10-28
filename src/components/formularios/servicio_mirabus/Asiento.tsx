@@ -5,7 +5,7 @@ interface AsientoProps {
   num_asiento: string;
 }
 
-export default function Asiento({ className, num_asiento }: AsientoProps) {
+const Asiento = React.memo(({ className, num_asiento }: AsientoProps) => {
   return (
     <div>
       <svg
@@ -26,4 +26,5 @@ export default function Asiento({ className, num_asiento }: AsientoProps) {
       </span>
     </div>
   );
-}
+});
+export default Asiento;
