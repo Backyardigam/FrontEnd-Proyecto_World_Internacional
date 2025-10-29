@@ -5,56 +5,24 @@ import type { Seat, SeatStatus } from "./seatUtils/interfaceBus";
 import { useSeatSelectionLogic } from "./seatUtils/useSeatSelectionLogic";
 import { getAdjacentSeats } from "./seatUtils/seatFunctions";
 
-export default function Mirabus() {
-  // Datos iniciales de los asientos.
-  const initialSeatsData: Seat[] = [
-    // Array de prueba con 36 asientos. Layout: filas (y),columnas (x).
-    // Fila 1
-    { id: "01", x: 1, y: 1, status: "available" },
-    { id: "02", x: 2, y: 1, status: "available" },
-    { id: "03", x: 3, y: 1, status: "available" },
-    { id: "04", x: 4, y: 1, status: "available" },
-    { id: "05", x: 5, y: 1, status: "available" },
-    { id: "06", x: 6, y: 1, status: "available" },
-    { id: "07", x: 7, y: 1, status: "reserved" },
-    { id: "08", x: 8, y: 1, status: "reserved" },
-    { id: "09", x: 9, y: 1, status: "available" },
-    // Fila 2
-    { id: "10", x: 1, y: 2, status: "available" },
-    { id: "11", x: 2, y: 2, status: "available" },
-    { id: "12", x: 3, y: 2, status: "available" },
-    { id: "13", x: 4, y: 2, status: "available" },
-    { id: "14", x: 5, y: 2, status: "available" },
-    { id: "15", x: 6, y: 2, status: "available" },
-    { id: "16", x: 7, y: 2, status: "available" },
-    { id: "17", x: 8, y: 2, status: "available" },
-    { id: "18", x: 9, y: 2, status: "available" },
-    // Fila 3
-    { id: "19", x: 1, y: 4, status: "available" },
-    { id: "20", x: 2, y: 4, status: "available" },
-    { id: "21", x: 3, y: 4, status: "available" },
-    { id: "22", x: 4, y: 4, status: "available" },
-    //{ id: "23", x: 5, y: 4, status: "available" },
-    { id: "24", x: 6, y: 4, status: "available" },
-    { id: "25", x: 7, y: 4, status: "available" },
-    { id: "26", x: 8, y: 4, status: "available" },
-    { id: "27", x: 9, y: 4, status: "available" },
-    // Fila 4
-    { id: "28", x: 1, y: 5, status: "available" },
-    { id: "29", x: 2, y: 5, status: "available" },
-    { id: "30", x: 3, y: 5, status: "available" },
-    //{ id: "31", x: 4, y: 5, status: "available" },
-    { id: "32", x: 5, y: 5, status: "available" },
-    { id: "33", x: 6, y: 5, status: "available" },
-    { id: "34", x: 7, y: 5, status: "available" },
-    { id: "35", x: 8, y: 5, status: "available" },
-    { id: "36", x: 9, y: 5, status: "available" },
-  ];
+interface MirabusProps {
+  initialSeatsData: Seat[];
+  onSelectionChange: (selectedSeats: Seat[]) => void;
+  // En el futuro, aquí podrías pasar funciones para enviar eventos WebSocket
+  // onSeatSelectAction: (seatId: string) => void;
+  // onSeatDeselectAction: (seatId: string) => void;
+}
 
-  // Usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien.
+export default function Mirabus({ initialSeatsData, onSelectionChange }: MirabusProps) {
+  // usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
 
-  // usamos el nuevo hook para encapsular la lógica de selección de asientos
+  // Sincronizar el estado si los datos iniciales cambian (ej: al seleccionar otro horario)
+  React.useEffect(() => {
+    setSeats(initialSeatsData);
+  }, [initialSeatsData]);
+
+  //  cargar las herramientas necesarias con las funciones
   const { areSeatsContiguous, wouldSplitBlock } =
     useSeatSelectionLogic(initialSeatsData);
 
@@ -63,8 +31,8 @@ export default function Mirabus() {
     (seatId: string) => {
       setSeats((currentSeats) => {
         // la logica de validacion se aplica aqui para usar siempre el estado más reciente
-        console.log("Intentando seleccionar:", seatId);
-        const seatToToggle = currentSeats.find((s) => s.id === seatId);
+        
+        const seatToToggle = currentSeats.find((s) => s.id === seatId); // Aquí también se validaría el estado 'pending'
         if (!seatToToggle || seatToToggle.status === 'occupied' || seatToToggle.status === 'reserved' || seatToToggle.status === 'blocked') {
           console.warn(`Acción bloqueada: El asiento ${seatId} no está disponible o no existe.`);
           return currentSeats; // no hacer nada si el asiento no es seleccionable
@@ -89,15 +57,21 @@ export default function Mirabus() {
         );
 
         if (isSelecting) {
-          // Al seleccionar, solo verificamos que el nuevo bloque sea contiguo.
+          //intento de seleccion
+          console.log("Intentando seleccionar:", seatId);
           if (!areSeatsContiguous(newSelection)) {
             console.warn(
               `Acción bloqueada: La selección debe formar un único bloque.`
             );
             return currentSeats;
           }
+          //
+          //paso la verificacion, ahora aca se puede implementar la logica websocket si es seleccionado
+          //
+          console.log("Asiento seleccionado correctamente")
         } else {
-          // Al deseleccionar, verificamos si la acción parte el bloque.
+          //al deseleccionar, verificamos si la acción parte el bloque
+          console.log("Intentando deseleccionar:", seatId);
           const currentSelection = currentSeats.filter(
             (s) => s.status === "selected"
           );
@@ -107,11 +81,20 @@ export default function Mirabus() {
             );
             return currentSeats;
           }
+          //
+          //paso la verificacion, ahora aca se puede implementar la logica websocket si es deseleccionado
+          //
         }
 
-        // 3. Si es válida, aplicar el cambio.
+        // si es válida, aplicar el cambio.
+        // notificar al componente padre sobre la nueva seleccion de asientos
+        onSelectionChange(newSelection);
         return hypotheticalSeats;
       });
+
+      // seccion dedicada a los eventos de ws
+      // Por ejemplo: sendMessage({ action: 'select', seatId });
+
     },
     [areSeatsContiguous, wouldSplitBlock]
   );
@@ -124,8 +107,9 @@ export default function Mirabus() {
 
     if (selectedSeats.length === 0) {
       // si no hay nada seleccionado, todos los asientos 'blocked' vuelven a 'available'
+      const valid :SeatStatus = "available";
       return seats.map((s) =>
-        s.status === "blocked" ? { ...s, status: "available" } : s
+        s.status === "blocked" ? { ...s, status: valid } : s
       );
     }
 
@@ -133,7 +117,7 @@ export default function Mirabus() {
     const allowedSeatIds = new Set(
       selectedSeats
         .flatMap((sel) => getAdjacentSeats(sel, seats))
-        .filter((s) => s.status !== "occupied" && s.status !== "reserved")
+        .filter((s) => s.status !== "occupied" && s.status !== "reserved" && s.status !== "pending")
         .map((s) => s.id)
     );
 
@@ -141,7 +125,8 @@ export default function Mirabus() {
       if (
         s.status === "occupied" ||
         s.status === "reserved" ||
-        s.status === "selected"
+        s.status === "selected" ||
+        s.status === "pending" // Los asientos 'pending' también deben mantener su estado
       ) {
         return s;
       }
@@ -154,9 +139,8 @@ export default function Mirabus() {
   }, [seats]);
 
   //el error que aparece en seats es por una declaracion de un dato que se me chispoteo en algun lado pero sigue funcinando igual... o deberia
+  // El componente ahora es más un "controlador de UI" que un contenedor de datos.
   return (
-    <>
-      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
-    </>
+    <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
   );
 }

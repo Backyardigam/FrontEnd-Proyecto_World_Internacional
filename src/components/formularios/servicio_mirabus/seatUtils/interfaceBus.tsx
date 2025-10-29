@@ -1,6 +1,6 @@
 export type SeatStatus =
   | "available"
-  | "pending"
+  | "pending" // Ideal para cuando otro usuario está en proceso de selección
   | "selected"
   | "occupied"
   | "reserved"

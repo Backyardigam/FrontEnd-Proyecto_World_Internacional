@@ -7,7 +7,10 @@ interface FechaHorarioSelectorProps {
   fetchHorarios: (fecha: string) => Promise<string[]>; // función opcional para obtener horarios disponibles
 }
 
-export function FechaHorarioSelector({ onSelectionChange, fetchHorarios }: FechaHorarioSelectorProps) {
+export function FechaHorarioSelector({
+  onSelectionChange,
+  fetchHorarios,
+}: FechaHorarioSelectorProps) {
   const [fecha, setFecha] = useState("");
   const [horarios, setHorarios] = useState<string[]>([]);
   const [horario, setHorario] = useState("");
@@ -31,6 +34,8 @@ export function FechaHorarioSelector({ onSelectionChange, fetchHorarios }: Fecha
         value={fecha}
         onChange={(e) => setFecha(e.target.value)}
         className="border rounded p-2"
+        min={new Date().toISOString().split("T")[0]} 
+        max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
       />
       <select
         value={horario}
