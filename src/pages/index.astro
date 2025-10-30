@@ -6,17 +6,34 @@ import FormularioMirabus from "../components/formularios/servicio_mirabus/Formul
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<Header />
-		<main>Si aplica</main>
-		<Footer></Footer>
-		<FormularioMirabus client:load/>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>World International</title>
+  </head>
+  <body>
+    <Header />
+    <main>Si aplica</main>
+    <Footer />
+    <FormularioMirabus client:load />
+  </body>
+  <script>
+    var $buoop = {
+      required: { e: -2, f: -2, o: -2, s: 14, c: 100 },
+      insecure: true,
+      api: 2025.1,
+    };
+    function $buo_f() {
+      var e = document.createElement("script");
+      e.src = "//browser-update.org/update.min.js";
+      document.body.appendChild(e);
+    }
+    if (document.readyState === "complete") {
+      $buo_f();
+    } else {
+      document.addEventListener("DOMContentLoaded", $buo_f);
+    }
+  </script>
 </html>

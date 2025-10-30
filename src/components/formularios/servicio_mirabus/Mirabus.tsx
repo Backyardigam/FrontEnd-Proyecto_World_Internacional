@@ -8,20 +8,65 @@ import { getAdjacentSeats } from "./seatUtils/seatFunctions";
 interface MirabusProps {
   initialSeatsData: Seat[];
   onSelectionChange: (selectedSeats: Seat[]) => void;
-  // En el futuro, aquí podrías pasar funciones para enviar eventos WebSocket
-  // onSeatSelectAction: (seatId: string) => void;
-  // onSeatDeselectAction: (seatId: string) => void;
+  onRequestSeatSelection: (seatId: string) => void;
+  onRequestSeatDeselection: (seatId: string) => void;
 }
 
-export default function Mirabus({ initialSeatsData, onSelectionChange }: MirabusProps) {
+export default function Mirabus({ initialSeatsData, onSelectionChange, onRequestSeatSelection, onRequestSeatDeselection }: MirabusProps) {
   // usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
+  // Efecto 1: Sincroniza el estado local con los datos del servidor (fusión inteligente y pesimista).
+  React.useEffect(() => { 
+    // FUSIÓN INTELIGENTE: No reemplazamos el estado, lo fusionamos.
+    setSeats(currentLocalSeats => {
+      // Identificamos qué asientos *nosotros* hemos puesto en 'pending'
+      // para distinguirlos de los 'pending' que vienen del servidor (de otros usuarios).
+      const ourPendingRequests = new Set<string>();
+      currentLocalSeats.forEach(seat => {
+        if (seat.status === 'pending') {
+          ourPendingRequests.add(seat.id);
+        }
+      });
 
-  // Sincronizar el estado si los datos iniciales cambian (ej: al seleccionar otro horario)
-  React.useEffect(() => {
-    setSeats(initialSeatsData);
+      // Creamos el nuevo estado fusionado.
+      const newMergedSeats = initialSeatsData.map(serverSeat => {
+        // Si el servidor ya ha confirmado nuestra selección (serverSeat.status === 'selected')
+        // o si el asiento está ocupado/reservado/bloqueado (por nosotros o por otros),
+        // o si otro usuario lo tiene en 'pending', el estado del servidor es la verdad.
+        // En estos casos, el estado del servidor tiene prioridad absoluta.
+        if (
+          serverSeat.status === 'selected' ||
+          serverSeat.status === 'occupied' ||
+          serverSeat.status === 'reserved' ||
+          serverSeat.status === 'blocked' ||
+          // Si el servidor dice 'pending', es porque otro usuario lo tiene en pending.
+          // Nuestro 'pending' local solo es válido si el servidor aún lo ve como 'available'.
+          (serverSeat.status === 'pending' && !ourPendingRequests.has(serverSeat.id))
+        ) {
+          return serverSeat;
+        }
+
+        // Si el servidor dice 'available', pero nosotros tenemos una petición 'pending' para este asiento,
+        // mantenemos nuestro estado 'pending' local hasta que el servidor responda.
+        if (serverSeat.status === 'available' && ourPendingRequests.has(serverSeat.id)) {
+          return { ...serverSeat, status: 'pending' };
+        }
+
+        // En cualquier otro caso (ej: el servidor ahora dice 'occupied'), el estado del servidor gana.
+        return serverSeat;
+      });
+
+      return newMergedSeats;
+    });
   }, [initialSeatsData]);
 
+  // Efecto 2: Notifica al componente padre cuando la selección local ha cambiado.
+  // Esto se ejecuta DESPUÉS de que el estado 'seats' se ha actualizado y el componente se ha renderizado.
+  React.useEffect(() => {
+    const currentSelection = seats.filter(s => s.status === 'selected');
+    onSelectionChange(currentSelection);
+  }, [seats, onSelectionChange]);
+  
   //  cargar las herramientas necesarias con las funciones
   const { areSeatsContiguous, wouldSplitBlock } =
     useSeatSelectionLogic(initialSeatsData);
@@ -29,95 +74,76 @@ export default function Mirabus({ initialSeatsData, onSelectionChange }: Mirabus
   // funcion que maneja el click en un asiento
   const seatSelectHandler = useCallback(
     (seatId: string) => {
-      setSeats((currentSeats) => {
-        // la logica de validacion se aplica aqui para usar siempre el estado más reciente
-        
-        const seatToToggle = currentSeats.find((s) => s.id === seatId); // Aquí también se validaría el estado 'pending'
-        if (!seatToToggle || seatToToggle.status === 'occupied' || seatToToggle.status === 'reserved' || seatToToggle.status === 'blocked') {
-          console.warn(`Acción bloqueada: El asiento ${seatId} no está disponible o no existe.`);
-          return currentSeats; // no hacer nada si el asiento no es seleccionable
+      // 1. Encontrar el asiento en el estado local actual
+      const seatToToggle = seats.find((s) => s.id === seatId);
+      if (!seatToToggle || ['occupied', 'reserved', 'blocked', 'pending'].includes(seatToToggle.status)) {
+        console.warn(`Acción bloqueada en UI: El asiento ${seatId} no está disponible.`);
+        return;
+      }
+
+      const isSelecting = seatToToggle.status !== "selected";
+
+      // 2. Validaciones locales ANTES de enviar la petición
+      if (isSelecting) {
+        const hypotheticalSelection = [...seats.filter(s => s.status === 'selected'), seatToToggle];
+        if (!areSeatsContiguous(hypotheticalSelection)) {
+          console.warn(`Acción bloqueada: La selección debe formar un único bloque.`);
+          return;
         }
-
-        const isSelecting = seatToToggle.status !== "selected";
-
-        //crear un estado hipotetico con el asiento añadido o quitado
-        const hypotheticalSeats = currentSeats.map((seat) => {
-          if (seat.id === seatId) {
-            const newStatus: SeatStatus = isSelecting
-              ? "selected"
-              : "available";
-            return { ...seat, status: newStatus };
-          }
-          return seat;
-        });
-
-        // validar el estado hipotético.
-        const newSelection = hypotheticalSeats.filter(
-          (s) => s.status === "selected"
-        );
-
-        if (isSelecting) {
-          //intento de seleccion
-          console.log("Intentando seleccionar:", seatId);
-          if (!areSeatsContiguous(newSelection)) {
-            console.warn(
-              `Acción bloqueada: La selección debe formar un único bloque.`
-            );
-            return currentSeats;
-          }
-          //
-          //paso la verificacion, ahora aca se puede implementar la logica websocket si es seleccionado
-          //
-          console.log("Asiento seleccionado correctamente")
-        } else {
-          //al deseleccionar, verificamos si la acción parte el bloque
-          console.log("Intentando deseleccionar:", seatId);
-          const currentSelection = currentSeats.filter(
-            (s) => s.status === "selected"
-          );
-          if (wouldSplitBlock(seatId, currentSelection)) {
-            console.warn(
-              `Acción bloqueada: No se puede deseleccionar un asiento que parte el bloque.`
-            );
-            return currentSeats;
-          }
-          //
-          //paso la verificacion, ahora aca se puede implementar la logica websocket si es deseleccionado
-          //
+      } else { // Deseleccionando
+        const currentSelection = seats.filter(s => s.status === 'selected');
+        if (wouldSplitBlock(seatId, currentSelection)) {
+          console.warn(`Acción bloqueada: No se puede deseleccionar un asiento que parte el bloque.`);
+          return;
         }
+      }
 
-        // si es válida, aplicar el cambio.
-        // notificar al componente padre sobre la nueva seleccion de asientos
-        onSelectionChange(newSelection);
-        return hypotheticalSeats;
-      });
-
-      // seccion dedicada a los eventos de ws
-      // Por ejemplo: sendMessage({ action: 'select', seatId });
-
+      // 3. Si las validaciones locales pasan, actualiza la UI a 'pending' y notifica al padre.
+      if (isSelecting) {
+        setSeats(currentSeats => currentSeats.map(s => 
+          s.id === seatId ? { ...s, status: 'pending' } : s
+        ));
+        onRequestSeatSelection(seatId);
+      } else {
+        // Para deseleccionar, también podríamos tener un estado 'pending_deselection'
+        // pero por simplicidad, llamamos directamente a la acción.
+        onRequestSeatDeselection(seatId);
+      }
     },
-    [areSeatsContiguous, wouldSplitBlock]
+    [seats, areSeatsContiguous, wouldSplitBlock, onRequestSeatSelection, onRequestSeatDeselection]
   );
 
 
   // logica de UI para determinar qué asientos mostrar (incluyendo los bloqueados)
   // se calcula cada vez que el estado 'seats' cambia
   const displaySeats = useMemo(() => {
+    // La lógica de bloqueo ahora se basa en el estado local 'seats', que ya está fusionado.
+    const hasPendingSeats = seats.some(s => s.status === 'pending');
     const selectedSeats = seats.filter((s) => s.status === "selected");
 
+    // Si hay asientos en estado 'pending' (nuestros), bloqueamos todos los demás 'available'
+    // para evitar selecciones rápidas adicionales y posibles inconsistencias.
+    if (hasPendingSeats) {
+      return seats.map(s => {
+        if (s.status === 'available' && !selectedSeats.some(sel => sel.id === s.id)) {
+          return { ...s, status: 'blocked' };
+        }
+        return s;
+      });
+    }
+
+    // Si no hay asientos seleccionados (y tampoco pending), revertir 'blocked' a 'available'
     if (selectedSeats.length === 0) {
-      // si no hay nada seleccionado, todos los asientos 'blocked' vuelven a 'available'
-      const valid :SeatStatus = "available";
       return seats.map((s) =>
-        s.status === "blocked" ? { ...s, status: valid } : s
+        s.status === "blocked" ? { ...s, status: "available" } : s
       );
     }
 
-    // formamos la lista de permitidos excluyendo preterderminadamente los ocupados o reservados
+    // Si hay asientos seleccionados (y no pending), aplicar reglas de contigüidad.
     const allowedSeatIds = new Set(
       selectedSeats
         .flatMap((sel) => getAdjacentSeats(sel, seats))
-        .filter((s) => s.status !== "occupied" && s.status !== "reserved" && s.status !== "pending")
+        .filter((s) => s.status === "available") // Solo los disponibles son adyacentes válidos
         .map((s) => s.id)
     );
 
@@ -126,7 +152,7 @@ export default function Mirabus({ initialSeatsData, onSelectionChange }: Mirabus
         s.status === "occupied" ||
         s.status === "reserved" ||
         s.status === "selected" ||
-        s.status === "pending" // Los asientos 'pending' también deben mantener su estado
+        s.status === "pending" // Los asientos 'pending' (de otros usuarios) también deben mantener su estado
       ) {
         return s;
       }
@@ -138,8 +164,6 @@ export default function Mirabus({ initialSeatsData, onSelectionChange }: Mirabus
     });
   }, [seats]);
 
-  //el error que aparece en seats es por una declaracion de un dato que se me chispoteo en algun lado pero sigue funcinando igual... o deberia
-  // El componente ahora es más un "controlador de UI" que un contenedor de datos.
   return (
     <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
   );

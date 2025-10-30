@@ -67,6 +67,12 @@ export default function AsientoBus({ seats, onSeatSelect }: AsientoBusProps) {
                       iconClassName += " text-blue-700";
                       ariaLabel += " seleccionado por ti";
                       break;
+                    case "pending":
+                      seatClassName += " bg-gray-300 cursor-wait animate-pulse";
+                      iconClassName += " text-gray-600";
+                      ariaLabel += " procesando selección";
+                      isDisabled = true;
+                      break;
                     case "occupied":
                       seatClassName += " bg-yellow-200 cursor-not-allowed";
                       iconClassName += " text-yellow-700"; //el color del trazo, no pregunten porque se pide con el text, funciona y ya

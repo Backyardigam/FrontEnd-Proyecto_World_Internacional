@@ -1,15 +1,18 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, StrictMode } from "react";
 import { FechaHorarioSelector } from "./FechaHorarioSelector";
 import Mirabus from "./Mirabus";
-import type { Seat } from "./seatUtils/interfaceBus";
+import type { Seat, SeatStatus } from "./seatUtils/interfaceBus";
 
 // --- DATOS DE EJEMPLO ---
 // En una aplicación real, esto vendría de tu API/WebSocket.
-const fetchSeatsForTrip = async (fecha: string, horario: string): Promise<Seat[]> => {
+const fetchSeatsForTrip = async (
+  fecha: string,
+  horario: string
+): Promise<Seat[]> => {
   console.log(`Fetching seats for ${fecha} at ${horario}...`);
   // Simulamos una llamada a la API.
   // Aquí es donde te conectarías al WebSocket y obtendrías el estado inicial.
-  await new Promise(resolve => setTimeout(resolve, 500)); 
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Devolvemos datos de ejemplo. La estructura debe coincidir con tu API.
   return [
@@ -58,48 +61,132 @@ const fetchSeatsForTrip = async (fecha: string, horario: string): Promise<Seat[]
 };
 
 const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
-    console.log(`Buscando horarios para ${fecha}`);
-    // Simula una llamada a la API para obtener horarios
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return ["10:00 AM", "02:00 PM", "06:00 PM"];
-}
+  console.log(`Buscando horarios para ${fecha}`);
+  // Simula una llamada a la API para obtener horarios
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return ["10:00 AM", "02:00 PM", "06:00 PM"];
+};
 // --- FIN DATOS DE EJEMPLO ---
 
 //componente encargado de cargar con todo el formulario normal y la seleccion de asientos
 export default function FormularioMirabus() {
-  const [tripSelection, setTripSelection] = useState<{fecha: string, horario: string} | null>(null);
-  const [initialSeats, setInitialSeats] = useState<Seat[]>([]);
+  const [tripSelection, setTripSelection] = useState<{
+    fecha: string;
+    horario: string;
+  } | null>(null);
+  // Este estado ahora representa la "base de datos del servidor"
+  const [serverSeats, setServerSeats] = useState<Seat[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleTripSelection = useCallback(async (fecha: string, horario: string) => {
-    setTripSelection({ fecha, horario });
-    setIsLoading(true);
-    try {
-      const seatsData = await fetchSeatsForTrip(fecha, horario);
-      setInitialSeats(seatsData);
-      // Aquí establecerías la conexión WebSocket para este viaje
-    } catch (error) {
-      console.error("Failed to fetch seats:", error);
-      // Manejar el error en la UI
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const handleTripSelection = useCallback(
+    async (fecha: string, horario: string) => {
+      setTripSelection({ fecha, horario });
+      setIsLoading(true);
+      setSelectedSeats([]); // Limpiar selección al cambiar de viaje
+      try {
+        const seatsData = await fetchSeatsForTrip(fecha, horario);
+        setServerSeats(seatsData);
+        // Aquí establecerías la conexión WebSocket real para este viaje
+      } catch (error) {
+        console.error("Failed to fetch seats:", error);
+        // Manejar el error en la UI
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
-  const handleSeatSelectionChange = (newSelection: Seat[]) => {
-    setSelectedSeats(newSelection);
-    console.log("Asientos seleccionados en el formulario principal:", newSelection.map(s => s.id));
+  const handleSeatSelectionChange = useCallback(
+    (newSelection: Seat[]) => {
+      // Comparamos si la nueva selección es realmente diferente para evitar re-renders innecesarios.
+      setSelectedSeats((prevSelected) => {
+        if (JSON.stringify(prevSelected) !== JSON.stringify(newSelection)) {
+          console.log("Asientos seleccionados en el formulario principal:", newSelection.map((s) => s.id));
+          return newSelection;
+        }
+        return prevSelected;
+      });
+    },
+    []
+  );
+
+  // --- SIMULACIÓN DE WEBSOCKET ---
+
+  const updateSeatStatusOnServer = (seatId: string, status: SeatStatus) => {
+    console.log(
+      `[SIMULACIÓN SERVIDOR]: Recibida petición para cambiar ${seatId} a ${status}`
+    );
+    // Simula la latencia de la red
+    setTimeout(() => {
+      let success = false;
+      setServerSeats((currentServerSeats) => {
+        const seatToUpdate = currentServerSeats.find((s) => s.id === seatId);
+        // El servidor solo permite cambiar asientos 'available'
+        if (seatToUpdate && seatToUpdate.status === "available") {
+          success = true;
+          return currentServerSeats.map((s) =>
+            s.id === seatId ? { ...s, status } : s
+          );
+        }
+        // Si el asiento ya no está disponible, la petición falla.
+        return currentServerSeats;
+      });
+
+      if (success) {
+        console.log(`[SIMULACIÓN SERVIDOR]: Petición para ${seatId} APROBADA.`);
+      } else {
+        console.error(
+          `[SIMULACIÓN SERVIDOR]: Petición para ${seatId} RECHAZADA (asiento no disponible).`
+        );
+        // En una app real, enviarías un mensaje de error de vuelta al cliente.
+        // La UI del cliente se corregirá sola gracias a la "fusión inteligente".
+      }
+    }, 500 + Math.random() * 500); // Latencia aleatoria entre 0.5s y 1s
   };
 
+  const handleRequestSeatSelection = (seatId: string) => {
+    // El cliente pide seleccionar un asiento. El servidor lo marcará como 'selected'.
+    // En un sistema real, podría ser 'pending' primero, pero para esta simulación 'selected' es suficiente.
+    updateSeatStatusOnServer(seatId, "selected");
+  };
+
+  const handleRequestSeatDeselection = (seatId: string) => {
+    // El cliente pide deseleccionar. El servidor lo devuelve a 'available'.
+    setServerSeats((currentServerSeats) => {
+      const seatToUpdate = currentServerSeats.find((s) => s.id === seatId);
+      // Solo se puede deseleccionar algo que estaba 'selected'
+      if (seatToUpdate && seatToUpdate.status === "selected") {
+        console.log(`[SIMULACIÓN SERVIDOR]: Deseleccionando ${seatId}.`);
+        return currentServerSeats.map((s) =>
+          s.id === seatId ? { ...s, status: "available" } : s
+        );
+      }
+      return currentServerSeats;
+    });
+  };
+
+  // --- FIN DE SIMULACIÓN ---
+
   return (
-    <div>
-      <FechaHorarioSelector onSelectionChange={handleTripSelection} fetchHorarios={fetchHorariosDisponibles} />
-      {isLoading && <div>Cargando asientos...</div>}
-      {!isLoading && initialSeats.length > 0 && (
-        <Mirabus initialSeatsData={initialSeats} onSelectionChange={handleSeatSelectionChange} />
-      )}
-      {/* Aquí iría el resto de tu formulario (datos del pasajero, etc.) */}
-    </div>
+    <StrictMode>
+      <div>
+        <FechaHorarioSelector
+          onSelectionChange={handleTripSelection}
+          fetchHorarios={fetchHorariosDisponibles}
+        />
+        {isLoading && <div>Cargando asientos...</div>}
+        {!isLoading && serverSeats.length > 0 && (
+          <Mirabus
+            initialSeatsData={serverSeats}
+            onSelectionChange={handleSeatSelectionChange}
+            onRequestSeatSelection={handleRequestSeatSelection}
+            onRequestSeatDeselection={handleRequestSeatDeselection}
+          />
+        )}
+        {/* Aquí iría el resto de tu formulario (datos del pasajero, etc.) */}
+      </div>
+    </StrictMode>
   );
 }
