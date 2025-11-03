@@ -7,12 +7,19 @@ import { getAdjacentSeats } from "./seatUtils/seatFunctions";
 
 interface MirabusProps {
   initialSeatsData: Seat[];
+  busOrden: string; // <-- AÑADIDO: Para identificar este bus.
   onSelectionChange: (selectedSeats: Seat[]) => void;
-  onRequestSeatSelection: (seatId: string) => void;
-  onRequestSeatDeselection: (seatId: string) => void;
+  onRequestSeatSelection: (seatId: string, busOrden: string) => void;
+  onRequestSeatDeselection: (seatId: string, busOrden: string) => void;
 }
 
-export default function Mirabus({ initialSeatsData, onSelectionChange, onRequestSeatSelection, onRequestSeatDeselection }: MirabusProps) {
+export default function Mirabus({
+  initialSeatsData,
+  busOrden,
+  onSelectionChange,
+  onRequestSeatSelection,
+  onRequestSeatDeselection,
+}: MirabusProps) {
   // usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
   // Efecto 1: Sincroniza el estado local con los datos del servidor (fusión inteligente y pesimista).
@@ -104,14 +111,22 @@ export default function Mirabus({ initialSeatsData, onSelectionChange, onRequest
         setSeats(currentSeats => currentSeats.map(s => 
           s.id === seatId ? { ...s, status: 'pending' } : s
         ));
-        onRequestSeatSelection(seatId);
+        // Ahora pasamos el ID del bus junto con el del asiento
+        onRequestSeatSelection(seatId, busOrden);
       } else {
         // Para deseleccionar, también podríamos tener un estado 'pending_deselection'
         // pero por simplicidad, llamamos directamente a la acción.
-        onRequestSeatDeselection(seatId);
+        onRequestSeatDeselection(seatId, busOrden);
       }
     },
-    [seats, areSeatsContiguous, wouldSplitBlock, onRequestSeatSelection, onRequestSeatDeselection]
+    [
+      seats,
+      busOrden, // <-- AÑADIDO: El handler ahora depende del ID del bus.
+      areSeatsContiguous,
+      wouldSplitBlock,
+      onRequestSeatSelection,
+      onRequestSeatDeselection,
+    ]
   );
 
 
@@ -133,11 +148,12 @@ export default function Mirabus({ initialSeatsData, onSelectionChange, onRequest
         return s;
       });
     }
-
+    const valid:SeatStatus='available';
     // Si no hay asientos seleccionados (y tampoco pending), revertir 'blocked' a 'available'
     if (selectedSeats.length === 0) {
       return seats.map((s) =>
-        s.status === "blocked" ? { ...s, status: "available" } : s
+        
+        s.status === 'blocked' ? { ...s, status: valid } : s
       );
     }
 
@@ -158,10 +174,11 @@ export default function Mirabus({ initialSeatsData, onSelectionChange, onRequest
       ) {
         return s;
       }
-      // si el asiento no está en la lista de permitidos se bloquea
-      const newStatus: SeatStatus = allowedSeatIds.has(s.id)
-        ? "available"
-        : "blocked";
+
+      // si el asiento no está en la lista de permitidos se bloquea      
+      const newStatus:SeatStatus= allowedSeatIds.has(s.id)
+        ? 'available'
+        : 'blocked';
       return { ...s, status: newStatus };
     });
   }, [seats]);
