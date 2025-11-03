@@ -49,7 +49,8 @@ export default function Mirabus({ initialSeatsData, onSelectionChange, onRequest
         // Si el servidor dice 'available', pero nosotros tenemos una petición 'pending' para este asiento,
         // mantenemos nuestro estado 'pending' local hasta que el servidor responda.
         if (serverSeat.status === 'available' && ourPendingRequests.has(serverSeat.id)) {
-          return { ...serverSeat, status: 'pending' };
+          const valid:SeatStatus='pending'
+          return { ...serverSeat, status: valid };
         }
 
         // En cualquier otro caso (ej: el servidor ahora dice 'occupied'), el estado del servidor gana.
@@ -126,7 +127,8 @@ export default function Mirabus({ initialSeatsData, onSelectionChange, onRequest
     if (hasPendingSeats) {
       return seats.map(s => {
         if (s.status === 'available' && !selectedSeats.some(sel => sel.id === s.id)) {
-          return { ...s, status: 'blocked' };
+          const block:SeatStatus='blocked'
+          return { ...s, status: block };
         }
         return s;
       });

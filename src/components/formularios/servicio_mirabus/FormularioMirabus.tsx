@@ -1,7 +1,7 @@
 import React, { useState, useCallback, StrictMode } from "react";
 import { FechaHorarioSelector } from "./FechaHorarioSelector";
 import Mirabus from "./Mirabus";
-import type { Seat, SeatStatus } from "./seatUtils/interfaceBus";
+import type { Seat, SeatStatus, Bus } from "./seatUtils/interfaceBus";
 
 // --- DATOS DE EJEMPLO ---
 // En una aplicación real, esto vendría de tu API/WebSocket.
@@ -18,7 +18,7 @@ const fetchSeatsForTrip = async (
   return [
     // Array de prueba con 36 asientos. Layout: filas (y),columnas (x).
     // Fila 1
-    { id: "01", x: 1, y: 1, status: "available" },
+    { id: "01", x: 1, y: 1, status: "occupied" },
     { id: "02", x: 2, y: 1, status: "available" },
     { id: "03", x: 3, y: 1, status: "available" },
     { id: "04", x: 4, y: 1, status: "available" },
