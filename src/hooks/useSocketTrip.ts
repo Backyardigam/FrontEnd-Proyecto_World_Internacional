@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import type {
   Bus,
@@ -22,7 +22,10 @@ interface UseSocketTripReturn {
   isConnecting: boolean;
   sessionTimeLeft: number;
   sessionExpired: boolean;
-  connectToTrip: (tripDetails: JoinTripRoomPayload) => void;
+  connectToTrip: (
+    tripDetails: JoinTripRoomPayload,
+    callback?: (result: { success: boolean; error?: string }) => void
+  ) => void;
   disconnectFromTrip: () => void;
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
@@ -71,13 +74,25 @@ export function useSocketTrip(): UseSocketTripReturn {
     setSessionExpired(false);
   }, []);
 
+  // Efecto para manejar la expiración del temporizador
+  useEffect(() => {
+    // Solo actúa si el tiempo llega a 0 MIENTRAS estamos conectados.
+    if (sessionTimeLeft <= 0 && isConnected) {
+      console.warn("La sesión de selección ha expirado por tiempo.");
+      setSessionExpired(true);
+      cleanup(); // Limpia y desconecta
+    }
+  }, [sessionTimeLeft, isConnected, cleanup]);
+
   // --- FUNCIONES EXPUESTAS ---
 
   /**
    * Inicia la conexión con el servidor de sockets y se une a la sala del viaje.
    * @param tripDetails - Objeto con la fecha y el horario del viaje.
+   * @param callback - Función opcional que se ejecuta al conectar o al fallar.
    */
-  const connectToTrip = useCallback((tripDetails: JoinTripRoomPayload) => {
+  const connectToTrip = useCallback(
+    (tripDetails: JoinTripRoomPayload, callback?: (result: { success: boolean; error?: string }) => void) => {
     // Prevenir múltiples conexiones si ya existe una
     if (socketRef.current) return;
 
@@ -105,6 +120,12 @@ export function useSocketTrip(): UseSocketTripReturn {
       newSocket.emit(SocketEvents.JOIN_TRIP_ROOM, tripDetails);
     });
 
+    newSocket.on("connect_error", (err) => {
+      console.error("Error de conexión:", err.message);
+      callback?.({ success: false, error: `No se pudo conectar al servidor: ${err.message}` });
+      cleanup(); // Limpia para permitir un nuevo intento
+    });
+
     newSocket.on("disconnect", () => {
       console.log("Socket desconectado.");
       cleanup();
@@ -113,7 +134,21 @@ export function useSocketTrip(): UseSocketTripReturn {
     newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
       console.log("Recibido estado inicial de buses:", initialBuses);
       setBuses(initialBuses);
-      // Aquí se podría iniciar el temporizador de sesión si el servidor lo indica
+      callback?.({ success: true }); // ¡Conexión y unión a la sala exitosas!
+
+      // Iniciar el temporizador de sesión de 5 minutos
+      if (timerRef.current) clearInterval(timerRef.current);
+      setSessionTimeLeft(300); // 5 minutos = 300 segundos
+      timerRef.current = setInterval(() => {
+        setSessionTimeLeft((prevTime) => {
+          // La lógica de expiración está en el useEffect para mayor limpieza
+          if (prevTime <= 1) {
+            clearInterval(timerRef.current!);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
     });
 
     newSocket.on(SocketEvents.SEAT_STATUS_UPDATED, (payload) => {
@@ -162,7 +197,7 @@ export function useSocketTrip(): UseSocketTripReturn {
 
     // Ahora que todo está configurado, conectamos manualmente.
     newSocket.connect();
-  }, [cleanup]);
+  }, [cleanup, isConnected]);
 
   /**
    * Cierra la conexión con el servidor de sockets y limpia el estado.

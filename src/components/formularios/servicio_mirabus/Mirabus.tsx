@@ -22,6 +22,7 @@ export default function Mirabus({
 }: MirabusProps) {
   // usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   // Efecto 1: Sincroniza el estado local con los datos del servidor (fusión inteligente y pesimista).
   React.useEffect(() => { 
     // FUSIÓN INTELIGENTE: No reemplazamos el estado, lo fusionamos.
@@ -75,6 +76,16 @@ export default function Mirabus({
     onSelectionChange(currentSelection);
   }, [seats, onSelectionChange]);
   
+  // Efecto 3: Limpia el mensaje de advertencia después de un tiempo.
+  React.useEffect(() => {
+    if (warningMessage) {
+      const timer = setTimeout(() => {
+        setWarningMessage(null);
+      }, 3000); // El mensaje desaparecerá después de 3 segundos
+      return () => clearTimeout(timer);
+    }
+  }, [warningMessage]);
+
   //  cargar las herramientas necesarias con las funciones
   const { areSeatsContiguous, wouldSplitBlock } =
     useSeatSelectionLogic(initialSeatsData);
@@ -85,7 +96,7 @@ export default function Mirabus({
       // 1. Encontrar el asiento en el estado local actual
       const seatToToggle = seats.find((s) => s.id === seatId);
       if (!seatToToggle || ['occupied', 'reserved', 'blocked', 'pending'].includes(seatToToggle.status)) {
-        console.warn(`Acción bloqueada en UI: El asiento ${seatId} no está disponible.`);
+        setWarningMessage(`El asiento ${seatId} no está disponible en este momento.`);
         return;
       }
 
@@ -93,15 +104,22 @@ export default function Mirabus({
 
       // 2. Validaciones locales ANTES de enviar la petición
       if (isSelecting) {
+        const currentSelectionCount = seats.filter(s => s.status === 'selected').length;
+        const MAX_SELECTION_LIMIT = 10;
+
+        if (currentSelectionCount >= MAX_SELECTION_LIMIT) {
+          setWarningMessage(`No se pueden seleccionar más de ${MAX_SELECTION_LIMIT} asientos.`);
+          return;
+        }
         const hypotheticalSelection = [...seats.filter(s => s.status === 'selected'), seatToToggle];
         if (!areSeatsContiguous(hypotheticalSelection)) {
-          console.warn(`Acción bloqueada: La selección debe formar un único bloque.`);
+          setWarningMessage(`La selección debe formar un único bloque de asientos.`);
           return;
         }
       } else { // Deseleccionando
         const currentSelection = seats.filter(s => s.status === 'selected');
         if (wouldSplitBlock(seatId, currentSelection)) {
-          console.warn(`Acción bloqueada: No se puede deseleccionar un asiento que parte el bloque.`);
+          setWarningMessage(`No se puede deseleccionar un asiento que divida el bloque.`);
           return;
         }
       }
@@ -184,6 +202,13 @@ export default function Mirabus({
   }, [seats]);
 
   return (
-    <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
+    <div>
+      {warningMessage && (
+        <div className="p-2 mb-4 text-center text-sm text-red-700 bg-red-100 rounded-lg">
+          {warningMessage}
+        </div>
+      )}
+      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
+    </div>
   );
 }

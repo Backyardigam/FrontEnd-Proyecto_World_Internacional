@@ -25,7 +25,6 @@ export interface JoinTripRoomPayload {
   servicio: string;
   fecha: string;
   horario: string;
-
 }
 
 export interface RequestSeatSelectionPayload {

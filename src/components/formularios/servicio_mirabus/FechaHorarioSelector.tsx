@@ -28,19 +28,19 @@ export function FechaHorarioSelector({
   }, [fecha, horario]);
 
   return (
-    <div className="flex gap-2">
+    <div className="flex justify-between gap-5 items-center md:w-full md:px-9">
       <input
         type="date"
         value={fecha}
         onChange={(e) => setFecha(e.target.value)}
-        className="border rounded p-2"
+        className="border rounded p-2 w-full bg-white"
         min={new Date().toISOString().split("T")[0]} 
         max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
       />
       <select
         value={horario}
         onChange={(e) => setHorario(e.target.value)}
-        className="border rounded p-2"
+        className="border rounded p-2 w-full bg-white"
       >
         <option value="">Selecciona un horario</option>
         {horarios.map((h) => (
