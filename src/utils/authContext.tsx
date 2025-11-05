@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-
-const API_URL = import.meta.env.PUBLIC_API_URL;
+import { apiGet, apiPost } from "./apiClient";
 
 interface User {
   id: string;
@@ -18,12 +17,14 @@ interface AuthContextType {
   auth: AuthState;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  secureFetch: (url: string, options?: RequestInit) => Promise<Response>;
+  renderWhenReady: (children: React.ReactNode) => React.ReactNode;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider principal
+
+const USER_STORAGE_KEY = 'app_user_data';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [auth, setAuth] = useState<AuthState>({
@@ -34,80 +35,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --------- LOGIN ----------
   const login = async (email: string, password: string) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      credentials: "include", // 🔒 incluye cookies
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!res.ok) throw new Error("Credenciales inválidas");
-
-    // El backend ya setea cookies, solo recuperamos datos del usuario
-    const data = await res.json();
-    setAuth({ isAuthenticated: true, user: data.user, loading: false });
+    // Usamos apiPost. Le pasamos el objeto directamente y le decimos que esperamos un objeto con una propiedad 'user'.
+    const { user } = await apiPost<{ user: User }>("/auth/login", { email, password });
+    // Guardamos los datos del usuario en localStorage
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    // Actualizamos el estado
+    setAuth({ isAuthenticated: true, user, loading: false });
   };
 
   // --------- LOGOUT ----------
   const logout = async () => {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    setAuth({ isAuthenticated: false, user: null, loading: false });
-  };
-
-  // --------- SECURE FETCH ----------
-  const secureFetch = async (url: string, options: RequestInit = {}) => {
-    const res = await fetch(url, {
-      ...options,
-      credentials: "include",
-    });
-
-    if (res.status === 401) {
-      // Intentar refrescar sesión
-      const refreshed = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (refreshed.ok) {
-        // Nuevo access token emitido en cookie → reintenta
-        return fetch(url, { ...options, credentials: "include" });
-      } else {
-        // Refresh falló → cerrar sesión
-        setAuth({ isAuthenticated: false, user: null, loading: false });
-        throw new Error("Sesión expirada. Inicia sesión nuevamente.");
-      }
+    // apiPost también funciona para peticiones sin cuerpo y donde no nos importa la respuesta.
+    // El try/catch es por si el servidor falla, aunque para un logout podríamos ignorarlo.
+    try {
+      await apiPost("/auth/logout", {});
+    } catch (error) {
+      console.error("Error durante el logout:", error);
     }
-
-    return res;
+    // Limpiamos localStorage y el estado
+    localStorage.removeItem(USER_STORAGE_KEY);
+    setAuth({ isAuthenticated: false, user: null, loading: false });
   };
 
   // --------- CHECK SESSION ----------
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const res = await fetch(`${API_URL}/auth/check`, {
-          credentials: "include",
-        });
+      // 1. Intentar leer los datos del usuario desde localStorage
+      const storedUserJSON = localStorage.getItem(USER_STORAGE_KEY);
+      if (!storedUserJSON) {
+        // Si no hay datos, no hay sesión.
+        setAuth({ isAuthenticated: false, user: null, loading: false });
+        return;
+      }
 
-        if (res.ok) {
-          const data = await res.json();
-          setAuth({ isAuthenticated: true, user: data.user, loading: false });
-        } else {
-          setAuth({ isAuthenticated: false, user: null, loading: false });
-        }
-      } catch {
+      try {
+        // 2. Hay datos, ahora validamos la sesión con el backend.
+        // Este endpoint ya no devuelve datos, solo un 200 OK si la cookie es válida.
+        await apiGet("/auth/check");
+
+        // 3. Si la llamada es exitosa, la sesión es válida. Usamos los datos de localStorage.
+        const user = JSON.parse(storedUserJSON) as User;
+        setAuth({ isAuthenticated: true, user, loading: false });
+      } catch (error) {
+        // 4. Si la llamada falla (401), la sesión es inválida. Limpiamos todo.
+        localStorage.removeItem(USER_STORAGE_KEY);
         setAuth({ isAuthenticated: false, user: null, loading: false });
       }
     };
     checkSession();
   }, []);
 
+  /**
+   * Una función helper para renderizar componentes solo cuando la sesión
+   * ha sido verificada. Muestra null (o un loader) mientras tanto.
+   */
+  const renderWhenReady = (children: React.ReactNode): React.ReactNode => {
+    if (auth.loading) {
+      return null; // O podrías retornar <Spinner />
+    }
+    return children;
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, login, logout, secureFetch }}>
+    <AuthContext.Provider value={{ auth, login, logout, renderWhenReady }}>
       {children}
     </AuthContext.Provider>
   );

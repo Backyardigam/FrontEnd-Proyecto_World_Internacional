@@ -3,7 +3,8 @@ import { FechaHorarioSelector } from "./FechaHorarioSelector";
 import Mirabus from "./Mirabus";
 import type { Bus, Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
-import { useUser } from "../../../hooks/useUser"; // <-- 1. Importar el hook de usuario
+import { useUser } from "../../../hooks/useUser";
+import { apiPost } from "../../../utils/apiClient"; // <-- 1. Cambiamos la importación a apiPost
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
 const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
@@ -213,22 +214,13 @@ export default function FormularioMirabus() {
     console.log("Enviando reserva:", reservationPayload);
 
     try {
-      // Simular una petición POST al backend
-      // En un entorno real, esta URL sería tu endpoint de reserva
-      const response = await fetch("/api/reserve-trip", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reservationPayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al procesar la reserva.");
-      }
-
-      const responseData = await response.json();
+      // 2. Usamos apiPost. Le pasamos la URL y el objeto payload directamente.
+      // La función se encarga de stringify, headers, credentials, y parsear la respuesta.
+      // También lanzará un error si la respuesta no es 'ok'.
+      const responseData = await apiPost<{ redirectUrl?: string }>(
+        "/api/reserve-trip",
+        reservationPayload
+      );
       console.log("Reserva exitosa:", responseData);
 
       // Asumiendo que el backend envía una URL de redirección a Izipay
