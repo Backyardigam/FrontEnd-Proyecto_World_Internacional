@@ -103,6 +103,7 @@ export function useSocketTrip(): UseSocketTripReturn {
     const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> =
       io(SOCKET_URL, {
         // Opciones de conexión
+        withCredentials:true,
         reconnection: true, // Habilitar la reconexión si se pierde la conexión
         reconnectionAttempts: 3, // Intentar reconectar solo 3 veces
         reconnectionDelay: 1000, // Esperar 1 segundo entre intentos

@@ -117,9 +117,9 @@ export default function FormularioMirabus() {
   const handleStartSelection = () => {
     if (tripSelection) {
       if (!user) {
-        // En una app real, aquí podrías abrir un modal de login.
-        // Por ahora, mostraremos un error en el cuadro de estado.
-        setUiStatus({ status: "error", message: "Debes iniciar sesión para seleccionar asientos." });
+        // Redirigir a la página de login, guardando la URL actual para poder volver.
+        const currentPath = window.location.pathname;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         return;
       }
 
@@ -279,8 +279,11 @@ export default function FormularioMirabus() {
 
   return (
     <StrictMode>
-      <div className="w-full flex justify-center items-center font-redhat bg-gray-100">
-        <div className="p-5 align-center items-center inline-block">
+      <div className="w-full flex flex-col justify-center items-center font-redhat py-10 bg-gray-100 max-h-full">
+        <div className="font-baloo text-5xl mb-10 text-gray-400">
+          Reserva de tours
+        </div>
+        <div className="p-5 align-center items-center inline-block border bg-white border-gray-500 rounded-2xl">
           <Formulario onFormDataChange={setPassengerData} />
           <div className="flex items-center align-center flex-col my-5">
             <div className="font-bold text-lg mt-5 mb-5 self-start">

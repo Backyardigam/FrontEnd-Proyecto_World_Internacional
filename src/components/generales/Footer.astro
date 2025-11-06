@@ -1,14 +1,111 @@
 ---
 import Logo from "../iconos/Logo.astro";
-
-
+import LogoFacebook from "../iconos/LogoFacebook.astro";
+import LogoInstagram from "../iconos/LogoInstagram.astro";
+import PhoneLogo from "../iconos/PhoneLogo.astro";
+import EmailLogo from "../iconos/EmailLogo.astro";
+import MapsLogo from "../iconos/MapsLogo.astro";
 ---
-<div class="columns-3 bg-black text-white font-redhat ">
-    <Logo logoColor="fill-white" />
-    <div>
 
+<footer id="footer" class="p-8 bg-black text-white font-redhat">
+  <div
+    class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8"
+  >
+    <!-- Columna 1: Logo y Copyright -->
+    <div class="flex-shrink-0">
+      <a href="/" aria-label="Ir a la página de inicio">
+        <Logo logoColor="fill-white" />
+      </a>
+      <p class="text-gray-400 text-sm mt-4">
+        &copy; {new Date().getFullYear()} World International. Todos los derechos
+        reservados.
+      </p>
     </div>
-    <div>
 
+    <!-- Columna 2: Contacto -->
+    <div class="text-gray-200">
+      <h2 class="font-bold text-lg mb-4">Contáctanos</h2>
+      <ul class="space-y-2">
+        <li>
+          <p class="font-semibold">Comunícate al:</p>
+          <ul class="pl-4 text-gray-300">
+            <li>
+              <a href="tel:+51933401708" class="hover:underline"
+                >+51 933 401 708</a
+              >
+              <PhoneLogo />
+            </li>
+            <li>
+              <a href="tel:+51932121621" class="hover:underline"
+                >+51 932 121 621</a
+              >
+              <PhoneLogo />
+            </li>
+          </ul>
+        </li>
+        <li>
+          <MapsLogo />
+          <address class="not-italic">
+            <a
+              href="https://maps.app.goo.gl/BegnXMXC6fkP6N2B9"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:underline"
+            >
+              Av. San Martin 270, Tacna 23000
+            </a>
+          </address>
+        </li>
+
+        <li>
+          <a
+            href="mailto:worldintenacionaltsq@gmail.com"
+            class="hover:underline">worldintenacionaltsq@gmail.com</a
+          >
+          <EmailLogo />
+        </li>
+      </ul>
     </div>
-</div>
+
+    <!-- Columna 3: Redes Sociales -->
+    <div class="text-gray-200">
+      <h2 class="font-bold text-lg mb-4">Redes Sociales</h2>
+      <ul class="space-y-4">
+        <li class="flex items-center gap-3">
+          <a
+            href="https://www.facebook.com/World.International.Agy"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Visita nuestra página de Facebook"
+            class="hover:opacity-80 transition-opacity"
+          >
+            <LogoFacebook class="w-6 h-6" />
+          </a>
+          <a
+            href="https://www.facebook.com/World.International.Agy"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:underline">world.internationa.agy</a
+          >
+        </li>
+        <li class="flex items-center gap-3">
+          <a
+            href="https://www.instagram.com/worldinternationaltacna/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Visita nuestro perfil de Instagram"
+            class="hover:opacity-80 transition-opacity"
+          >
+            <LogoInstagram class="w-6 h-6" />
+          </a>
+          <a
+            href="https://www.instagram.com/worldinternationaltacna/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:underline">wold_international_tacna</a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>
