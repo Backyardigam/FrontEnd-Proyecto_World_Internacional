@@ -1,10 +1,7 @@
 ---
-//IMPORTANTE RECUERDA BORRAR LOS COMENTARIOS EN EL HTML
-
 import Logo from "../iconos/Logo.astro";
 import CartIcon from "../iconos/CartIcon.astro";
 
-// clases de los enlaces de navegacion en el header para no repetir codigo
 const navLinkClasses = "hover:underline underline-offset-4";
 ---
 
@@ -12,15 +9,20 @@ const navLinkClasses = "hover:underline underline-offset-4";
   <div
     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
   >
-    <Logo logocolor="fill-black"/>
+    <Logo logocolor="fill-black" text="hidden md:block"/>
 
-    <!-- manejo de hamburguesa en omviles -->
-    <nav class="hidden md:flex gap-10 text-black">
+    <!-- Menú de Navegación -->
+    <nav id="menu" class="hidden absolute top-0 pt-16 left-0 w-full h-[70vh] bg-white 
+                         flex-col items-center justify-center space-y-8 text-2xl
+                         transform -translate-y-full transition-transform duration-300 ease-in-out
+                         md:flex md:gap-10">
       <a href="/" class={navLinkClasses}>Inicio</a>
       <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
       <a href="/#Nosotros" class={navLinkClasses}>Nosotros</a>
       <a href="/#footer" class={navLinkClasses}>Contáctanos</a>
     </nav>
+
+    
 
     <div class="flex gap-6 items-center ">
       <a 
@@ -30,13 +32,47 @@ const navLinkClasses = "hover:underline underline-offset-4";
       >
         <CartIcon />
       </a>
-      <!-- selector de idioma (esto recien esta por verse) -->
-      <label for="lang-select" class="sr-only">Seleccionar idioma</label>
-      <!-- <select name="lang" id="lang-select" class="rounded border-gray-300">
-        <option value="es">ES</option>
-        <option value="en">EN</option>
-      </select> -->
       <a href="/login" class="justify-center items-center flex">Iniciar Sesión</a>
     </div>
+
+    <!-- Botón de Hamburguesa (solo visible en móviles) -->
+    <button id="menu-btn" class="md:hidden focus:outline-none z-50 flex flex-col gap-1.5">
+      <span id="hamburger-top" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
+      <span id="hamburger-middle" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
+      <span id="hamburger-bottom" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
+    </button>
   </div>
 </header>
+<script>
+  const menuBtn = document.getElementById('menu-btn');
+  const htop = document.getElementById('hamburger-top');
+  const hmiddle = document.getElementById('hamburger-middle');
+  const hbottom = document.getElementById('hamburger-bottom');
+  const menu = document.getElementById('menu');
+  if (menuBtn && menu) {
+    menuBtn.addEventListener('click', () => {
+      // Estilos para los elementos al seleccionar el menu
+      htop?.classList.toggle('transform');
+      htop?.classList.toggle('rotate-45');
+      htop?.classList.toggle('translate-y-2');
+
+      hmiddle?.classList.toggle('opacity-0');
+      
+      hbottom?.classList.toggle('transform');
+      hbottom?.classList.toggle('-rotate-45');
+      hbottom?.classList.toggle('-translate-y-2');
+
+      // Alterna la visibilidad del menú
+      menu.classList.toggle('hidden');
+      menu.classList.toggle('flex');
+      menu.classList.toggle('translate-y-0');
+
+      // Opcional: Evita el scroll del body cuando el menú está abierto
+      if (!menu.classList.contains('hidden')) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'auto';
+      }
+    });
+  }
+</script>
