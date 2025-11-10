@@ -6,6 +6,10 @@ import { logoutUser } from "../../utils/authActions";
 export default function SesionButton() {
     // 1. Nos suscribimos a la tienda global de Nanostores.
     const authState = useStore($auth);
+    // Estado para forzar el renderizado del lado del cliente y evitar el mismatch de hidratación.
+    // Comienza en `false` y se cambia a `true` en un `useEffect`, garantizando que el primer render
+    // en el cliente coincida con el del servidor.
+    const [isClient, setIsClient] = useState(false);
     // Estado para controlar la visibilidad del menú desplegable
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     // Ref para el contenedor del menú para detectar clics fuera de él
@@ -35,9 +39,14 @@ export default function SesionButton() {
         };
     }, [isDropdownOpen]);
 
+    // Este efecto se ejecuta solo en el cliente, después del primer render.
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
 
     // 3. Renderizamos un placeholder mientras se verifica la sesión inicial.
-    if (authState.loading) {
+    if (!isClient || authState.loading) {
         // Placeholder para el avatar circular
         return <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>;
     }

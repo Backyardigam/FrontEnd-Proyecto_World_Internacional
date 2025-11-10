@@ -6,7 +6,7 @@ import { AuthProvider } from '../utils/authContext';
  */
 export default function AppContainer({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
+    <AuthProvider >
       {children}
     </AuthProvider>
   );

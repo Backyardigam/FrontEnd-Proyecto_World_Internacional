@@ -3,8 +3,8 @@ import { FechaHorarioSelector } from "./FechaHorarioSelector";
 import Mirabus from "./Mirabus";
 import type { Bus, Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
-import { useUser } from "../../../hooks/useUser";
-import { apiPost } from "../../../utils/apiClient"; // <-- 1. Cambiamos la importación a apiPost
+import { useAuth } from "../../../utils/authContext";
+import { apiPost } from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
 const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
@@ -14,34 +14,39 @@ const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
   return ["10:00 AM", "02:00 PM", "06:00 PM"];
 };
 
-// --- NUEVA FUNCIÓN: Simula la obtención de detalles del servicio desde una API ---
-const fetchServiceDetails = async (serviceId: string): Promise<{ name: string; price: number }> => {
+// simular la obtención de detalles del servicio desde una API ---
+const fetchServiceDetails = async (
+  serviceId: string
+): Promise<{ name: string; price: number }> => {
   console.log(`Fetching details for service: ${serviceId}`);
-  await new Promise(resolve => setTimeout(resolve, 700)); // Simular latencia de red
+  await new Promise((resolve) => setTimeout(resolve, 700)); // Simular latencia de red
 
-  if (serviceId === 'mirabus-tour-lima') {
-    return { name: 'Mirabus City Tour Lima', price: 50.00 };
-  } else if (serviceId === 'tour-fallido') {
-    throw new Error('El servicio solicitado no se encuentra disponible.');
+  if (serviceId === "mirabus-tour-lima") {
+    return { name: "Mirabus City Tour Lima", price: 50.0 };
+  } else if (serviceId === "tour-fallido") {
+    throw new Error("El servicio solicitado no se encuentra disponible.");
   } else {
-    throw new Error('Servicio no encontrado.');
+    throw new Error("Servicio no encontrado.");
   }
 };
 
 //componente encargado de cargar con todo el formulario normal y la seleccion de asientos
 export default function FormularioMirabus() {
   // --- ESTADOS PARA LA CARGA INICIAL DEL SERVICIO ---
-  const [serviceInfo, setServiceInfo] = useState<{ name: string; price: number } | null >(null);
+  const [serviceInfo, setServiceInfo] = useState<{
+    name: string;
+    price: number;
+  } | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState<string | null>(null);
 
   // --- OBTENER DATOS DEL USUARIO ---
-  const { user } = useUser(); // <-- 2. Usar el hook para obtener el usuario
+  const { auth, renderWhenReady } = useAuth();
 
   // --- EFECTO PARA CARGAR LOS DATOS DEL SERVICIO AL MONTAR EL COMPONENTE ---
   const loadServiceData = useCallback(async () => {
     // TODO: En una app real, obtendrías el serviceId desde el router (ej: useParams de React Router)
-    const serviceId = 'mirabus-tour-lima'; // Simulacion
+    const serviceId = "mirabus-tour-lima"; // Simulacion
 
     setServiceLoading(true);
     setServiceError(null);
@@ -50,7 +55,9 @@ export default function FormularioMirabus() {
       const data = await fetchServiceDetails(serviceId);
       setServiceInfo(data);
     } catch (error: any) {
-      setServiceError(error.message || 'No se pudo cargar la información del servicio.');
+      setServiceError(
+        error.message || "No se pudo cargar la información del servicio."
+      );
     } finally {
       setServiceLoading(false);
     }
@@ -115,15 +122,17 @@ export default function FormularioMirabus() {
 
   const handleStartSelection = () => {
     if (tripSelection) {
-      if (!user) {
+      if (!auth.isAuthenticated) {
         // Redirigir a la página de login, guardando la URL actual para poder volver.
         const currentPath = window.location.pathname;
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        window.location.href = `/login?redirect=${encodeURIComponent(
+          currentPath
+        )}`;
         return;
       }
 
-      const userId = user.id; // <-- 3. Usar el ID de usuario real
-      const servicio = serviceInfo?.name || '';
+      const userId = auth.user!.id; // Usamos '!' porque ya hemos verificado la autenticación.
+      const servicio = serviceInfo?.name || "";
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
       setReservationError(null); // Limpiar cualquier error de reserva anterior
@@ -167,8 +176,10 @@ export default function FormularioMirabus() {
     setReservationError(null);
 
     // <-- 4. VALIDACIÓN DE SESIÓN ANTES DE RESERVAR -->
-    if (!user) {
-      setReservationError("Tu sesión ha expirado o no has iniciado sesión. Por favor, inicia sesión para continuar.");
+    if (!auth.isAuthenticated) {
+      setReservationError(
+        "Tu sesión ha expirado o no has iniciado sesión. Por favor, inicia sesión para continuar."
+      );
       setReservationLoading(false);
       return;
     }
@@ -206,7 +217,7 @@ export default function FormularioMirabus() {
         id: seat.id,
         busOrden: busToDisplay?.ordenBus || "",
       })),
-      userId: user.id, // <-- 5. Usar el ID de usuario real en el payload de la reserva
+      userId: auth.user!.id, // Usamos '!' porque ya hemos verificado la autenticación.
       servicio: serviceInfo?.name || "MIRABUS", // Usar el nombre del servicio cargado
     };
 
@@ -245,10 +256,9 @@ export default function FormularioMirabus() {
     passengerData,
     selectedSeats,
     busToDisplay,
-    user, // <-- Añadir user a las dependencias
+    auth, // <-- Añadir auth a las dependencias
     disconnectFromTrip,
   ]);
-
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
 
@@ -268,7 +278,10 @@ export default function FormularioMirabus() {
         <div className="p-5 bg-white shadow-lg rounded-lg text-center">
           <h2 className="text-xl font-bold text-red-600">Error</h2>
           <p className="my-4 text-gray-700">{serviceError}</p>
-          <button onClick={loadServiceData} className="p-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600">
+          <button
+            onClick={loadServiceData}
+            className="p-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
             Reintentar
           </button>
         </div>
@@ -278,133 +291,148 @@ export default function FormularioMirabus() {
 
   return (
     <StrictMode>
-      <div className="w-full flex flex-col justify-center items-center font-redhat py-10 bg-gray-100 max-h-full">
-        <div className="font-baloo text-3xl mb-10 text-gray-400 md:text-5xl">
-          Reserva de tours
-        </div>
-        <div className="p-5 align-center items-center inline-block md:border bg-white md:border-gray-500 rounded-2xl">
-          <Formulario onFormDataChange={setPassengerData} />
-          <div className="flex items-center align-center flex-col my-5">
-            <div className="font-bold text-lg mt-5 mb-5 self-start">
-              Seleccione sus asientos
-            </div>
-            <FechaHorarioSelector
-              onSelectionChange={handleTripSelection}
-              fetchHorarios={fetchHorariosDisponibles}
-            />
-            {/* --- INICIO: Nuevo Cuadro de Estado Dinámico --- */}
-            {tripSelection && !isSelecting && uiStatus.status === "idle" && (
-              <div className="mt-4">
-                <button
-                  onClick={handleStartSelection}
-                  className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Seleccionar Asientos
-                </button>
-              </div>
-            )}
-
-            {uiStatus.status === "connecting" && (
-              <div className="mt-4 p-2 border rounded bg-gray-100 text-gray-700 animate-pulse">
-                {uiStatus.message}
-              </div>
-            )}
-
-            {uiStatus.status === "error" && (
-              <div className="mt-4 p-2 border rounded bg-red-100 text-red-700 flex justify-between items-center">
-                <span>{uiStatus.message}</span>
-                <button
-                  onClick={handleStartSelection}
-                  className="ml-4 p-1 px-3 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Reintentar
-                </button>
-              </div>
-            )}
-            {/* --- FIN: Nuevo Cuadro de Estado Dinámico --- */}
-            {sessionExpired && (
-              <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
-                Tu sesión ha expirado. Por favor, selecciona los asientos de
-                nuevo.
-              </div>
-            )}
-
-            {isConnected && (
-              <div>
-                {buses.length > 1 && (
-                  <select
-                    value={selectedBusOrden || ""}
-                    onChange={(e) => setSelectedBusOrden(e.target.value)}
-                    className="mt-4 p-2 border rounded"
-                  >
-                    {buses.map((bus) => (
-                      <option key={bus.ordenBus} value={bus.ordenBus}>
-                        {`Bus ${bus.ordenBus}`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
-                <div className="my-4 text-lg font-semibold">
-                  Tiempo restante:{" "}
-                  <span className="text-blue-600">
-                    {formatTime(sessionTimeLeft)}
-                  </span>
-                </div>
-
-                {busToDisplay && (
-                  <Mirabus
-                    key={busToDisplay.ordenBus} // Importante para que React remonte el componente al cambiar de bus
-                    initialSeatsData={busToDisplay.seats}
-                    busOrden={busToDisplay.ordenBus}
-                    onSelectionChange={setSelectedSeats}
-                    onRequestSeatSelection={selectSeat}
-                    onRequestSeatDeselection={deselectSeat}
-                  />
-                )}
-              </div>
-            )}
+      {renderWhenReady(
+        <div className="w-full flex flex-col justify-center items-center font-redhat py-10 bg-gray-100 max-h-full">
+          <div className="font-baloo text-3xl mb-10 text-gray-400 md:text-5xl">
+            Reserva de tours
           </div>
-          {/* --- BOTON DE RESERVAR --- */}
-          {isSelecting && selectedSeats.length > 0 && (
-            <div className="mt-8 border-t pt-6">
-              {/* --- INICIO: Resumen de la Reserva --- */}
-              <div className="mt-6 p-4 border rounded-lg bg-gray-50 space-y-2">
-                <h3 className="font-bold text-lg">Resumen de tu Reserva</h3>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Servicio:</span>
-                  <span className="font-semibold">{serviceInfo?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Asientos ({selectedSeats.length}):</span>
-                  <span className="font-semibold">{selectedSeats.map(s => s.id).join(', ')}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
-                  <span>Total:</span>
-                  <span>S/ {(serviceInfo!.price * selectedSeats.length).toFixed(2)}</span>
-                </div>
+          <div className="p-5 align-center items-center inline-block md:border bg-white md:border-gray-500 rounded-2xl">
+            <Formulario onFormDataChange={setPassengerData} />
+            <div className="flex items-center align-center flex-col my-5">
+              <div className="font-bold text-lg mt-5 mb-5 self-start">
+                Seleccione sus asientos
               </div>
-              {/* --- FIN: Resumen de la Reserva --- */}
+              <FechaHorarioSelector
+                onSelectionChange={handleTripSelection}
+                fetchHorarios={fetchHorariosDisponibles}
+              />
+              {/* --- INICIO: Nuevo Cuadro de Estado Dinámico --- */}
+              {tripSelection && !isSelecting && uiStatus.status === "idle" && (
+                <div className="mt-4">
+                  <button
+                    onClick={handleStartSelection}
+                    className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Seleccionar Asientos
+                  </button>
+                </div>
+              )}
 
-              <div className="mt-6 text-center">
-                {reservationError && (
-                  <div className="p-2 mb-4 text-red-700 bg-red-100 rounded-lg">
-                    {reservationError}
+              {uiStatus.status === "connecting" && (
+                <div className="mt-4 p-2 border rounded bg-gray-100 text-gray-700 animate-pulse">
+                  {uiStatus.message}
+                </div>
+              )}
+
+              {uiStatus.status === "error" && (
+                <div className="mt-4 p-2 border rounded bg-red-100 text-red-700 flex justify-between items-center">
+                  <span>{uiStatus.message}</span>
+                  <button
+                    onClick={handleStartSelection}
+                    className="ml-4 p-1 px-3 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
+              {/* --- FIN: Nuevo Cuadro de Estado Dinámico --- */}
+              {sessionExpired && (
+                <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
+                  Tu sesión ha expirado. Por favor, selecciona los asientos de
+                  nuevo.
+                </div>
+              )}
+
+              {isConnected && (
+                <div>
+                  {buses.length > 1 && (
+                    <select
+                      value={selectedBusOrden || ""}
+                      onChange={(e) => setSelectedBusOrden(e.target.value)}
+                      className="mt-4 p-2 border rounded"
+                    >
+                      {buses.map((bus) => (
+                        <option key={bus.ordenBus} value={bus.ordenBus}>
+                          {`Bus ${bus.ordenBus}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  <div className="my-4 text-lg font-semibold">
+                    Tiempo restante:{" "}
+                    <span className="text-blue-600">
+                      {formatTime(sessionTimeLeft)}
+                    </span>
                   </div>
-                )}
-                <button
-                  onClick={handleReservation}
-                  disabled={reservationLoading}
-                  className={`w-full p-3 bg-green-600 text-white rounded-lg text-lg font-semibold transition-colors ${reservationLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"}`}
-                >
-                  {reservationLoading ? "Procesando Reserva..." : "Confirmar y Pagar"}
-                </button>
-              </div>
+
+                  {busToDisplay && (
+                    <Mirabus
+                      key={busToDisplay.ordenBus} // Importante para que React remonte el componente al cambiar de bus
+                      initialSeatsData={busToDisplay.seats}
+                      busOrden={busToDisplay.ordenBus}
+                      onSelectionChange={setSelectedSeats}
+                      onRequestSeatSelection={selectSeat}
+                      onRequestSeatDeselection={deselectSeat}
+                    />
+                  )}
+                </div>
+              )}
             </div>
-          )}
-          {/* --- FIN --- */}
+            {/* --- BOTON DE RESERVAR --- */}
+            {isSelecting && selectedSeats.length > 0 && (
+              <div className="mt-8 border-t pt-6">
+                {/* --- INICIO: Resumen de la Reserva --- */}
+                <div className="mt-6 p-4 border rounded-lg bg-gray-50 space-y-2">
+                  <h3 className="font-bold text-lg">Resumen de tu Reserva</h3>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Servicio:</span>
+                    <span className="font-semibold">{serviceInfo?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">
+                      Asientos ({selectedSeats.length}):
+                    </span>
+                    <span className="font-semibold">
+                      {selectedSeats.map((s) => s.id).join(", ")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
+                    <span>Total:</span>
+                    <span>
+                      S/{" "}
+                      {(serviceInfo!.price * selectedSeats.length).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                {/* --- FIN: Resumen de la Reserva --- */}
+
+                <div className="mt-6 text-center">
+                  {reservationError && (
+                    <div className="p-2 mb-4 text-red-700 bg-red-100 rounded-lg">
+                      {reservationError}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleReservation}
+                    disabled={reservationLoading}
+                    className={`w-full p-3 bg-green-600 text-white rounded-lg text-lg font-semibold transition-colors ${
+                      reservationLoading
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-green-700"
+                    }`}
+                  >
+                    {reservationLoading
+                      ? "Procesando Reserva..."
+                      : "Confirmar y Pagar"}
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* --- FIN --- */}
+          </div>
         </div>
-      </div>
+      )}
     </StrictMode>
   );
 }

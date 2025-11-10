@@ -9,23 +9,25 @@ interface AuthContextType {
   renderWhenReady: (children: React.ReactNode) => React.ReactNode;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 // Provider principal
 
-const USER_STORAGE_KEY = 'app_user_data';
+const USER_STORAGE_KEY = "app_user_data";
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // El estado inicial ahora se lee directamente de la tienda global.
-  // El script de inicialización ya se encargó de poner el valor correcto.
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [auth, setAuth] = useState<AuthState>($auth.get());
-  
+
   // --------- SINCRONIZAR CON LA TIENDA GLOBAL ----------
   useEffect(() => {
     // Nos suscribimos a los cambios en la tienda global.
     // Si `logoutUser` se llama desde `SesionButton`, este `AuthProvider` se enterará
     // y actualizará su propio estado para que los componentes hijos (como FormularioMirabus) reaccionen.
-    const unsubscribe = $auth.subscribe(newState => {
+    const unsubscribe = $auth.subscribe((newState) => {
       setAuth(newState);
     });
     return () => unsubscribe(); // Limpiamos la suscripción al desmontar.
@@ -49,9 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+  
   if (!context) {
     throw new Error("useAuth debe usarse dentro de un AuthProvider");
   }
