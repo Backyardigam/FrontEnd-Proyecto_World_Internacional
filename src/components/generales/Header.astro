@@ -1,78 +1,98 @@
 ---
 import Logo from "../iconos/Logo.astro";
 import CartIcon from "../iconos/CartIcon.astro";
+import SesionButton from "../user/SesionButton";
 
-const navLinkClasses = "hover:underline underline-offset-4";
+const navLinkClasses = "hover:underline underline-offset-4 md:block";
 ---
 
 <header class="w-full bg-white shadow-sm sticky top-0 z-50 rounded-b-xl">
   <div
-    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
+    class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
   >
-    <Logo logocolor="fill-black" text="hidden md:block"/>
+    <Logo logocolor="fill-black" text="hidden md:block" />
 
-    <!-- Menú de Navegación -->
-    <nav id="menu" class="hidden absolute top-0 pt-16 left-0 w-full h-[70vh] bg-white 
-                         flex-col items-center justify-center space-y-8 text-2xl
-                         transform -translate-y-full transition-transform duration-300 ease-in-out
-                         md:flex md:gap-10">
+    <nav
+      id="menu"
+      class="absolute top-0 left-0 w-full h-[70vh] bg-white text-2xl
+         flex-col items-center justify-center gap-8
+         transform -translate-y-full opacity-0 pointer-events-none
+         transition-transform duration-300 ease-in-out
+         md:text-base md:static md:h-auto md:w-auto md:translate-y-0 md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:gap-10"
+    >
       <a href="/" class={navLinkClasses}>Inicio</a>
       <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
       <a href="/#Nosotros" class={navLinkClasses}>Nosotros</a>
       <a href="/#footer" class={navLinkClasses}>Contáctanos</a>
     </nav>
 
-    
-
-    <div class="flex gap-6 items-center ">
-      <a 
-        href="/carrito" 
+    <div class="z-10 flex gap-6 items-center">
+      <a
+        href="/carrito"
         aria-label="Ver carrito de compras"
         class="hover:scale-110 hover:bg-naranja-f transition w-20 h-auto aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
       >
         <CartIcon />
       </a>
-      <a href="/login" class="justify-center items-center flex">Iniciar Sesión</a>
+      <SesionButton client:load/>
     </div>
 
-    <!-- Botón de Hamburguesa (solo visible en móviles) -->
-    <button id="menu-btn" class="md:hidden focus:outline-none z-50 flex flex-col gap-1.5">
-      <span id="hamburger-top" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
-      <span id="hamburger-middle" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
-      <span id="hamburger-bottom" class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"></span>
+    <button
+      id="menu-btn"
+      class="md:hidden focus:outline-none z-50 flex flex-col gap-1.5"
+    >
+      <span
+        id="hamburger-top"
+        class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"
+      ></span>
+      <span
+        id="hamburger-middle"
+        class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"
+      ></span>
+      <span
+        id="hamburger-bottom"
+        class="block w-6 h-0.5 bg-black rounded-lg transition-all duration-300 ease-in-out"
+      ></span>
     </button>
   </div>
+  <script>
+    const menuBtn = document.getElementById("menu-btn");
+    const htop = document.getElementById("hamburger-top");
+    const hmiddle = document.getElementById("hamburger-middle");
+    const hbottom = document.getElementById("hamburger-bottom");
+    const menu = document.getElementById("menu");
+
+    if (menuBtn && menu) {
+      menuBtn.addEventListener("click", () => {
+        htop?.classList.toggle("rotate-45");
+        htop?.classList.toggle("translate-y-2");
+        hmiddle?.classList.toggle("opacity-0");
+        hbottom?.classList.toggle("-rotate-45");
+        hbottom?.classList.toggle("-translate-y-2");
+
+        menu.classList.toggle("-translate-y-full");
+        menu.classList.toggle("translate-y-0");
+
+        menu.classList.toggle("opacity-0");
+        menu.classList.toggle("opacity-100");
+
+        menu.classList.toggle("pointer-events-none");
+        menu.classList.toggle("pointer-events-auto");
+
+        if (menu.classList.contains("translate-y-0")) {
+          menu.classList.add("flex");
+          document.body.style.overflow = "hidden";
+        } else {
+          menu.classList.remove("flex");
+          document.body.style.overflow = "auto";
+        }
+      });
+    }
+  </script>
+  <script>
+    // Al colocar la importación aquí, Astro se asegura de que este script
+    // se ejecute en el navegador del cliente en cada carga de página,
+    // inicializando así nuestro estado de autenticación global.
+    import "../../utils/authInitializer.ts";
+  </script>
 </header>
-<script>
-  const menuBtn = document.getElementById('menu-btn');
-  const htop = document.getElementById('hamburger-top');
-  const hmiddle = document.getElementById('hamburger-middle');
-  const hbottom = document.getElementById('hamburger-bottom');
-  const menu = document.getElementById('menu');
-  if (menuBtn && menu) {
-    menuBtn.addEventListener('click', () => {
-      // Estilos para los elementos al seleccionar el menu
-      htop?.classList.toggle('transform');
-      htop?.classList.toggle('rotate-45');
-      htop?.classList.toggle('translate-y-2');
-
-      hmiddle?.classList.toggle('opacity-0');
-      
-      hbottom?.classList.toggle('transform');
-      hbottom?.classList.toggle('-rotate-45');
-      hbottom?.classList.toggle('-translate-y-2');
-
-      // Alterna la visibilidad del menú
-      menu.classList.toggle('hidden');
-      menu.classList.toggle('flex');
-      menu.classList.toggle('translate-y-0');
-
-      // Opcional: Evita el scroll del body cuando el menú está abierto
-      if (!menu.classList.contains('hidden')) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = 'auto';
-      }
-    });
-  }
-</script>

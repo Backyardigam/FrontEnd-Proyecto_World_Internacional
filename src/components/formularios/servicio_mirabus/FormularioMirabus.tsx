@@ -41,8 +41,7 @@ export default function FormularioMirabus() {
   // --- EFECTO PARA CARGAR LOS DATOS DEL SERVICIO AL MONTAR EL COMPONENTE ---
   const loadServiceData = useCallback(async () => {
     // TODO: En una app real, obtendrías el serviceId desde el router (ej: useParams de React Router)
-    const serviceId = 'mirabus-tour-lima'; // Simulación
-    // const serviceId = 'tour-fallido'; // Descomenta para probar el caso de error
+    const serviceId = 'mirabus-tour-lima'; // Simulacion
 
     setServiceLoading(true);
     setServiceError(null);
@@ -280,10 +279,10 @@ export default function FormularioMirabus() {
   return (
     <StrictMode>
       <div className="w-full flex flex-col justify-center items-center font-redhat py-10 bg-gray-100 max-h-full">
-        <div className="font-baloo text-5xl mb-10 text-gray-400">
+        <div className="font-baloo text-3xl mb-10 text-gray-400 md:text-5xl">
           Reserva de tours
         </div>
-        <div className="p-5 align-center items-center inline-block border bg-white border-gray-500 rounded-2xl">
+        <div className="p-5 align-center items-center inline-block md:border bg-white md:border-gray-500 rounded-2xl">
           <Formulario onFormDataChange={setPassengerData} />
           <div className="flex items-center align-center flex-col my-5">
             <div className="font-bold text-lg mt-5 mb-5 self-start">
