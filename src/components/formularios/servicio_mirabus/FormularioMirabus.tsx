@@ -290,7 +290,7 @@ export default function FormularioMirabus() {
   }
 
   return (
-    <StrictMode>
+    <>
       {renderWhenReady(
         <div className="w-full flex flex-col justify-center items-center font-redhat py-10 bg-gray-100 max-h-full">
           <div className="font-baloo text-3xl mb-10 text-gray-400 md:text-5xl">
@@ -433,6 +433,6 @@ export default function FormularioMirabus() {
           </div>
         </div>
       )}
-    </StrictMode>
+    </>
   );
 }

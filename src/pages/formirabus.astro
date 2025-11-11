@@ -1,6 +1,5 @@
 ---
-import AppContainer from '../components/AppContainer.tsx';
-import FormularioMirabus from '../components/formularios/servicio_mirabus/FormularioMirabus';
+import MirabusPage from '../pages-react/MirabusPage.tsx';
 import Header from '../components/generales/Header.astro';
 import "../styles/global.css";
 
@@ -14,8 +13,6 @@ import "../styles/global.css";
 </head>
 <body>
     <Header />
-    <AppContainer client:load>
-        <FormularioMirabus client:load/>
-    </AppContainer>
+    <MirabusPage client:load />
 </body>
 </html>

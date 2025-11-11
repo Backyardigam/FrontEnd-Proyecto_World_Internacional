@@ -4,9 +4,10 @@ import { $auth } from "./authStore";
 // Importar las interfaces compartidas
 import type { User, AuthState } from "../utils/auth";
 
-interface AuthContextType {
+export interface AuthContextType {
   auth: AuthState;
   renderWhenReady: (children: React.ReactNode) => React.ReactNode;
+  
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -15,13 +16,12 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 // Provider principal
 
-const USER_STORAGE_KEY = "app_user_data";
+export const USER_STORAGE_KEY = "app_user_data";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [auth, setAuth] = useState<AuthState>($auth.get());
-
   // --------- SINCRONIZAR CON LA TIENDA GLOBAL ----------
   useEffect(() => {
     // Nos suscribimos a los cambios en la tienda global.
@@ -53,9 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
   if (!context) {
     throw new Error("useAuth debe usarse dentro de un AuthProvider");
   }
-  return context;
+  return context!; // Usamos '!' porque el if anterior garantiza que no es undefined.
 };
