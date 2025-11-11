@@ -61,7 +61,7 @@ export default function SesionButton() {
                         {authState.user.avatarURL ? (
                             <img src={authState.user.avatarURL} alt={`Avatar de ${authState.user.name}`} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full bg-blue-500 text-white flex items-center justify-center text-lg font-bold">
+                            <div className="w-full h-full bg-naranaja-c text-white flex items-center justify-center text-lg font-bold">
                                 {authState.user.name.charAt(0).toUpperCase()}
                             </div>
                         )}
@@ -87,8 +87,7 @@ export default function SesionButton() {
                 </div>
             );
         }
-        // Caso: Usuario invitado. Podríamos mostrar algo o nada.
-        // Por ahora, mostramos un botón para que pueda registrarse o iniciar sesión.
+        
         if (authState.user.rol === 'guest') {
             return <a href="/login" className="px-4 py-2 text-sm font-semibold bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">Registrarse</a>;
         }
@@ -96,7 +95,7 @@ export default function SesionButton() {
 
     // 5. Caso por defecto: No hay sesión.
     return (
-        <a href="/login" className="px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+        <a href="/login" className="h- px-4 py-2 text-sm font-semibold bg-naranja-c text-white rounded-md hover:bg-naranja-f transition-colors">
             Iniciar Sesión
         </a>
     );

@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const renderWhenReady = (children: React.ReactNode): React.ReactNode => {
     if (auth.loading) {
-      return null; // O podrías retornar <Spinner />
+      return null;
     }
     return children;
   };
@@ -56,5 +56,5 @@ export const useAuth = (): AuthContextType => {
   if (!context) {
     throw new Error("useAuth debe usarse dentro de un AuthProvider");
   }
-  return context!; // Usamos '!' porque el if anterior garantiza que no es undefined.
+  return context!;
 };

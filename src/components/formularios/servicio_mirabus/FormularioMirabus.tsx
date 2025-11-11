@@ -131,14 +131,13 @@ export default function FormularioMirabus() {
         return;
       }
 
-      const userId = auth.user!.id; // Usamos '!' porque ya hemos verificado la autenticación.
       const servicio = serviceInfo?.name || "";
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
       setReservationError(null); // Limpiar cualquier error de reserva anterior
 
-      // Llamamos a connectToTrip y esperamos el resultado en el callback.
-      connectToTrip({ ...tripSelection, userId, servicio }, (result) => {
+      // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
+      connectToTrip({ ...tripSelection, servicio }, (result) => {
         if (result.success) {
           // Solo cambiamos la UI si la conexión fue exitosa.
           setIsSelecting(true);
@@ -217,7 +216,6 @@ export default function FormularioMirabus() {
         id: seat.id,
         busOrden: busToDisplay?.ordenBus || "",
       })),
-      userId: auth.user!.id, // Usamos '!' porque ya hemos verificado la autenticación.
       servicio: serviceInfo?.name || "MIRABUS", // Usar el nombre del servicio cargado
     };
 

@@ -18,7 +18,7 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
          flex-col items-center justify-center gap-8
          transform -translate-y-full opacity-0 pointer-events-none
          transition-transform duration-300 ease-in-out
-         md:text-base md:static md:h-auto md:w-auto md:translate-y-0 md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:gap-10"
+         md:text-base md:mx-2 md:static md:h-auto md:w-auto md:translate-y-0 md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:gap-10"
     >
       <a href="/" class={navLinkClasses}>Inicio</a>
       <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
@@ -88,6 +88,36 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
         }
       });
     }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Selecciona todos los enlaces de navegación que apuntan a un ancla en la página de inicio.
+      const navLinks = document.querySelectorAll('header nav a[href^="/#"]');
+
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+          // Solo aplicamos la lógica de scroll suave si estamos en la página de inicio.
+          if (window.location.pathname === "/") {
+            event.preventDefault(); // Prevenimos la navegación por defecto.
+
+            const href = link.getAttribute("href");
+            if (!href) return;
+
+            const targetId = href.substring(href.indexOf("#"));
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+              targetElement.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }
+          }
+          // Si no estamos en la página de inicio, no hacemos nada y dejamos
+          // que el navegador maneje el `href="/#Servicios"` normalmente.
+        });
+      });
+    });
   </script>
   <script>
     //script para reconocer al usuario

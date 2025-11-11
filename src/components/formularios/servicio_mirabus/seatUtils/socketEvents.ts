@@ -21,7 +21,6 @@ export enum SocketEvents {
 
 // Payloads para eventos Cliente -> Servidor
 export interface JoinTripRoomPayload {
-  userId: string;
   servicio: string;
   fecha: string;
   horario: string;

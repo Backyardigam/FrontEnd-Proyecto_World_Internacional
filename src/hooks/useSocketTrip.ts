@@ -5,7 +5,6 @@ import type {
   Seat,
 } from "../components/formularios/servicio_mirabus/seatUtils/interfaceBus";
 
-// Importar nuestro contrato de eventos y tipos
 import {
   type ServerToClientEvents,
   type ClientToServerEvents,
@@ -13,8 +12,8 @@ import {
   SocketEvents,
 } from "../components/formularios/servicio_mirabus/seatUtils/socketEvents";
 /**
- * Define la forma del objeto que devolverá el hook.
- * Esto es lo que los componentes consumirán.
+ * Define la forma del objeto que devolvera el hook
+ * Esto es lo que los componentes consumiran
  */
 interface UseSocketTripReturn {
   buses: Bus[];
