@@ -1,12 +1,39 @@
+---
+import UserProfile from "../components/user/UserProfile.tsx";
+import Header from "../components/generales/Header.astro";
+import "../styles/global.css";
+---
+
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi perfil</title>
-</head>
-<body>
-    
-</body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Perfil</title>
+  </head>
+  <body>
+    <Header />
+    <main class="w-full font-redhat bg-gray-50 pt-16">
+      <UserProfile client:load />
+    </main>
+
+    <script>
+      // Script de protección de ruta
+      import { $auth } from "../utils/authStore";
+
+      // Nos suscribimos a los cambios en el estado de autenticación.
+      const unsubscribe = $auth.subscribe((auth) => {
+        // Esperamos a que termine la carga inicial para tomar una decisión.
+        if (!auth.loading) {
+          // Si el usuario no está autenticado o es un invitado, lo redirigimos al login.
+          if (!auth.isAuthenticated || auth.user?.rol === "guest") {
+            window.location.replace("/login?redirect=/perfil");
+          }
+          // Una vez que hemos hecho la verificación, ya no necesitamos seguir escuchando.
+          unsubscribe();
+        }
+      });
+    </script>
+  </body>
 </html>

@@ -7,7 +7,7 @@ export interface User {
   name: string | null;
   email: string | null;
   phoneNumber: string | null;
-  avatarURL: string | null;
+  avatar: string | null;
   rol: 'guest'|'user'; // |admin|employee|superadmin Rol del usuario que se registro 
 }
 
@@ -27,8 +27,8 @@ export interface AuthState {
 
 
 export interface RegisterPayload {
-  fullName: string;
-  phoneNumber: string;
+  // fullName: string;
+  // phoneNumber: string;
   email: string;
   password: string;
 }

@@ -96,14 +96,14 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-naranja-c hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-orange-300"
+            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-naranja-c hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rojo-f disabled:bg-orange-300"
           >
             {isLoading ? "Iniciando..." : "Iniciar Sesión"}
           </button>
         </div>
 
         <div className="flex items-center justify-between text-sm text-naranja-c">
-          <a href="/forgot-password" className="font-medium hover:underline underline-offset-4 hover:text-naranja-f">¿Olvidaste tu contraseña?</a>
+          <a href="/reset-password" className="font-medium hover:underline underline-offset-4 hover:text-naranja-f">¿Olvidaste tu contraseña?</a>
           <a href="/register" className="font-medium hover:underline underline-offset-4 hover:text-naranja-f">Registrar usuario</a>
         </div>
       </form>

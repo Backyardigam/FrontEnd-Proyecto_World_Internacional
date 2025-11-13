@@ -1,0 +1,21 @@
+---
+import Header from "../components/generales/Header.astro";
+import CartView from "../components/carrito/CartView.tsx";
+import "../styles/global.css";
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carrito de Compras</title>
+  </head>
+  <body class="bg-gray-100">
+    <Header />
+    <main class="w-full font-redhat pt-20">
+      <CartView client:load />
+    </main>
+  </body>
+</html>

@@ -10,14 +10,31 @@ const USER_STORAGE_KEY = 'app_user_data';
  * @param password 
  */
 export const loginUser = async (email: string, password: string) => {
-  // La lógica de la llamada a la API ahora vive aquí.
-  const { user } = await apiPost<{ user: User }>("/auth/login", { email, password });
-  
+  // 1. Inicia sesión, el backend establece la cookie.
+  await apiPost<{ user: User }>("/auth/login", { email, password });
+  const user = await apiGet<User>("/profile/")
   // Guardamos los datos del usuario en localStorage
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   
   // Actualizamos la tienda global, que notificará a todos los componentes.
-  $auth.set({ isAuthenticated: true, user, loading: false });
+  $auth.set({ isAuthenticated: true, user , loading: false });
+};
+
+/**
+ * Actualiza los datos del perfil del usuario.
+ * @param updatedData - Los nuevos datos del usuario.
+ */
+export const updateUserProfile = async (updatedData: Partial<User>) => {
+  // 1. Envía los datos actualizados al backend.
+  // El backend debería devolver el objeto de usuario completo y actualizado.
+  const updatedUser = await apiPost<User>("/profile/", updatedData);
+
+  // 2. Actualiza los datos en localStorage.
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+
+  // 3. Actualiza la tienda global para que toda la UI refleje los cambios.
+  // $auth.setKey('user', updatedUser);
+  return updatedUser;
 };
 
 /**
@@ -35,7 +52,7 @@ export const continueAsGuest = async () => {
     name: 'Invitado',
     phoneNumber: null,
     email: null,
-    avatarURL: null,
+    avatar: null,
     rol: 'guest',
   };
 
@@ -68,7 +85,7 @@ export const verifyAndLoginUser = async (email: string, code: string) => {
   await apiPost("/auth/verify", { email, code }); 
 
   // 2. Con la cookie ya establecida, pedimos los datos completos del perfil.
-  const user = await apiGet<User>("/auth/getProfile");
+  const user = await apiGet<User>("/profile/");
 
   // 3. Si todo es correcto, guardamos los datos y actualizamos el estado global.
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
@@ -86,6 +103,31 @@ export const resendVerificationCode = async (email: string, purpose: 'register' 
   await apiPost("/auth/resend-code", { email, purpose });
 };
 
+/**
+ * Paso 1 de recuperación: Solicita un código para restablecer la contraseña.
+ * @param email El email del usuario.
+ */
+export const requestPasswordReset = async (email: string) => {
+  // Reutilizamos la acción de reenviar código con el propósito 'resetPassword'.
+  await apiPost("/auth/forgot-password",{email})
+};
+
+/**
+ * Paso 2 de recuperación: Verifica que el código ingresado es válido.
+ * @param email El email del usuario.
+ * @param code El código recibido.
+ */
+export const verifyResetCode = async (email: string, code: string) => {
+  // Este endpoint solo valida el código. No establece sesión.
+  await apiPost("/auth/verify-reset-code", { email, code });
+};
+
+/**
+ * Paso 3 de recuperación: Establece la nueva contraseña.
+ */
+export const resetPassword = async (email: string, code: string, newPassword: string) => {
+  await apiPost("/auth/reset-password", { email, code, newPassword });
+};
 
 /**
  * Cierra la sesión del usuario.
@@ -93,14 +135,11 @@ export const resendVerificationCode = async (email: string, purpose: 'register' 
  */
 export const logoutUser = async () => {
   try {
-    // Llama al endpoint del backend para invalidar la sesión/cookie.
     await apiPost("/auth/logout", {});
   } catch (error) {
     console.error("Error durante el logout, se procederá a limpiar localmente:", error);
   } finally {
-    // Independientemente de si el backend falló, limpiamos el estado del cliente.
     localStorage.removeItem(USER_STORAGE_KEY);
-    // Actualizamos la tienda global, lo que notificará a todos los componentes suscritos.
     $auth.set({ isAuthenticated: false, user: null, loading: false });
   }
 };

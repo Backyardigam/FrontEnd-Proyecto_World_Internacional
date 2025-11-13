@@ -19,7 +19,7 @@ async function initializeAuthStore() {
   }
 
   try {
-    await apiGet("/auth/check");
+    await apiGet("/auth/check-session");
     const user = JSON.parse(storedUserJSON) as User;
     $auth.set({ isAuthenticated: true, user, loading: false });
 

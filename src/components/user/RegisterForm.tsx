@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { registerUser, verifyAndLoginUser, resendVerificationCode } from "../../utils/authActions";
+import {
+  registerUser,
+  verifyAndLoginUser,
+  resendVerificationCode,
+} from "../../utils/authActions";
 
 export default function RegisterForm() {
   // Estado para controlar el paso actual del formulario
@@ -8,8 +12,8 @@ export default function RegisterForm() {
   );
 
   // Estados para el formulario de registro
-  const [fullName, setFullName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  // const [fullName, setFullName] = useState("");
+  // const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,9 +28,9 @@ export default function RegisterForm() {
 
   // Efecto para manejar el temporizador de reenvío de código
   useEffect(() => {
-    if (currentStep === 'verify' && resendCooldown > 0) {
+    if (currentStep === "verify" && resendCooldown > 0) {
       const timer = setTimeout(() => {
-        setResendCooldown(prev => prev - 1);
+        setResendCooldown((prev) => prev - 1);
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -46,12 +50,28 @@ export default function RegisterForm() {
     }
 
     try {
-      await registerUser({ fullName, phoneNumber, email, password });
+      await registerUser({ email, password }); //fullName,phoneNumber
       // Si el registro es exitoso, cambiamos al paso de verificación
       setCurrentStep("verify");
       setResendCooldown(60); // Iniciar temporizador de 60 segundos
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error durante el registro.");
+      let errorMessage = "Ocurrió un error durante el registro.";
+      if (err && err.message) {
+        try {
+          const errorData = JSON.parse(err.message);
+          if (errorData.error === "El usuario ya existe pero no fue verificado. Se envió un nuevo código.") {
+            setCurrentStep("verify");
+            setResendCooldown(60);
+            setError(null); // Limpiar cualquier error previo
+            return; // Salir temprano ya que hemos manejado este caso específico
+          } else {
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch (parseError) {
+          errorMessage = err.message; // Si err.message no es un JSON válido, usarlo directamente
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +104,12 @@ export default function RegisterForm() {
     setError(null);
     try {
       // Llamamos a la nueva acción específica para reenviar el código.
-      await resendVerificationCode(email, 'register');
+      await resendVerificationCode(email, "register");
       setResendCooldown(60); // Reiniciar el temporizador
     } catch (err: any) {
-      setError(err.message || "No se pudo reenviar el código. Intenta más tarde.");
+      setError(
+        err.message || "No se pudo reenviar el código. Intenta más tarde."
+      );
     }
   };
 
@@ -117,7 +139,7 @@ export default function RegisterForm() {
               name="verificationCode"
               type="text"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:bg-white sm:text-sm"
               placeholder="Código de Verificación"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
@@ -138,7 +160,9 @@ export default function RegisterForm() {
               disabled={isLoading || resendCooldown > 0}
               className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : "Reenviar código"}
+              {resendCooldown > 0
+                ? `Reenviar en ${resendCooldown}s`
+                : "Reenviar código"}
             </button>
           </div>
         </form>
@@ -156,42 +180,6 @@ export default function RegisterForm() {
       )}
 
       <div className="rounded-md shadow-sm -space-y-px">
-        {/* Nombre completo */}
-        <div>
-          <label htmlFor="full-name" className="sr-only">
-            Nombre completo
-          </label>
-          <input
-            id="full-name"
-            name="fullName"
-            type="text"
-            autoComplete="name"
-            required
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-            placeholder="Nombre completo"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        {/* Celular */}
-        <div>
-          <label htmlFor="phone-number" className="sr-only">
-            Número de celular
-          </label>
-          <input
-            id="phone-number"
-            name="phoneNumber"
-            type="tel"
-            autoComplete="tel"
-            required
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-            placeholder="Número de celular"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
         {/* Correo electrónico */}
         <div>
           <label htmlFor="email-address" className="sr-only">
@@ -203,7 +191,7 @@ export default function RegisterForm() {
             type="email"
             autoComplete="email"
             required
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:z-10 sm:text-sm"
             placeholder="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -212,7 +200,7 @@ export default function RegisterForm() {
         </div>
         {/* Contraseña y Repetir Contraseña en la misma fila */}
         <div className="flex -space-x-px">
-          <div className="w-1/2">
+          <div className="w-full">
             <label htmlFor="password" className="sr-only">
               Contraseña
             </label>
@@ -222,14 +210,14 @@ export default function RegisterForm() {
               type="password"
               autoComplete="new-password"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-bl-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-bl-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:z-10 sm:text-sm"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
           </div>
-          <div className="w-1/2">
+          <div className="w-full">
             <label htmlFor="confirm-password" className="sr-only">
               Repetir Contraseña
             </label>
@@ -239,7 +227,7 @@ export default function RegisterForm() {
               type="password"
               autoComplete="new-password"
               required
-              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-br-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-br-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:bg-white focus:z-10 sm:text-sm"
               placeholder="Repetir Contraseña"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -268,7 +256,7 @@ export default function RegisterForm() {
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 hover:text-blue-500"
+            className="font-medium text-naranja-c hover:text-naranja-f"
           >
             Términos y Condiciones
           </a>{" "}
@@ -277,7 +265,7 @@ export default function RegisterForm() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-blue-600 hover:text-blue-500"
+            className="font-medium text-naranja-c hover:text-naranja-f"
           >
             Política de Privacidad
           </a>
@@ -289,7 +277,7 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={isLoading || !termsAccepted}
-          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-naranja-c hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rojo-f disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Registrando..." : "Registrar"}
         </button>

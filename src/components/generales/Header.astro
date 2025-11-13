@@ -2,11 +2,12 @@
 import Logo from "../iconos/Logo.astro";
 import CartIcon from "../iconos/CartIcon.astro";
 import SesionButton from "../user/SesionButton";
+import CartBubble from "./CartBubble";
 
 const navLinkClasses = "hover:underline underline-offset-4 md:block";
 ---
 
-<header class="w-full bg-white shadow-sm sticky top-0 z-50 rounded-b-xl">
+<header class="absolute w-full bg-white shadow-sm top-0 z-50 rounded-b-xl">
   <div
     class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
   >
@@ -30,9 +31,10 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
       <a
         href="/carrito"
         aria-label="Ver carrito de compras"
-        class="hover:scale-110 hover:bg-naranja-f transition w-20 h-auto aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
+        class="relative hover:scale-110 hover:bg-naranja-f transition w-20 h-auto aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
       >
         <CartIcon />
+        <CartBubble client:load />
       </a>
       <SesionButton client:load/>
     </div>

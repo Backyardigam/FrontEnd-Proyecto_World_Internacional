@@ -1,6 +1,6 @@
 import React from 'react';
-import { AuthProvider } from '../utils/authContext';
-import FormularioMirabus from '../components/formularios/servicio_mirabus/FormularioMirabus';
+import { AuthProvider } from '../../utils/authContext';
+import FormularioMirabus from './servicio_mirabus/FormularioMirabus';
 
 /**
  * Este componente actúa como la "pagina" completa de React.
