@@ -117,14 +117,18 @@ export const resetPassword = async (email: string, code: string, newPassword: st
  * Esta función puede ser llamada desde cualquier parte de la aplicación.
  */
 export const logoutUser = async () => {
+  
+  debugger
+  // La limpieza del estado local y de la tienda debe ocurrir siempre,
+  // independientemente de si la llamada a la API tiene éxito o no.
+  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem('cart'); // Buena práctica: limpiar también el carrito.
+  $auth.set({ isAuthenticated: false, user: null, loading: false });
+
   try {
     await apiPost("/auth/logout", {});
   } catch (error) {
-    console.error("Error durante el logout, se procederá a limpiar localmente:", error);
-  } finally {
-    localStorage.removeItem(USER_STORAGE_KEY);
-    $auth.set({ isAuthenticated: false, user: null, loading: false });
-    // Redirigir a la página de inicio para asegurar un estado limpio.
-    window.location.href = '/';
+    // Si la API falla, el usuario ya está deslogueado en el frontend.
+    console.error("La llamada a /auth/logout falló, pero el cliente ya ha sido limpiado.", error);
   }
 };

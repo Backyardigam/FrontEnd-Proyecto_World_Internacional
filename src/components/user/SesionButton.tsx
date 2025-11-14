@@ -17,7 +17,9 @@ export default function SesionButton() {
 
     // 2. Manejador para el logout que llama a nuestra nueva acción global.
     const handleLogout = async () => {
-        await logoutUser(); // logoutUser ahora se encarga de la redirección.
+        await logoutUser();
+        // Ahora que la acción no redirige, el componente se encarga de ello.
+        window.location.href = '/';
     };
 
     // Efecto para cerrar el menú si se hace clic fuera de él

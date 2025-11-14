@@ -17,10 +17,6 @@ export default function LoginForm() {
 
     try {
       await loginUser(email, password);
-      
-      // SOLUCIÓN: Usamos setTimeout para empujar la redirección al final de la cola de eventos.
-      // Esto da tiempo al navegador para procesar la actualización del estado y la cookie de sesión
-      // antes de que la nueva página cargue y ejecute el authInitializer, evitando la condición de carrera.
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect") || "/";
       setTimeout(() => {
