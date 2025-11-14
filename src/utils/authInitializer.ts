@@ -11,8 +11,6 @@ const USER_STORAGE_KEY = 'app_user_data';
  * la tienda global de Nanostores ($auth) en consecuencia
  */
 async function initializeAuthStore() {
-
-  debugger
   
   const storedUserJSON = localStorage.getItem(USER_STORAGE_KEY);
 
@@ -27,7 +25,6 @@ async function initializeAuthStore() {
     $auth.set({ isAuthenticated: true, user, loading: false });
 
   } catch (error) {
-    debugger
     localStorage.removeItem(USER_STORAGE_KEY);
     $auth.set({ isAuthenticated: false, user: null, loading: false });
   }
