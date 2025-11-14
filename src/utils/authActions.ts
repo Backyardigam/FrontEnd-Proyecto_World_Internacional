@@ -10,13 +10,10 @@ const USER_STORAGE_KEY = 'app_user_data';
  * @param password 
  */
 export const loginUser = async (email: string, password: string) => {
-  // 1. Inicia sesión, el backend establece la cookie.
   await apiPost<{ user: User }>("/auth/login", { email, password });
   const user = await apiGet<User>("/profile/")
-  // Guardamos los datos del usuario en localStorage
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   
-  // Actualizamos la tienda global, que notificará a todos los componentes.
   $auth.set({ isAuthenticated: true, user , loading: false });
 };
 
@@ -25,15 +22,12 @@ export const loginUser = async (email: string, password: string) => {
  * @param updatedData - Los nuevos datos del usuario.
  */
 export const updateUserProfile = async (updatedData: Partial<User>) => {
-  // 1. Envía los datos actualizados al backend.
-  // El backend debería devolver el objeto de usuario completo y actualizado.
   const updatedUser = await apiPost<User>("/profile/", updatedData);
-
-  // 2. Actualiza los datos en localStorage.
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+  
+  const currentState = $auth.get();
+  $auth.set({ ...currentState, user: updatedUser });
 
-  // 3. Actualiza la tienda global para que toda la UI refleje los cambios.
-  // $auth.setKey('user', updatedUser);
   return updatedUser;
 };
 
@@ -43,11 +37,8 @@ export const updateUserProfile = async (updatedData: Partial<User>) => {
  * y devuelve un objeto de usuario temporal.
  */
 export const continueAsGuest = async () => {
-  // 1. Llama al endpoint del backend. Este solo establece la cookie de sesión
-  //    y no devuelve contenido en el cuerpo de la respuesta.
   await apiPost("/auth/guest", {});
 
-  // 2. Como la llamada fue exitosa, creamos el objeto de usuario invitado en el frontend.
   const user: User = {
     name: 'Invitado',
     phoneNumber: null,
@@ -56,10 +47,8 @@ export const continueAsGuest = async () => {
     rol: 'guest',
   };
 
-  // 3. Guarda el objeto de usuario en localStorage.
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
-  // 4. Actualiza la tienda global para reflejar el nuevo estado.
   $auth.set({ isAuthenticated: true, user, loading: false });
 };
 
@@ -70,8 +59,6 @@ export const continueAsGuest = async () => {
  * @param payload - Datos del formulario de registro.
  */
 export const registerUser = async (payload: RegisterPayload) => {
-  // Llama al endpoint de registro. Si hay un error (ej: email ya existe),
-  // apiPost lo lanzará y será capturado en el componente.
   await apiPost("/auth/register", payload);
 };
 
@@ -81,17 +68,12 @@ export const registerUser = async (payload: RegisterPayload) => {
  * @param code - El código de verificación recibido por email.
  */
 export const verifyAndLoginUser = async (email: string, code: string) => {
-  // 1. Envía el email y el código para verificación. El backend establecerá la cookie de sesión.
   await apiPost("/auth/verify", { email, code }); 
 
-  // 2. Con la cookie ya establecida, pedimos los datos completos del perfil.
   const user = await apiGet<User>("/profile/");
 
-  // 3. Si todo es correcto, guardamos los datos y actualizamos el estado global.
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   $auth.set({ isAuthenticated: true, user, loading: false });
-
-  // 4. El componente se encargará de la redirección.
 };
 
 /**
@@ -108,17 +90,17 @@ export const resendVerificationCode = async (email: string, purpose: 'register' 
  * @param email El email del usuario.
  */
 export const requestPasswordReset = async (email: string) => {
-  // Reutilizamos la acción de reenviar código con el propósito 'resetPassword'.
   await apiPost("/auth/forgot-password",{email})
 };
 
 /**
  * Paso 2 de recuperación: Verifica que el código ingresado es válido.
+ * Esta funcion solo verifica el codigo, luego de la validacion puede dar la instruccion
+ * para el cambio de contraseña
  * @param email El email del usuario.
  * @param code El código recibido.
  */
 export const verifyResetCode = async (email: string, code: string) => {
-  // Este endpoint solo valida el código. No establece sesión.
   await apiPost("/auth/verify-reset-code", { email, code });
 };
 

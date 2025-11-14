@@ -1,6 +1,12 @@
+import { isBrowser } from "./environment";
+
+interface AuthenticatedFetchOptions extends RequestInit {
+  handle401?: boolean;
+}
+
 /**
  * Un wrapper para la API fetch que maneja la autenticación automáticamente.
- * Añade el accessToken a las cabeceras y redirige a /login si la petición
+ * Incluye las credenciales (cookies) y opcionalmente redirige a /login si la petición
  * devuelve un 401 (Unauthorized).
  *
  * @param url - La URL del endpoint, puede ser relativa (ej. '/api/reserve-trip').
@@ -10,18 +16,21 @@
  */
 export async function authenticatedFetch(
   url: string,
-  options: RequestInit = {}
+  options: AuthenticatedFetchOptions = {}
 ): Promise<Response> {
+  const { handle401 = true, ...fetchOptions } = options;
   const fullUrl = `${import.meta.env.PUBLIC_API_URL || ''}${url}`;
   const response = await fetch(fullUrl, {
-    ...options,
+    ...fetchOptions,
     credentials: 'include',
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && handle401) {
     console.error('Error 401: No autorizado. Redirigiendo a /login...');
-    window.location.href = '/login';
-    // Devolvemos una promesa que nunca se resuelve para detener la ejecución del código que llamó a fetch.
+    if (isBrowser) {
+      const currentPath = window.location.pathname + window.location.search;
+      window.location.href = `/login?session_expired=true&redirect=${encodeURIComponent(currentPath)}`;
+    }
     return new Promise(() => {});
   }
 
@@ -37,17 +46,15 @@ export async function authenticatedFetch(
  * @returns Una promesa que resuelve con los datos JSON.
  * @throws Lanza un error si la respuesta no es 'ok' (ej. 400, 500).
  */
-export async function apiGet<T = any>(url: string, options: RequestInit = {}): Promise<T> {
+export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOptions = {}): Promise<T> {
   const response = await authenticatedFetch(url, { ...options, method: 'GET' });
 
   if (!response.ok) {
-    // Intenta obtener un mensaje de error del cuerpo de la respuesta
     let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
       errorDetails = errorData.message || JSON.stringify(errorData);
     } catch (e) {
-      // El cuerpo no es JSON o está vacío
     }
     throw new Error(errorDetails);
   }
@@ -63,7 +70,7 @@ export async function apiGet<T = any>(url: string, options: RequestInit = {}): P
  * @returns Una promesa que resuelve con los datos JSON de la respuesta.
  * @throws Lanza un error si la respuesta no es 'ok'.
  */
-export async function apiPost<T = any>(url: string, body: any, options: RequestInit = {}): Promise<T> {
+export async function apiPost<T = any>(url: string, body: any, options: AuthenticatedFetchOptions = {}): Promise<T> {
   const response = await authenticatedFetch(url, {
     ...options,
     method: 'POST',
@@ -80,7 +87,6 @@ export async function apiPost<T = any>(url: string, body: any, options: RequestI
       const errorData = await response.json();
       errorDetails = errorData.message || JSON.stringify(errorData);
     } catch (e) {
-      // El cuerpo no es JSON o está vacío
     }
     throw new Error(errorDetails);
   }
