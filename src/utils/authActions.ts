@@ -11,7 +11,8 @@ const USER_STORAGE_KEY = 'app_user_data';
  */
 export const loginUser = async (email: string, password: string) => {
   await apiPost<{ user: User }>("/auth/login", { email, password });
-  const user = await apiGet<User>("/profile/")
+  // Usamos `cache: 'no-store'` para obtener el perfil fresco del usuario que acaba de iniciar sesión.
+  const user = await apiGet<User>("/profile/", { cache: 'no-store' });
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   
   $auth.set({ isAuthenticated: true, user , loading: false });

@@ -19,7 +19,11 @@ async function initializeAuthStore() {
   }
 
   try {
-    await apiGet("/auth/check-session", { handle401: false });
+    // Usamos `cache: 'no-store'` para asegurarnos de que siempre obtenemos una respuesta
+    // fresca del servidor y no una respuesta en caché que podría ser incorrecta
+    // (ej. un 401 cacheado de antes de iniciar sesión).
+    // `handle401: false` sigue siendo crucial para evitar el bucle de redirección.
+    await apiGet("/auth/check-session", { handle401: false, cache: 'no-store' });
     const user = JSON.parse(storedUserJSON) as User;
     $auth.set({ isAuthenticated: true, user, loading: false });
 

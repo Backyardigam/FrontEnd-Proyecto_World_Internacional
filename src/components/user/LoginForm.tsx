@@ -17,6 +17,11 @@ export default function LoginForm() {
 
     try {
       await loginUser(email, password);
+      // Redirigir después de un login exitoso.
+      // Si la URL tiene un parámetro ?redirect=..., vamos a esa página.
+      // Si no, vamos a la página de inicio.
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get("redirect") || "/";
     } catch (err: any) {
       setError(err.message || "Ocurrió un error. Por favor, intenta de nuevo.");
     } finally {
