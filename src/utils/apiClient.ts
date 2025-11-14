@@ -59,7 +59,14 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
     throw new Error(errorDetails);
   }
 
-  return response.json() as Promise<T>;
+  // Verificamos si la respuesta tiene contenido antes de intentar parsearla como JSON.
+  // Un status 204 (No Content) o un header 'content-length' de 0 indican que no hay cuerpo.
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T); // Devolvemos undefined si no hay JSON que parsear.
+  }
+
+  return response.json() as Promise<T>; // Solo parseamos si estamos seguros de que hay JSON.
 }
 
 /**
