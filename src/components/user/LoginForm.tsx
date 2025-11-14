@@ -17,11 +17,16 @@ export default function LoginForm() {
 
     try {
       await loginUser(email, password);
-      // Redirigir después de un login exitoso.
-      // Si la URL tiene un parámetro ?redirect=..., vamos a esa página.
-      // Si no, vamos a la página de inicio.
+      
+      // SOLUCIÓN: Usamos setTimeout para empujar la redirección al final de la cola de eventos.
+      // Esto da tiempo al navegador para procesar la actualización del estado y la cookie de sesión
+      // antes de que la nueva página cargue y ejecute el authInitializer, evitando la condición de carrera.
       const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get("redirect") || "/";
+      const redirectTo = params.get("redirect") || "/";
+      setTimeout(() => {
+        window.location.replace(redirectTo);
+      }, 0);
+
     } catch (err: any) {
       setError(err.message || "Ocurrió un error. Por favor, intenta de nuevo.");
     } finally {

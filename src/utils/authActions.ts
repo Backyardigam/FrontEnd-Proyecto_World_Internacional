@@ -124,5 +124,7 @@ export const logoutUser = async () => {
   } finally {
     localStorage.removeItem(USER_STORAGE_KEY);
     $auth.set({ isAuthenticated: false, user: null, loading: false });
+    // Redirigir a la página de inicio para asegurar un estado limpio.
+    window.location.href = '/';
   }
 };
