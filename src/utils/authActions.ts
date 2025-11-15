@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "./apiClient";
+import { apiGet, apiPost, apiPut } from "./apiClient";
 import { $auth } from "./authStore";
 import type { User, RegisterPayload } from "./auth";
 
@@ -23,7 +23,7 @@ export const loginUser = async (email: string, password: string) => {
  * @param updatedData - Los nuevos datos del usuario.
  */
 export const updateUserProfile = async (updatedData: Partial<User>) => {
-  const updatedUser = await apiPost<User>("/profile/", updatedData);
+  const updatedUser = await apiPut<User>("/profile/", updatedData);
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
   
   const currentState = $auth.get();

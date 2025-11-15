@@ -73,7 +73,7 @@ export default function UserProfile() {
               <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden self-center mb-4 sm:mb-0">
                 {user.avatar ? (
                   <img
-                    src={user.avatar}
+                    src={user.avatar.url}
                     alt="Avatar del usuario"
                     className="w-full h-full object-cover"
                   />

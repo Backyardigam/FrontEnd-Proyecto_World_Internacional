@@ -3,12 +3,13 @@
  * para la autenticación en toda la aplicación.
  * Basicamente los datos del usuario y si el usuario existe.
  */
+
 export interface User {
   name: string | null;
   email: string | null;
   phoneNumber: string | null;
-  avatar: string | null;
-  role: 'guest'|'user'; // |admin|employee|superadmin Rol del usuario que se registro 
+  avatar: { url: string } | null;
+  role: 'guest' | 'user'; // |admin|employee|superadmin Rol del usuario que se registro
 }
 
 /**

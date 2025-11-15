@@ -100,3 +100,36 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
 
   return response.json() as Promise<T>;
 }
+
+/**
+ * Realiza una petición PUT autenticada con un cuerpo JSON y parsea la respuesta JSON.
+ * @param url La URL del endpoint.
+ * @param body El objeto que se enviará como cuerpo de la petición.
+ * @param options Opciones adicionales de fetch.
+ * @returns Una promesa que resuelve con los datos JSON de la respuesta.
+ * @throws Lanza un error si la respuesta no es 'ok'.
+ */
+export async function apiPut<T = any>(url: string, body: any, options: AuthenticatedFetchOptions = {}): Promise<T> {
+  const response = await authenticatedFetch(url, {
+    ...options,
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    let errorDetails = `Error HTTP: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorDetails = errorData.message || JSON.stringify(errorData);
+    } catch (e) {
+      // Si el cuerpo del error no es JSON o está vacío, el error original se mantiene.
+    }
+    throw new Error(errorDetails);
+  }
+
+  return response.json() as Promise<T>;
+}

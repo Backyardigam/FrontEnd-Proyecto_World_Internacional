@@ -43,7 +43,7 @@ export default function SesionButton() {
                     <div className="relative" ref={dropdownRef}>
                         <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-naranja-f focus:outline-none focus:ring-2 focus:ring-naranja-c focus:ring-opacity-50 transition">
                             {authState.user.avatar ? (
-                                <img src={authState.user.avatar} alt={`Avatar de ${authState.user.name}`} className="w-full h-full object-cover" />
+                                <img src={authState.user.avatar.url} alt={`Avatar de ${authState.user.name}`} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-naranja-c text-white flex items-center justify-center text-lg font-bold">
                                     {(authState.user.name || authState.user.email || 'U').charAt(0).toUpperCase()}
