@@ -45,7 +45,7 @@ export const continueAsGuest = async () => {
     phoneNumber: null,
     email: null,
     avatar: null,
-    rol: 'guest',
+    role: 'guest',
   };
 
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
@@ -117,8 +117,6 @@ export const resetPassword = async (email: string, code: string, newPassword: st
  * Esta función puede ser llamada desde cualquier parte de la aplicación.
  */
 export const logoutUser = async () => {
-  
-  debugger
   // La limpieza del estado local y de la tienda debe ocurrir siempre,
   // independientemente de si la llamada a la API tiene éxito o no.
   localStorage.removeItem(USER_STORAGE_KEY);

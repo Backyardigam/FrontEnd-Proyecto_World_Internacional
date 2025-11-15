@@ -8,7 +8,7 @@ export interface User {
   email: string | null;
   phoneNumber: string | null;
   avatar: string | null;
-  rol: 'guest'|'user'; // |admin|employee|superadmin Rol del usuario que se registro 
+  role: 'guest'|'user'; // |admin|employee|superadmin Rol del usuario que se registro 
 }
 
 /**

@@ -32,13 +32,12 @@ export default function SesionButton() {
         setIsClient(true);
     }, []);
 
-    debugger
     if (!isClient || authState.loading) {
         return <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>;
     }
 
     if (authState.isAuthenticated && authState.user) {
-        switch (authState.user.rol) {
+        switch (authState.user.role) {
             case 'user':
                 return (
                     <div className="relative" ref={dropdownRef}>
