@@ -7,7 +7,10 @@ import CartBubble from "./CartBubble";
 const navLinkClasses = "hover:underline underline-offset-4 md:block";
 ---
 
-<header class="absolute w-full bg-white shadow-sm top-0 z-50 rounded-b-xl">
+<header
+  id="main-header"
+  class="fixed w-full bg-white shadow-sm top-0 z-50 rounded-b-xl transform duration-300 ease-in-out"
+>
   <div
     class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16 font-redhat"
   >
@@ -22,8 +25,8 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
          md:text-base md:mx-2 md:static md:h-auto md:w-auto md:translate-y-0 md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:gap-10"
     >
       <a href="/" class={navLinkClasses}>Inicio</a>
-      <a href="/#Servicios" class={navLinkClasses}>Servicios</a>
-      <a href="/#Nosotros" class={navLinkClasses}>Nosotros</a>
+      <a href="/#servicios" class={navLinkClasses}>Servicios</a>
+      <a href="/#nosotros" class={navLinkClasses}>Nosotros</a>
       <a href="/#footer" class={navLinkClasses}>Contáctanos</a>
     </nav>
 
@@ -36,7 +39,7 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
         <CartIcon />
         <CartBubble client:load />
       </a>
-      <SesionButton client:load/>
+      <SesionButton client:load />
     </div>
 
     <button
@@ -58,6 +61,23 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
     </button>
   </div>
   <script>
+    const header = document.getElementById("main-header");
+    let lastScrollY = window.scrollY;
+
+    function handleHeaderVisibility() {
+      // Aparece después de un pequeño scroll inicial
+      if (window.scrollY > 100) {
+        header?.classList.remove("opacity-0", "-translate-y-4");
+      } else {
+        header?.classList.add("opacity-0", "-translate-y-4");
+      }
+      lastScrollY = window.scrollY;
+    }
+    window.addEventListener("scroll", handleHeaderVisibility, {
+      passive: true,
+    });
+    document.addEventListener("DOMContentLoaded", handleHeaderVisibility);
+
     const menuBtn = document.getElementById("menu-btn");
     const htop = document.getElementById("hamburger-top");
     const hmiddle = document.getElementById("hamburger-middle");
@@ -115,8 +135,6 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
               });
             }
           }
-          // Si no estamos en la página de inicio, no hacemos nada y dejamos
-          // que el navegador maneje el `href="/#Servicios"` normalmente.
         });
       });
     });

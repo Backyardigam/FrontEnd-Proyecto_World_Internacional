@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from "./apiClient";
+import { apiGet, apiPost, apiPut, type AuthenticatedFetchOptions } from "./apiClient";
 import { $auth } from "./authStore";
 import type { User, RegisterPayload } from "./auth";
 
@@ -9,8 +9,8 @@ const USER_STORAGE_KEY = 'app_user_data';
  * @param email 
  * @param password 
  */
-export const loginUser = async (email: string, password: string) => {
-  await apiPost<{ user: User }>("/auth/login", { email, password });
+export const loginUser = async (email: string, password: string, options: AuthenticatedFetchOptions = {}) => {
+  await apiPost<{ user: User }>("/auth/login", { email, password }, options);
   // Usamos `cache: 'no-store'` para obtener el perfil fresco del usuario que acaba de iniciar sesión.
   const user = await apiGet<User>("/profile/", { cache: 'no-store' });
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));

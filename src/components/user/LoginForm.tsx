@@ -16,7 +16,7 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      await loginUser(email, password);
+      await loginUser(email, password,{handle401:false});
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect") || "/";
       setTimeout(() => {

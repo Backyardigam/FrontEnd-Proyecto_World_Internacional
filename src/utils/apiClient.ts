@@ -1,6 +1,6 @@
 import { isBrowser } from "./environment";
 
-interface AuthenticatedFetchOptions extends RequestInit {
+export interface AuthenticatedFetchOptions extends RequestInit {
   handle401?: boolean;
 }
 

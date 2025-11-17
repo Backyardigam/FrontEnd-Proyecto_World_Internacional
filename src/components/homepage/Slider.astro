@@ -1,0 +1,208 @@
+---
+// Importamos los estilos base y de los módulos que usaremos en Swiper.
+import "swiper/css";
+import { Image } from "astro:assets";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import "swiper/css/effect-fade";
+import "swiper/css/autoplay";
+import "swiper/css/parallax";
+// --- CONTENIDO DE LOS SLIDES ---
+// Definimos el contenido aquí para que sea fácil de actualizar.
+const slides = [
+  {
+    image:
+      "https://es.digitaltrends.com/wp-content/uploads/2023/12/google-chrome.jpeg?resize=1200%2C720&p=1",
+    alt: "Paisaje de montaña con un lago cristalino",
+    tagline: "Aventura te espera",
+    title: "Descubre Destinos Inolvidables",
+    subtitle:
+      "Viaja con nosotros y vive experiencias que recordarás para siempre.",
+    buttonText: "Explorar Destinos",
+    buttonLink: "/destinos",
+  },
+  {
+    image: "/images/slider/slider2.jpg",
+    alt: "Playa tropical con palmeras y arena blanca",
+    tagline: "Relajo y Sol",
+    title: "Ofertas Exclusivas de Verano",
+    subtitle: "Aprovecha nuestros paquetes especiales y disfruta del paraíso.",
+    buttonText: "Ver Ofertas",
+    buttonLink: "/ofertas",
+  },
+  {
+    image: "/images/slider/slider3.jpg", // Asegúrate de tener esta imagen en public/images/slider/
+    alt: "Ciudad europea histórica al atardecer",
+    tagline: "Cultura e Historia",
+    title: "Sumérgete en Nuevas Culturas",
+    subtitle:
+      "Explora las ciudades más fascinantes del mundo con nuestros tours guiados.",
+    buttonText: "Tours Culturales",
+    buttonLink: "/tours",
+  },
+];
+---
+
+<section
+  id="hero-slider-section"
+  class="relative h-screen w-full text-white bg-gradient-to-br from-gray-800 to-gray-900"
+  style={{
+    transform: "scale(var(--scroll-scale, 1))",
+    opacity: "var(--scroll-opacity, 1)",
+  }}
+>
+  <!-- Contenedor de Swiper con Parallax -->
+  <div class="swiper h-full" data-swiper-parallax="-23%">
+    <div class="swiper-wrapper">
+      <!-- Generamos los slides dinámicamente -->
+      {
+        slides.map((slide, index) => (
+          <div class="swiper-slide">
+            <Image
+              src={slide.image}
+              alt={slide.alt}
+              width={1920}
+              height={1080}
+              quality="mid"
+              loading={index === 0 ? "eager" : "lazy"}
+              class="image-slider absolute inset-0 w-full h-full object-cover"
+              data-swiper-parallax="-23%"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div class="relative z-10 flex flex-col items-center justify-center h-full text-center p-6">
+              <p
+                class="tagline uppercase tracking-widest text-sm md:text-base font-light opacity-0"
+                data-swiper-parallax="-500"
+              >
+                {slide.tagline}
+              </p>
+              <h2
+                class="title text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg mt-2 opacity-0"
+                data-swiper-parallax="-400"
+              >
+                {slide.title}
+              </h2>
+              <p
+                class="subtitle mt-4 max-w-2xl text-lg md:text-xl drop-shadow-md opacity-0"
+                data-swiper-parallax="-300"
+              >
+                {slide.subtitle}
+              </p>
+              <a
+                href={slide.buttonLink}
+                class="button mt-8 px-8 py-3 bg-naranja-c hover:bg-naranja-f text-white font-bold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 opacity-0"
+                data-swiper-parallax="-200"
+                rel="prefetch"
+              >
+                {slide.buttonText}
+              </a>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <!-- Paginación personalizada -->
+    <div class="swiper-pagination swiper-pagination-white"></div>
+
+    <!-- Botones de Navegación personalizados -->
+    <div
+      class="swiper-button-prev after:!text-2xl !text-white !left-8 drop-shadow-md"
+    >
+    </div>
+    <div
+      class="swiper-button-next after:!text-2xl !text-white !right-8 drop-shadow-md"
+    >
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Estilos para la animación de entrada del texto */
+  .swiper-slide-active .tagline,
+  .swiper-slide-active .title,
+  .swiper-slide-active .subtitle,
+  .swiper-slide-active .button {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
+  }
+  .swiper-slide-active .title {
+    transition-delay: 0.1s;
+  }
+  .swiper-slide-active .subtitle {
+    transition-delay: 0.2s;
+  }
+  .swiper-slide-active .button {
+    transition-delay: 0.3s;
+  }
+
+  /* Estilos para la paginación (barras en lugar de puntos) */
+  :global(.swiper-pagination-bullet) {
+    width: 24px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+  }
+  :global(.swiper-pagination-bullet-active) {
+    width: 48px;
+    background-color: white;
+  }
+</style>
+
+<script>
+  import Swiper from "swiper";
+  import {
+    Navigation,
+    Pagination,
+    Autoplay,
+    EffectFade,
+    Parallax,
+  } from "swiper/modules";
+
+  const swiper = new Swiper(".swiper", {
+    modules: [Navigation, Pagination, Autoplay, EffectFade, Parallax],
+    loop: true,
+    effect: "fade",
+    fadeEffect: { crossFade: true },
+    speed: 800, // Velocidad de la transición entre slides
+    parallax: true, // Habilitamos el efecto parallax
+    // autoplay: {
+    //   delay: 15000, // 5 segundos
+    //   disableOnInteraction: false,
+    // },
+    pagination: {
+      el: ".swiper-pagination",
+      clickable: true,
+    },
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev",
+    },
+  });
+
+  // --- LÓGICA PARA ANIMACIÓN EN SCROLL ---
+  const sliderSection = document.getElementById("hero-slider-section");
+
+  if (sliderSection) {
+    function handleScroll() {
+      const scrollY = window.scrollY;
+      const sectionHeight = sliderSection.offsetHeight;
+
+      // Solo animar mientras la sección está en la vista
+      if (scrollY < sectionHeight) {
+        const scrollProgress = scrollY / sectionHeight;
+
+        const scale = 1 - scrollProgress * 0.2; // Escala disminuye para efecto de alejamiento (zoom out)
+        const opacity = Math.max(0, 1 - scrollProgress * 1.5);
+
+        sliderSection.style.setProperty("--scroll-scale", scale.toString());
+        sliderSection.style.setProperty("--scroll-opacity", opacity.toString());
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll);
+  }
+</script>

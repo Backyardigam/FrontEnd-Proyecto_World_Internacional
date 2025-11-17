@@ -1,3 +1,21 @@
-<button class="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg">
+<button id="boton-verde" class="fixed bottom-4 right-4 z-10 bg-blue-600 text-white p-4 rounded-full shadow-lg transform duration-300 ease-in-out">
   ↑
 </button>
+<script>
+  const BotonVerde = document.getElementById("boton-verde");
+    let lastScrollY = window.scrollY;
+
+    function handleHeaderVisibility() {
+      // Aparece después de un pequeño scroll inicial
+      if (window.scrollY > 100) {
+        BotonVerde?.classList.remove("opacity-0", "-translate-y-4");
+      } else {
+        BotonVerde?.classList.add("opacity-0", "-translate-y-4");
+      }
+      lastScrollY = window.scrollY;
+    }
+    window.addEventListener("scroll", handleHeaderVisibility, {
+      passive: true,
+    });
+    document.addEventListener("DOMContentLoaded", handleHeaderVisibility);
+</script>
