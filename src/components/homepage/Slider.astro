@@ -188,18 +188,20 @@ const slides = [
 
   if (sliderSection) {
     function handleScroll() {
-      const scrollY = window.scrollY;
-      const sectionHeight = sliderSection.offsetHeight;
+      if (sliderSection) {
+        const scrollY = window.scrollY;
+        const sectionHeight = sliderSection.offsetHeight;
 
-      // Solo animar mientras la sección está en la vista
-      if (scrollY < sectionHeight) {
-        const scrollProgress = scrollY / sectionHeight;
+        // Solo animar mientras la sección está en la vista
+        if (scrollY < sectionHeight) {
+          const scrollProgress = scrollY / sectionHeight;
 
-        const scale = 1 - scrollProgress * 0.2; // Escala disminuye para efecto de alejamiento (zoom out)
-        const opacity = Math.max(0, 1 - scrollProgress * 1.5);
+          const scale = 1 - scrollProgress * 0.2; // Escala disminuye para efecto de alejamiento (zoom out)
+          const opacity = Math.max(0, 1 - scrollProgress * 1.5);
 
-        sliderSection.style.setProperty("--scroll-scale", scale.toString());
-        sliderSection.style.setProperty("--scroll-opacity", opacity.toString());
+          sliderSection.style.setProperty("--scroll-scale", scale.toString());
+          sliderSection.style.setProperty("--scroll-opacity", opacity.toString());
+        }
       }
     }
 

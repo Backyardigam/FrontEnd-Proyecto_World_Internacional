@@ -1,0 +1,19 @@
+---
+const { style: className, ...rest } = Astro.props;
+---
+
+<svg
+  class:list={["h-auto", className]}
+  viewBox="0 0 18 18"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  {...rest}
+>
+  <path
+    d="M5.16667 5.16667H5.175M16.4917 10.5083L10.5167 16.4833C10.3619 16.6383 10.1781 16.7612 9.97573 16.8451C9.7734 16.929 9.55653 16.9721 9.3375 16.9721C9.11847 16.9721 8.9016 16.929 8.69927 16.8451C8.49694 16.7612 8.31312 16.6383 8.15833 16.4833L1 9.33333V1H9.33333L16.4917 8.15833C16.8021 8.4706 16.9763 8.89302 16.9763 9.33333C16.9763 9.77364 16.8021 10.1961 16.4917 10.5083Z"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"></path>
+</svg>

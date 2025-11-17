@@ -1,0 +1,60 @@
+---
+import TagIcon from "../../iconos/TagIcon.astro";
+interface Card {
+  id: string;
+  id_name: string;
+  name: string; //Tour Tacna
+  cost: string;
+  type: string;
+  compactDescription: string;
+  tag: string[];
+  mediaFile: string;
+}
+const servicio: Card = {
+  id: "1",
+  id_name: "tour-tacna",
+  name: "Tour Tacna",
+  cost: "250",
+  type: "tour",
+  compactDescription:
+    "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
+  tag: ["Salidas grupales", "Tour full day"],
+  mediaFile:
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChJMdz2OsGWinfICIUgteeDixE88izEnwGA&s",
+};
+---
+
+<div class="max-w-xs bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat">
+  <div class="">
+    <img src={servicio.mediaFile} alt={servicio.name} class="w-full" />
+  </div>
+  <div class="p-5 gap-4 flex flex-col">
+    <div class="">
+      <p class="text-sm">Circuito turistico</p>
+      <p class="font-baloo font-semibold text-naranja-c text-3xl">
+        {servicio.name}
+      </p>
+      <p>{servicio.compactDescription}</p>
+    </div>
+    <div class="w-full border-t-2 border-gray-300"></div>
+    <div class="flex justify-between items-center">
+      <div>
+        <ul>
+          <li>{servicio.tag[0]}</li>
+          <li>{servicio.tag[1]}</li>
+        </ul>
+      </div>
+      <div class="flex flex-col gap-2 items-center">
+        <div class="flex gap-2">
+          <TagIcon style="w-4" />
+          <p>
+            S/. {servicio.cost}
+          </p>
+        </div>
+        <div class="bg-naranja-c w-auto rounded-sm p-2 text-white ">
+          <a href="">Conoce más</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
