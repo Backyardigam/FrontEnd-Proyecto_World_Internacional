@@ -1,33 +1,36 @@
 ---
-import Card from "./Card.astro";
+import Card, { type CardData } from "./Card.astro";
+import { apiGet } from "../../../utils/apiClient";
 
+let servicios: CardData[] = [];
+let error: string | null = null;
+
+try {
+  servicios = await apiGet<CardData[]>("/services");
+} catch (e) {
+  console.error("Error al cargar los servicios:", e);
+  error = "No se pudieron cargar los servicios en este momento. Por favor, intente más tarde.";
+}
 ---
 
 <section class="w-full bg-gray-200 flex flex-col items-center">
   <div
     class="font-redhat w-full flex justify-center items-center p-20 bg-gray-500"
   >
-    <p>Descubre nuestros servicos</p>
+    <p>Descubre nuestros servicios</p>
   </div>
-  <div class="w-full flex sm:hidden gap-4 overflow-x-auto snap-x snap-mandatory p-10">
-    <div class="inline-grid grid-rows-2 grid-flow-col gap-4 px-4">
-        <Card style="flex-shrink-0 w-72" />
-        <Card style="flex-shrink-0 w-72" />
-        <Card style="flex-shrink-0 w-72" />
-        <Card style="flex-shrink-0 w-72" />
-        <Card style="flex-shrink-0 w-72" />
-        <Card style="flex-shrink-0 w-72" />
+  {error ? (
+    <div class="p-10 text-red-500">{error}</div>
+  ) : (
+    <>
+      <!-- Vista para móviles (Carrusel) -->
+      <div class="w-full flex sm:hidden gap-4 overflow-x-auto snap-x snap-mandatory p-10">
+        {servicios.map(servicio => <Card servicio={servicio} style="flex-shrink-0 w-72 snap-center" />)}
       </div>
-  </div>
-
-  <div
-    class="hidden max-w-5/6 sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10"
-  >
-    <Card />
-    <Card />
-    <Card />
-    <Card />
-    <Card />
-    <Card />
-  </div>
+      <!-- Vista para tablets y escritorio (Grid) -->
+      <div class="hidden max-w-5/6 sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10">
+        {servicios.map(servicio => <Card servicio={servicio} />)}
+      </div>
+    </>
+  )}
 </section>

@@ -1,30 +1,21 @@
 ---
 import TagIcon from "../../iconos/TagIcon.astro";
 
-const {style:style} =Astro.props
-
-interface Card {
+export interface Props {
+  servicio: CardData;
+  style?: string;
+}
+export interface CardData {
   id: string;
   id_name: string;
-  name: string; //Tour Tacna
+  name: string;
   cost: string;
-  type: string;
   compactDescription: string;
   tag: string[];
   mediaFile: string;
 }
-const servicio: Card = {
-  id: "1",
-  id_name: "tour-tacna",
-  name: "Tour Tacna",
-  cost: "250",
-  type: "tour",
-  compactDescription:
-    "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
-  tag: ["Salidas grupales", "Tour full day"],
-  mediaFile:
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSChJMdz2OsGWinfICIUgteeDixE88izEnwGA&s",
-};
+
+const { servicio, style } = Astro.props;
 ---
 
 <div class:list={["max-w-80 bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat overflow-hidden",style]}>
@@ -44,8 +35,9 @@ const servicio: Card = {
       <div class="flex items-center justify-between space-x-2">
         <div>
           <ul>
-            <li>{servicio.tag[0]}</li>
-            <li>{servicio.tag[1]}</li>
+            {servicio.tag.map(t => (
+              <li>{t}</li>
+            ))}
           </ul>
         </div>
         <div class="flex flex-col gap-2 items-center">
