@@ -9,7 +9,8 @@ import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
-  output: 'static',
+  site:'https://front-end-proyecto-wor-git-ceef90-benjaminpari1478557s-projects.vercel.app',
+  output: 'static', //server
   integrations: [react()],
 
   vite: {

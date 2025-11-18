@@ -1,42 +1,51 @@
 ---
 import TagIcon from "../../iconos/TagIcon.astro";
+import TagMirabus from "../TagMirabus.astro";
 
 export interface Props {
   servicio: CardData;
   style?: string;
 }
+
 export interface CardData {
   id: string;
   id_name: string;
   name: string;
   cost: string;
+  type: 'tour' | 'mirabus';
   compactDescription: string;
   tag: string[];
-  mediaFile: string;
+  mediaFiles: string[];
 }
 
 const { servicio, style } = Astro.props;
 ---
 
-<div class:list={["max-w-80 bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat overflow-hidden",style]}>
+<div
+  class:list={["max-w-80 bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat overflow-hidden", style]}
+  data-searchable-text={`${servicio.name} ${servicio.compactDescription}`.toLowerCase()}
+  data-service-card
+>
+  {servicio.type === 'mirabus' && <TagMirabus />}
   <div class="">
-    <img src={servicio.mediaFile} alt={servicio.name} class="aspect-7/4 w-full max-h-" />
+    <img src={servicio.mediaFiles[0]} alt={`Imagen del tour ${servicio.name}`} class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
   </div>
-  <div class="p-5 gap-4 flex flex-col">
+  <div class="p-5 gap-4 flex flex-col flex-grow">
     <div class="">
       <p class="text-base">Circuito turistico</p>
-      <p class="font-baloo font-semibold text-naranja-c text-3xl">
+      <h3 class="font-baloo font-semibold text-naranja-c text-3xl">
         {servicio.name}
-      </p>
+      </h3>
       <p class="text-lg">{servicio.compactDescription}</p>
     </div>
     <div class="flex flex-col justify-end space-y-3">
       <div class="w-full border-t-2 border-gray-300"></div>
       <div class="flex items-center justify-between space-x-2">
         <div>
-          <ul>
-            <li>{servicio.tag[0]}</li>
-            <li>{servicio.tag[1]}</li>
+          <ul class="break-words list-disc list-inside text-sm text-gray-600">
+            {servicio.tag.slice(0, 2).map(tag => (
+              <li>{tag}</li>
+            ))}
           </ul>
         </div>
         <div class="flex flex-col gap-2 items-center">
@@ -46,8 +55,8 @@ const { servicio, style } = Astro.props;
               S/. {servicio.cost}
             </p>
           </div>
-          <div class="bg-naranja-c w-auto rounded-sm p-2 text-white ">
-            <a href=`/${servicio.id_name}`>Conoce más</a>
+          <div class="bg-naranja-c  rounded-sm p-2 text-white min-w-[106px]">
+            <a href={`/servicios/${servicio.id_name}`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a>
           </div>
         </div>
       </div>

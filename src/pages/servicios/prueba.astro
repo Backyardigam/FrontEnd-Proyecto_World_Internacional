@@ -1,0 +1,103 @@
+---
+import type { GetStaticPaths } from "astro";
+import { apiGet } from "../../utils/apiClient";
+import Header from "../../components/generales/Header.astro";
+import Footer from "../../components/generales/Footer.astro";
+import InfoSection from "../../components/servicios/InfoSection.astro"
+import '../../styles/global.css'
+
+
+interface Schedule {
+  [key: string]: {
+    startTrip: string;
+    endTrip: string;
+  };
+}
+
+export interface ServiceDetails {
+  id: string;
+  id_name: string;
+  name: string;
+  cost: string;
+  type: 'tour' | 'mirabus';
+  tag: string[];
+  fullDescription: string;
+  itinerary: string;
+  recomendations: string;
+  additional: string;
+  schedule: Schedule;
+  mediaFiles: string[];
+}
+
+
+const serviceData: ServiceDetails = {
+        id: "cmi3dyy9h0002tpn8kshfp119",
+        id_name: "tacna_tarata",
+        name: "Tacna Tarata",
+        cost: "200",
+        type: "tour",
+        tag: [
+            "salidas diarias",
+            "almuerzo incluido"
+        ],
+        fullDescription: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Sit amet consectetur adipiscing elit quisque faucibus ex. Adipiscing elit quisque faucibus ex sapien vitae pellentesque.",
+        itinerary: "Mirador de la Apacheta; Andeneria Preinca",
+        recomendations: "Lorem ipsum dolor sit amet consectetur adipiscing elit; Lorem ipsum dolor sit amet consectetur adipiscing elit; Lorem ipsum dolor sit amet consectetur adipiscing elit;",
+        additional: "Ingreso a baños termales S/ 10.00; lorem ipsum dolor sit amet",
+        schedule: {
+            1: {
+                "startTrip": "3:00 am",
+                "endTrip": "12:00 pm"
+            }
+        },
+        mediaFiles: []
+    }
+
+// Helper para convertir strings separados por ';' en arrays
+const splitString = (text: string) => text ? text.split(';').map(item => item.trim()).filter(item => item) : [];
+
+const itineraryItems = splitString(serviceData.itinerary);
+const recomendationItems = splitString(serviceData.recomendations);
+const additionalItems = splitString(serviceData.additional);
+---
+
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={serviceData.fullDescription.substring(0, 160)} />
+    <title>{serviceData.name} - Tour en World International</title>
+</head>
+<body class="bg-gray-50 font-redhat">
+    <Header />
+    <main class="container mx-auto px-4 py-24 md:py-32">
+        <div class="max-w-4xl mx-auto">
+            <!-- Título y Precio -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">{serviceData.name}</h1>
+                <span class="text-3xl font-semibold text-naranja-c mt-4 md:mt-0">S/. {serviceData.cost}</span>
+            </div>
+
+            <!-- Galería de Imágenes (simple) -->
+            {serviceData.mediaFiles && serviceData.mediaFiles.length > 0 && (
+                <img src={serviceData.mediaFiles[0]} alt={`Imagen principal del tour ${serviceData.name}`} class="w-full h-auto max-h-[500px] object-cover rounded-lg shadow-lg mb-10" />
+            )}
+
+            <!-- Descripción Completa -->
+            <section class="mb-10">
+                <h2 class="text-2xl font-bold mb-4 border-b-2 border-naranja-c pb-2">Descripción del Tour</h2>
+                <p class="text-lg text-gray-700 leading-relaxed">{serviceData.fullDescription}</p>
+            </section>
+
+            <!-- Itinerario, Recomendaciones, etc. -->
+            {itineraryItems.length > 0 && <InfoSection title="Itinerario" items={itineraryItems} />}
+            {recomendationItems.length > 0 && <InfoSection title="Recomendaciones" items={recomendationItems} />}
+            {additionalItems.length > 0 && <InfoSection title="Información Adicional" items={additionalItems} />}
+        </div>
+    </main>
+    <Footer />
+</body>
+</html>
+

@@ -1,16 +1,72 @@
 ---
+import Header from "../../components/generales/Header.astro";
+import Footer from "../../components/generales/Footer.astro";
+import Card, { type CardData } from "../../components/homepage/seccion_servicio/Card.astro";
+import { apiGet } from "../../utils/apiClient";
+import '../../styles/global.css'
 
+let servicios: CardData[] = [];
+let error: string | null = null;
+
+try {
+  servicios = await apiGet<CardData[]>("/services");
+} catch (e) {
+  console.error("Error al cargar la lista de servicios:", e);
+  error = "No se pudieron cargar los servicios. Por favor, intente de nuevo más tarde.";
+}
 ---
 
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Servicios</title>
+		<meta name="description" content="Explora todos nuestros tours y servicios turísticos en World International. Encuentra la aventura perfecta para ti, desde circuitos en mirabus hasta excursiones inolvidables." />
+		<title>Nuestros Servicios y Tours - World International</title>
 	</head>
-	<body>
-		
+	<body class="bg-gray-100">
+		<Header />
+		<main class="container mx-auto">
+			<div class="p-10 pt-26 bg-gray-600">
+				<h1 class="text-4xl md:text-5xl font-bold text-center mb-10 text-white">
+					Nuestros Tours y Servicios
+				</h1>
+	
+				<!-- Barra de Búsqueda -->
+				<div class="mb-10 max-w-lg mx-auto text-white">
+					<input
+						type="search"
+						id="search-input"
+						placeholder="Buscar tour por nombre o descripción..."
+						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-naranja-c focus:border-naranja-c transition"
+					/>
+				</div>
+			</div>
+
+			{error ? (
+				<div class="text-center text-red-500 bg-red-100 p-4 rounded-lg">{error}</div>
+			) : (
+				<div id="services-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center p-10">
+					{servicios.map(servicio => <Card servicio={servicio} />)}
+				</div>
+			)}
+		</main>
+		<Footer />
+		<script>
+			const searchInput = document.getElementById('search-input') as HTMLInputElement;
+			const servicesGrid = document.getElementById('services-grid');
+			const serviceCards = servicesGrid ? Array.from(servicesGrid.querySelectorAll('[data-service-card]')) as HTMLElement[] : [];
+
+			searchInput.addEventListener('input', () => {
+				const searchTerm = searchInput.value.toLowerCase().trim();
+
+				serviceCards.forEach(card => {
+					const searchableText = card.dataset.searchableText || '';
+					const isVisible = searchableText.includes(searchTerm);
+					card.classList.toggle('hidden', !isVisible);
+				});
+			});
+		</script>
 	</body>
 </html>
