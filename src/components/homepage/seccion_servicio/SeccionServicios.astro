@@ -1,11 +1,33 @@
 ---
-import Card from "./Card.astro"
----
-<section class="w-full bg-gray-200">
-    <div>
+import Card from "./Card.astro";
 
-    </div>
-    <div class="p-10">
-        <Card />
-    </div>
+---
+
+<section class="w-full bg-gray-200 flex flex-col items-center">
+  <div
+    class="font-redhat w-full flex justify-center items-center p-20 bg-gray-500"
+  >
+    <p>Descubre nuestros servicos</p>
+  </div>
+  <div class="w-full flex sm:hidden gap-4 overflow-x-auto snap-x snap-mandatory p-10">
+    <div class="inline-grid grid-rows-2 grid-flow-col gap-4 px-4">
+        <Card style="flex-shrink-0 w-72" />
+        <Card style="flex-shrink-0 w-72" />
+        <Card style="flex-shrink-0 w-72" />
+        <Card style="flex-shrink-0 w-72" />
+        <Card style="flex-shrink-0 w-72" />
+        <Card style="flex-shrink-0 w-72" />
+      </div>
+  </div>
+
+  <div
+    class="hidden max-w-5/6 sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10"
+  >
+    <Card />
+    <Card />
+    <Card />
+    <Card />
+    <Card />
+    <Card />
+  </div>
 </section>

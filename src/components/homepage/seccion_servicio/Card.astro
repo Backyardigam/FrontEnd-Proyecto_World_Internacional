@@ -1,5 +1,8 @@
 ---
 import TagIcon from "../../iconos/TagIcon.astro";
+
+const {style:style} =Astro.props
+
 interface Card {
   id: string;
   id_name: string;
@@ -24,35 +27,37 @@ const servicio: Card = {
 };
 ---
 
-<div class="max-w-xs bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat">
+<div class:list={["max-w-80 bg-white shadow-sm drop-shadow-xl rounded-xl font-redhat overflow-hidden",style]}>
   <div class="">
-    <img src={servicio.mediaFile} alt={servicio.name} class="w-full" />
+    <img src={servicio.mediaFile} alt={servicio.name} class="aspect-7/4 w-full max-h-" />
   </div>
   <div class="p-5 gap-4 flex flex-col">
     <div class="">
-      <p class="text-sm">Circuito turistico</p>
+      <p class="text-base">Circuito turistico</p>
       <p class="font-baloo font-semibold text-naranja-c text-3xl">
         {servicio.name}
       </p>
-      <p>{servicio.compactDescription}</p>
+      <p class="text-lg">{servicio.compactDescription}</p>
     </div>
-    <div class="w-full border-t-2 border-gray-300"></div>
-    <div class="flex justify-between items-center">
-      <div>
-        <ul>
-          <li>{servicio.tag[0]}</li>
-          <li>{servicio.tag[1]}</li>
-        </ul>
-      </div>
-      <div class="flex flex-col gap-2 items-center">
-        <div class="flex gap-2">
-          <TagIcon style="w-4" />
-          <p>
-            S/. {servicio.cost}
-          </p>
+    <div class="flex flex-col justify-end space-y-3">
+      <div class="w-full border-t-2 border-gray-300"></div>
+      <div class="flex items-center justify-between space-x-2">
+        <div>
+          <ul>
+            <li>{servicio.tag[0]}</li>
+            <li>{servicio.tag[1]}</li>
+          </ul>
         </div>
-        <div class="bg-naranja-c w-auto rounded-sm p-2 text-white ">
-          <a href="">Conoce más</a>
+        <div class="flex flex-col gap-2 items-center">
+          <div class="flex gap-2">
+            <TagIcon style="w-4" />
+            <p>
+              S/. {servicio.cost}
+            </p>
+          </div>
+          <div class="bg-naranja-c w-auto rounded-sm p-2 text-white ">
+            <a href=`/${servicio.id_name}`>Conoce más</a>
+          </div>
         </div>
       </div>
     </div>

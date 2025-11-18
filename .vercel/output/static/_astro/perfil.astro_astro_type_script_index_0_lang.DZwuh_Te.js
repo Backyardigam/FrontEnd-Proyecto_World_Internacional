@@ -1,0 +1,1 @@
+import{$ as e}from"./authStore.CMmJBlW-.js";import"./index.BSdFiPHn.js";const r=e.subscribe(i=>{i.loading||((!i.isAuthenticated||i.user?.rol==="guest")&&window.location.replace("/login?redirect=/perfil"),r())});

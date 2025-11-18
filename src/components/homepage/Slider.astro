@@ -45,7 +45,7 @@ const slides = [
 
 <section
   id="hero-slider-section"
-  class="relative h-screen w-full text-white bg-gradient-to-br from-gray-800 to-gray-900"
+  class="relative h-screen w-full text-white bg-gradient-to-br from-gray-800 to-gray-900 duration-300"
   style={{
     transform: "scale(var(--scroll-scale, 1))",
     opacity: "var(--scroll-opacity, 1)",
@@ -196,7 +196,7 @@ const slides = [
         if (scrollY < sectionHeight) {
           const scrollProgress = scrollY / sectionHeight;
 
-          const scale = 1 - scrollProgress * 0.2; // Escala disminuye para efecto de alejamiento (zoom out)
+          const scale = 1 - scrollProgress * 0.1; // Escala disminuye para efecto de alejamiento (zoom out)
           const opacity = Math.max(0, 1 - scrollProgress * 1.5);
 
           sliderSection.style.setProperty("--scroll-scale", scale.toString());
