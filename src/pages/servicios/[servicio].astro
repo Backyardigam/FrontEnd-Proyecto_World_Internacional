@@ -1,35 +1,46 @@
 ---
-import { getAllServices, type ServiceContent, type ServiceDetails } from "../../components/homepage/seccion_servicio/services";
+import {
+  getAllServices,
+  type ServiceContent,
+  type ServiceDetails,
+} from "../../components/homepage/seccion_servicio/services";
 import { ApiError } from "../../utils/apiClient";
 import Header from "../../components/generales/Header.astro";
 import Footer from "../../components/generales/Footer.astro";
-import '../../styles/global.css'
+import "../../styles/global.css";
 
 export const prerender = false;
 
 const { servicio: id_name } = Astro.params; // pbtenemos el 'id_name' de la URL
 let serviceData: ServiceContent;
 
+
 try {
   const allServices: ServiceDetails[] = await getAllServices();
-  const currentService = allServices.find(service => service.id_name === id_name);
+  const currentService = allServices.find(
+    (service) => service.id_name === id_name
+  );
   if (!currentService) {
     return new Response("Servicio no encontrado", { status: 404 });
   }
-  
+
   serviceData = currentService.data;
 
   Astro.response.headers.set(
     "Cache-Control",
     "public, max-age=3600, stale-while-revalidate=86400"
   );
-
 } catch (error: any) {
   if (error instanceof ApiError) {
-    console.error(`Error de API al obtener servicios para '${id_name}': Status ${error.status}, Mensaje: ${error.message}`);
+    console.error(
+      `Error de API al obtener servicios para '${id_name}': Status ${error.status}, Mensaje: ${error.message}`
+    );
     return new Response(error.message, { status: error.status });
   } else {
-    console.error(`Error inesperado al obtener el servicio ${id_name}:`, error.message);
+    console.error(
+      `Error inesperado al obtener el servicio ${id_name}:`,
+      error.message
+    );
     return new Response("Error interno del servidor", { status: 500 });
   }
 }
@@ -38,159 +49,358 @@ const itineraryItems = serviceData.itinerary ?? [];
 const recomendationItems = serviceData.recomendations ?? [];
 const additionalItems = serviceData.additional ?? [];
 ---
+
 <html lang="es">
-<head>
+  <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={serviceData.fullDescription.substring(0, 160)} />
+    <meta
+      name="description"
+      content={serviceData.fullDescription.substring(0, 160)}
+    />
     <title>{serviceData.name} - Tour en World International</title>
-</head>
-<body class="bg-gray-50 font-redhat">
+  </head>
+  <body class="bg-gray-50 font-redhat">
     <Header />
     <main>
-        <section class="relative w-full min-h-screen text-white flex items-center justify-center pt-14">
-            <img src={serviceData.mediaFiles.urlBG1} alt={`Paisaje del tour ${serviceData.name}`} class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125" />
-            <div class="absolute inset-0 bg-black/40"></div>
-            <div class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16">
-                <span class="font-semibold uppercase tracking-widest text-naranja-c mb-4">{serviceData.type}</span>
-                <div class="text-center self-center md:text-left mb-6">
-                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold">{serviceData.name}</h1>
-                    <p class="text-lg md:text-xl text-gray-300 mt-1">Circuito turístico</p>
-                </div>
-                <p class="mt-6 text-lg text-gray-200 leading-relaxed text-left max-w-3xl">{serviceData.fullDescription}</p>
-                <hr class="border-t-1 border-white my-8" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-                    <div class="flex flex-col">
-                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Lugares que visitarás</h3>
-                        <ul class="list-disc list-inside space-y-2 text-gray-300">
-                            {itineraryItems.map(item => <li>{item}</li>)}
-                        </ul>
-                    </div>                
-                    <div class="bg-stone-100/90 text-slate-800 rounded-lg p-6 shadow-lg">
-                        <h3 class="text-2xl font-bold mb-4 text-naranja-c">Detalles del Tour</h3>
-                        <h4 class="font-semibold mb-2">Incluye:</h4>
-                        <ul class="list-disc list-inside space-y-1 mb-4 font-medium">
-                            {serviceData.tag.map(item => <li>{item}</li>)}
-                        </ul>
-                        <h4 class="font-semibold mb-2">Horarios Disponibles:</h4>
-                        <ul class="list-disc list-inside space-y-1">
-                            {Object.values(serviceData.schedule).map(s => <li>{s.startTrip} - {s.endTrip}</li>)}
-                        </ul>
-                    </div>
-                </div>
+      
+      
+      
+      <section
+        id="hero-section"
+        class="relative w-full min-h-screen text-white flex items-center justify-center pt-14"
+      >
+        
+        <img
+          src={serviceData.mediaFiles.urlBG1}
+          alt={`Paisaje del tour ${serviceData.name}`}
+          class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125"
+        />
+        
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        
+        <div
+          class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16"
+        >
+          <span
+            class="font-semibold uppercase tracking-widest text-naranja-c mb-4"
+            >{serviceData.type}</span
+          >
+
+          <div class="text-center self-center md:text-left mb-6">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold">
+              {serviceData.name}
+            </h1>
+            <p class="text-lg md:text-xl text-gray-300 mt-1">
+              Circuito turístico
+            </p>
+          </div>
+
+          <p
+            class="mt-6 text-lg self-center text-gray-200 leading-relaxed text-left max-w-3xl"
+          >
+            {serviceData.fullDescription}
+          </p>
+
+          <hr class="border-t-1 border-white my-8" />
+
+          
+          <div
+            class="grid self-center grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl"
+          >
+            
+            <div class="flex flex-col">
+              <h3 class="text-xl font-semibold mb-4 text-naranja-c">
+                Lugares que visitarás
+              </h3>
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                {itineraryItems.map((item) => <li>{item}</li>)}
+              </ul>
             </div>
-        </section>
-        <section class="py-16 md:py-24 bg-gray-100">
-            <div class="container mx-auto px-4">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">Galería de Fotos</h2>
-                <p class="text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8">
-                    Un vistazo a las experiencias y paisajes que te esperan en este circuito. 
-                </p>                
-                <div class="text-center mb-8 place-self-end">
-                    <button id="toggle-gallery-btn" class="bg-naranja-c text-white font-semibold py-2 px-5 rounded-lg hover:bg-naranja-c-dark transition-colors">
-                        Ver todo
-                    </button>
-                </div>                
-                <div id="gallery-container" class="flex gap-4 overflow-x-auto pb-4 -mb-4 transition-all duration-500">
-                    {serviceData.mediaFiles.urlGallery.map((url, index) => (
-                        <div class="gallery-item flex-shrink-0 w-80 h-56 rounded-lg overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300">
-                            <img 
-                                src={url} 
-                                alt={`Galería de ${serviceData.name} - Imagen ${index + 1}`} 
-                                class="w-full h-full object-cover gallery-image"
-                                loading="lazy"
-                            />
-                        </div>
-                    ))}
-                </div>
+
+            
+            <div
+              class="bg-stone-100/90 text-slate-800 rounded-lg p-6 shadow-lg"
+            >
+              <h3 class="text-2xl font-bold mb-4 text-naranja-c">
+                Detalles del Tour
+              </h3>
+              <h4 class="font-semibold mb-2">Incluye:</h4>
+              <ul class="list-disc list-inside space-y-1 mb-4 font-medium">
+                {serviceData.tag.map((item) => <li>{item}</li>)}
+              </ul>
+              <h4 class="font-semibold mb-2">Horarios Disponibles:</h4>
+              <ul class="list-disc list-inside space-y-1">
+                {
+                  Object.values(serviceData.schedule).map((s) => (
+                    <li>
+                      {s.startTrip} - {s.endTrip}
+                    </li>
+                  ))
+                }
+              </ul>
             </div>
-        </section>
-        <section class="relative w-full min-h-screen text-white flex items-center justify-center ">
-            <img src={serviceData.mediaFiles.urlBG2} alt={`Paisaje del tour ${serviceData.name}`} class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125" />
-            <div class="absolute inset-0 bg-black/40"></div>
-            <div class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16">
-                <h2 class="text-3xl md:text-4xl self-center font-bold text-white mb-4">Ruta y Consejos de Viaje</h2>
-                <p class="text-lg text-gray-300 mb-8 max-w-3xl">
-                    Prepárate para la aventura. Aquí tienes el mapa del recorrido y algunos consejos para que disfrutes al máximo.
-                </p>
-                <img src={serviceData.mediaFiles.urlTrip} alt={`Mapa del recorrido de ${serviceData.name}`} class="w-full max-w-2xl rounded-lg shadow-lg my-4" />
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-8">
-                    <div class="flex flex-col">
-                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Recomendaciones</h3>
-                        <ul class="list-disc list-inside space-y-2 text-gray-300">
-                            {recomendationItems.map(item => <li>{item}</li>)}
-                        </ul>
-                    </div>
-                    <div class="flex flex-col">
-                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Información Adicional</h3>
-                        <ul class="list-disc list-inside space-y-2 text-gray-300">
-                            {additionalItems.map(item => <li>{item}</li>)}
-                        </ul>
-                    </div>
+          </div>
+        </div>
+      </section>
+
+      
+      
+      
+      <section class="py-16 md:py-24 bg-gray-100">
+        <div class="container mx-auto px-4">
+          <h2
+            class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4"
+          >
+            Galería de Fotos
+          </h2>
+          <p class="text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8">
+            Un vistazo a las experiencias y paisajes que te esperan en este
+            circuito.
+          </p>
+
+          
+          <div class="text-center mb-8 place-self-end">
+            <button
+              id="toggle-gallery-btn"
+              class="bg-naranja-c text-white font-semibold py-2 px-5 rounded-lg hover:bg-naranja-c-dark transition-colors"
+            >
+              Ver todo
+            </button>
+          </div>
+
+          
+          <div
+            id="gallery-container"
+            class="flex gap-4 overflow-x-auto pb-4 -mb-4 transition-all duration-500"
+          >
+            {
+              serviceData.mediaFiles.urlGallery.map((url, index) => (
+                <div class="gallery-item flex-shrink-0 w-80 h-56 rounded-lg overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300">
+                  <img
+                    src={url}
+                    alt={`Galería de ${serviceData.name} - Imagen ${index + 1}`}
+                    class="w-full h-full object-cover gallery-image"
+                    loading="lazy"
+                  />
                 </div>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      
+      
+      
+      <section
+        class="relative w-full min-h-screen text-white flex flex-col items-center justify-center"
+      >
+        
+        <img
+          src={serviceData.mediaFiles.urlBG2}
+          alt={`Paisaje del tour ${serviceData.name}`}
+          class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125"
+        />
+        
+        <div class="absolute inset-0 bg-black/40"></div>
+
+        
+        <div
+          class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16"
+        >
+          <h2
+            class="text-3xl md:text-4xl font-bold self-center text-white mb-4"
+          >
+            Ruta y Consejos de Viaje
+          </h2>
+          <p
+            class="text-lg text-gray-300 self-center text-start mb-8 max-w-3xl"
+          >
+            Prepárate para la aventura. Aquí tienes el mapa del recorrido y
+            algunos consejos para que disfrutes al máximo.
+          </p>
+
+          
+          <img
+            src={serviceData.mediaFiles.urlTrip}
+            alt={`Mapa del recorrido de ${serviceData.name}`}
+            class="w-full max-w-2xl self-center rounded-lg shadow-lg my-4"
+          />
+
+          
+          <div
+            class="grid self-center grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-8"
+          >
+            
+            <div class="flex flex-col">
+              <h3 class="text-xl font-semibold mb-4 text-naranja-c">
+                Recomendaciones
+              </h3>
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                {recomendationItems.map((item) => <li>{item}</li>)}
+              </ul>
             </div>
-        </section>
+            
+            <div class="flex flex-col">
+              <h3 class="text-xl font-semibold mb-4 text-naranja-c">
+                Información Adicional
+              </h3>
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                {additionalItems.map((item) => <li>{item}</li>)}
+              </ul>
+            </div>
+          </div>
+          
+          <div id="contenedor-btn" class="relative w-full h-10 mt-20">
+            
+          </div>
+        </div>
+      </section>
     </main>
-    <div id="image-modal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
-        <button id="modal-close" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
-        <img id="modal-image" src="" alt="Vista ampliada de la imagen" class="max-w-full max-h-full rounded-lg" />
+
+    
+    <div
+      id="reservar-fixed-btn"
+      class="flex gap-8 fixed bottom-8 place-self-center"
+    >
+      <a
+        href={`/reservar?servicio=${id_name}`}
+        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+        >Reservar Ya</a
+      >
+      <a
+        href={`/reservar?servicio=${id_name}`}
+        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+        >Reservar Ya</a
+      >
+    </div>
+    
+    
+    
+    <div
+      id="image-modal"
+      class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
+    >
+      <button
+        id="modal-close"
+        class="absolute top-4 right-4 text-white text-4xl font-bold"
+        >&times;</button
+      >
+      <img
+        id="modal-image"
+        src=""
+        alt="Vista ampliada de la imagen"
+        class="max-w-full max-h-full rounded-lg"
+      />
     </div>
     <Footer />
+
     <script>
-        const modal = document.getElementById('image-modal');
-        const modalImage = document.getElementById('modal-image') as HTMLImageElement;
-        const closeModalBtn = document.getElementById('modal-close');
-        const galleryImages = document.querySelectorAll('.gallery-image');
-        function openModal(src: string) {
-            if (modal && modalImage) {
-                modalImage.src = src;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.body.style.overflow = 'hidden';
-            }
+      const modal = document.getElementById("image-modal");
+      const modalImage = document.getElementById(
+        "modal-image"
+      ) as HTMLImageElement;
+      const closeModalBtn = document.getElementById("modal-close");
+      const galleryImages = document.querySelectorAll(".gallery-image");
+
+      function openModal(src: string) {
+        if (modal && modalImage) {
+          modalImage.src = src;
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+          document.body.style.overflow = "hidden";
         }
+      }
 
-        function closeModal() {
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.body.style.overflow = '';
-            }
+      function closeModal() {
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          document.body.style.overflow = "";
         }
+      }
 
-        galleryImages.forEach(img => {
-            img.addEventListener('click', () => openModal((img as HTMLImageElement).src));
-        });
+      galleryImages.forEach((img) => {
+        img.addEventListener("click", () =>
+          openModal((img as HTMLImageElement).src)
+        );
+      });
 
-        closeModalBtn?.addEventListener('click', closeModal);
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
+      closeModalBtn?.addEventListener("click", closeModal);
+      modal?.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
 
-        const toggleBtn = document.getElementById('toggle-gallery-btn');
-        const galleryContainer = document.getElementById('gallery-container');
-        const galleryItems = document.querySelectorAll('.gallery-item');
+      const toggleBtn = document.getElementById("toggle-gallery-btn");
+      const galleryContainer = document.getElementById("gallery-container");
+      const galleryItems = document.querySelectorAll(".gallery-item");
 
-        toggleBtn?.addEventListener('click', () => {
+      toggleBtn?.addEventListener("click", () => {
+        const isExpanded = galleryContainer?.classList.contains("grid");
 
-            const isExpanded = galleryContainer?.classList.contains('grid');
-            
-            if (isExpanded) {
-                galleryContainer?.classList.remove('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4');
-                galleryContainer?.classList.add('flex', 'overflow-x-auto', 'pb-4', '-mb-4');
-                galleryItems.forEach(item => item.classList.add('w-80', 'h-56'));
-                toggleBtn.textContent = 'Ver todo';
-            } else {
-                galleryContainer?.classList.remove('flex', 'overflow-x-auto', 'pb-4', '-mb-4');
-                galleryContainer?.classList.add('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4');
-                galleryItems.forEach(item => item.classList.remove('w-80', 'h-56'));
-                toggleBtn.textContent = 'Ver menos';
-            }
-        });
+        if (isExpanded) {
+          galleryContainer?.classList.remove(
+            "grid",
+            "grid-cols-2",
+            "md:grid-cols-3",
+            "lg:grid-cols-4"
+          );
+          galleryContainer?.classList.add(
+            "flex",
+            "overflow-x-auto",
+            "pb-4",
+            "-mb-4"
+          );
+          galleryItems.forEach((item) => item.classList.add("w-80", "h-56"));
+          toggleBtn.textContent = "Ver todo";
+        } else {
+          galleryContainer?.classList.remove(
+            "flex",
+            "overflow-x-auto",
+            "pb-4",
+            "-mb-4"
+          );
+          galleryContainer?.classList.add(
+            "grid",
+            "grid-cols-2",
+            "md:grid-cols-3",
+            "lg:grid-cols-4"
+          );
+          galleryItems.forEach((item) => item.classList.remove("w-80", "h-56"));
+          toggleBtn.textContent = "Ver menos";
+        }
+      });
+
+      const reservarBtn = document.getElementById("reservar-fixed-btn");
+      const anchorContainer = document.getElementById("contenedor-btn");
+
+      if (reservarBtn && anchorContainer) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                anchorContainer.appendChild(reservarBtn);
+                reservarBtn.style.position = "absolute";
+              } else {
+                document.body.appendChild(reservarBtn);
+                reservarBtn.style.position = "fixed";
+              }
+            });
+          },
+          {
+            root: null,
+            threshold: 0,
+          }
+        );
+
+        observer.observe(anchorContainer);
+      }
     </script>
-</body>
+  </body>
 </html>
