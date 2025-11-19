@@ -1,5 +1,17 @@
 import { isBrowser } from "./environment";
 
+/**
+ * Error personalizado para representar errores de la API.
+ * Contiene el mensaje de error y el código de estado HTTP.
+ */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 export interface AuthenticatedFetchOptions extends RequestInit {
   handle401?: boolean;
 }
@@ -54,11 +66,11 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
     try {
       const errorData = await response.json();
       errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) {
-    }
-    throw new Error(errorDetails);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    // Lanzamos nuestro error personalizado con el mensaje y el estado.
+    throw new ApiError(errorDetails, response.status);
   }
-
+  
   // Verificamos si la respuesta tiene contenido antes de intentar parsearla como JSON.
   // Un status 204 (No Content) o un header 'content-length' de 0 indican que no hay cuerpo.
   const contentType = response.headers.get("content-type");
@@ -93,11 +105,10 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
     try {
       const errorData = await response.json();
       errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) {
-    }
-    throw new Error(errorDetails);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    throw new ApiError(errorDetails, response.status);
   }
-
+  
   return response.json() as Promise<T>;
 }
 
@@ -125,11 +136,9 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
     try {
       const errorData = await response.json();
       errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) {
-      // Si el cuerpo del error no es JSON o está vacío, el error original se mantiene.
-    }
-    throw new Error(errorDetails);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    throw new ApiError(errorDetails, response.status);
   }
-
+  
   return response.json() as Promise<T>;
 }
