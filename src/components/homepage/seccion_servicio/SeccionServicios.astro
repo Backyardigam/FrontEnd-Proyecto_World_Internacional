@@ -15,11 +15,7 @@ try {
 
 <section id="servicios" class="w-full bg-gray-200 flex flex-col items-center">
   <div class="relative w-full font-redhat text-white text-center overflow-hidden">
-    <!-- 
-      RECOMENDACIÓN: Reemplaza esta imagen con una foto atractiva de alta calidad 
-      relacionada con tus tours (ej. un paisaje, un grupo de viajeros felices, etc.)
-    -->
-    <img src="/images/tours-background.jpg" alt="Paisaje montañoso impresionante durante un tour" class="absolute inset-0 w-full h-full object-cover" loading="eager" />
+    <img src="src/images/tours-background.jpg" alt="Paisaje impresionante durante un tour" class="absolute inset-0 w-full h-full object-cover" loading="eager" />
     <div class="absolute inset-0 bg-black/60"></div> <!-- Capa de superposición para mejorar legibilidad -->
     <div class="relative z-10 flex flex-col justify-center items-center p-16 md:p-24">
       <h2 class="text-4xl md:text-5xl font-bold drop-shadow-md">Explora el Mundo con Nuestros Tours</h2>
@@ -32,8 +28,8 @@ try {
     <div class="p-10 text-red-500">{error}</div>
   ) : (
     <>
-      <div class="w-full flex sm:hidden gap-4 overflow-x-auto snap-x snap-mandatory p-10">
-        {servicios.map(servicio => <Card servicio={servicio} style="flex-shrink-0 w-80 snap-center" />)}
+      <div class="w-full flex sm:hidden gap-3 overflow-x-auto snap-x snap-mandatory p-5">
+        {servicios.map(servicio => <Card servicio={servicio} style="flex-shrink-0 w-75 snap-center snap-always" />)}
       </div>
       <div class="hidden max-w-5/6 sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8 py-10">
         {servicios.map(servicio => <Card servicio={servicio} />)}

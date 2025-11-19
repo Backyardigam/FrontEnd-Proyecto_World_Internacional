@@ -1,11 +1,11 @@
 ---
-import type { GetStaticPaths } from "astro";
 import { apiGet } from "../../utils/apiClient";
 import Header from "../../components/generales/Header.astro";
 import Footer from "../../components/generales/Footer.astro";
 import InfoSection from "../../components/servicios/InfoSection.astro"
 import '../../styles/global.css'
 
+export const prerender = false
 
 interface Schedule {
   [key: string]: {
@@ -29,20 +29,25 @@ export interface ServiceDetails {
   mediaFiles: string[];
 }
 
-export const getStaticPaths = (async () => {
-  try {
-    const services = await apiGet<ServiceDetails[]>("/services/all");
-    return services.map((service) => ({
-      params: { servicio: service.id_name },
-      props: { serviceData: service },
-    }));
-  } catch (error) {
-    console.error("Error al generar las páginas de servicios:", error);
-    return [];
-  }
-}) satisfies GetStaticPaths;
+const { servicio: id_name } = Astro.params;
+let serviceData: ServiceDetails;
 
-const { serviceData } = Astro.props as { serviceData: ServiceDetails };
+try {
+  serviceData = await apiGet<ServiceDetails>(`/services/${id_name}`);
+  // Configura cache para ISR: cache por 1 hora, con revalidación en segundo plano.
+  Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=3600, stale-while-revalidate=86400"
+  );
+} catch (error: any) {
+  if (error.response && error.response.status === 404) {
+    return new Response("Servicio no encontrado", { status: 404 });
+  }
+  // Para otros errores, muestra un mensaje y devuelve un error de servidor.
+  console.error(`Error al obtener el servicio ${id_name}:`, error.message);
+  return new Response("Error interno del servidor", { status: 500 });
+}
+
 
 // Helper para convertir strings separados por ';' en arrays
 const splitString = (text: string) => text ? text.split(';').map(item => item.trim()).filter(item => item) : [];
@@ -91,4 +96,3 @@ const additionalItems = splitString(serviceData.additional);
     <Footer />
 </body>
 </html>
-

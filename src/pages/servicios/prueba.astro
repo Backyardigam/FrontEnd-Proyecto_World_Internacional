@@ -6,6 +6,12 @@ import Footer from "../../components/generales/Footer.astro";
 import InfoSection from "../../components/servicios/InfoSection.astro"
 import '../../styles/global.css'
 
+interface MediaFiles{
+    urlBG1: string;
+    urlBG2: string;
+    urlGallery: string[];
+    urlTrip:string;
+}
 
 interface Schedule {
   [key: string]: {
@@ -14,7 +20,7 @@ interface Schedule {
   };
 }
 
-export interface ServiceDetails {
+interface ServiceDetails {
   id: string;
   id_name: string;
   name: string;
@@ -26,7 +32,7 @@ export interface ServiceDetails {
   recomendations: string;
   additional: string;
   schedule: Schedule;
-  mediaFiles: string[];
+  mediaFiles: MediaFiles;
 }
 
 
@@ -41,7 +47,7 @@ const serviceData: ServiceDetails = {
             "almuerzo incluido"
         ],
         fullDescription: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Sit amet consectetur adipiscing elit quisque faucibus ex. Adipiscing elit quisque faucibus ex sapien vitae pellentesque.",
-        itinerary: "Mirador de la Apacheta; Andeneria Preinca",
+        itinerary: "Mirador de la Apacheta;Andeneria Preinca",
         recomendations: "Lorem ipsum dolor sit amet consectetur adipiscing elit; Lorem ipsum dolor sit amet consectetur adipiscing elit; Lorem ipsum dolor sit amet consectetur adipiscing elit;",
         additional: "Ingreso a baños termales S/ 10.00; lorem ipsum dolor sit amet",
         schedule: {
@@ -50,7 +56,17 @@ const serviceData: ServiceDetails = {
                 "endTrip": "12:00 pm"
             }
         },
-        mediaFiles: []
+        mediaFiles: {
+            urlBG1:"https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            urlBG2:"https://images.pexels.com/photos/2440024/pexels-photo-2440024.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            urlGallery:[
+                "https://images.pexels.com/photos/1658967/pexels-photo-1658967.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                "https://images.pexels.com/photos/238622/pexels-photo-238622.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                "https://images.pexels.com/photos/373912/pexels-photo-373912.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+                "https://images.pexels.com/photos/1583207/pexels-photo-1583207.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+            ],
+            urlTrip:"https://i.imgur.com/3O0k0hN.png"
+        }
     }
 
 // Helper para convertir strings separados por ';' en arrays
@@ -72,32 +88,198 @@ const additionalItems = splitString(serviceData.additional);
 </head>
 <body class="bg-gray-50 font-redhat">
     <Header />
-    <main class="container mx-auto px-4 py-24 md:py-32">
-        <div class="max-w-4xl mx-auto">
-            <!-- Título y Precio -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">{serviceData.name}</h1>
-                <span class="text-3xl font-semibold text-naranja-c mt-4 md:mt-0">S/. {serviceData.cost}</span>
+    <main>
+        <!-- ================================================== -->
+        <!-- ========= SECCIÓN 1: DESCRIPCIÓN GENERAL ========= -->
+        <!-- ================================================== -->
+        <section class="relative w-full min-h-screen text-white flex items-center justify-center pt-14 md:pt-0">
+            <!-- Imagen de Fondo -->
+            <img src={serviceData.mediaFiles.urlBG1} alt={`Paisaje del tour ${serviceData.name}`} class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125" />
+            <!-- Superposición oscura para contraste general -->
+            <div class="absolute inset-0 bg-black/40"></div>
+
+            <!-- Bloque de contenido principal (65% de ancho en pantallas grandes) -->
+            <div class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16">
+                
+                <span class="font-semibold uppercase tracking-widest text-naranja-c mb-4">{serviceData.type}</span>
+
+                <div class="text-center self-center md:text-left mb-6">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold">{serviceData.name}</h1>
+                    <p class="text-lg md:text-xl text-gray-300 mt-1">Circuito turístico</p>
+                </div>
+
+                <p class="mt-6 text-lg text-gray-200 leading-relaxed text-left max-w-3xl">{serviceData.fullDescription}</p>
+
+                <hr class="border-t-1 border-white my-8" />
+
+                <!-- Contenedor de dos columnas para itinerario y detalles -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                    <!-- Columna Izquierda: Itinerario -->
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Lugares que visitarás</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-300">
+                            {itineraryItems.map(item => <li>{item}</li>)}
+                        </ul>
+                    </div>
+
+                    <!-- Columna Derecha: Tags y Horarios -->
+                    <div class="bg-stone-100/90 text-slate-800 rounded-lg p-6 shadow-lg">
+                        <h3 class="text-2xl font-bold mb-4 text-naranja-c">Detalles del Tour</h3>
+                        <h4 class="font-semibold mb-2">Incluye:</h4>
+                        <ul class="list-disc list-inside space-y-1 mb-4 font-medium">
+                            {serviceData.tag.map(item => <li>{item}</li>)}
+                        </ul>
+                        <h4 class="font-semibold mb-2">Horarios Disponibles:</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            {Object.values(serviceData.schedule).map(s => <li>{s.startTrip} - {s.endTrip}</li>)}
+                        </ul>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <!-- Galería de Imágenes (simple) -->
-            {serviceData.mediaFiles && serviceData.mediaFiles.length > 0 && (
-                <img src={serviceData.mediaFiles[0]} alt={`Imagen principal del tour ${serviceData.name}`} class="w-full h-auto max-h-[500px] object-cover rounded-lg shadow-lg mb-10" />
-            )}
+        <!-- ======================================== -->
+        <!-- ========= SECCIÓN 2: GALERÍA ========= -->
+        <!-- ======================================== -->
+        <section class="py-16 md:py-24 bg-gray-100">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">Galería de Fotos</h2>
+                <p class="text-lg text-gray-600 text-center max-w-2xl mx-auto mb-8">
+                    Un vistazo a las experiencias y paisajes que te esperan en este circuito. 
+                </p>
 
-            <!-- Descripción Completa -->
-            <section class="mb-10">
-                <h2 class="text-2xl font-bold mb-4 border-b-2 border-naranja-c pb-2">Descripción del Tour</h2>
-                <p class="text-lg text-gray-700 leading-relaxed">{serviceData.fullDescription}</p>
-            </section>
+                <!-- Botón para expandir/colapsar galería -->
+                <div class="text-center mb-8 place-self-end">
+                    <button id="toggle-gallery-btn" class="bg-naranja-c text-white font-semibold py-2 px-5 rounded-lg hover:bg-naranja-c-dark transition-colors">
+                        Ver todo
+                    </button>
+                </div>
 
-            <!-- Itinerario, Recomendaciones, etc. -->
-            {itineraryItems.length > 0 && <InfoSection title="Itinerario" items={itineraryItems} />}
-            {recomendationItems.length > 0 && <InfoSection title="Recomendaciones" items={recomendationItems} />}
-            {additionalItems.length > 0 && <InfoSection title="Información Adicional" items={additionalItems} />}
-        </div>
+                <!-- Contenedor de galería con scroll horizontal -->
+                <div id="gallery-container" class="flex gap-4 overflow-x-auto pb-4 -mb-4 transition-all duration-500">
+                    {serviceData.mediaFiles.urlGallery.map((url, index) => (
+                        <div class="gallery-item flex-shrink-0 w-80 h-56 rounded-lg overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300">
+                            <img 
+                                src={url} 
+                                alt={`Galería de ${serviceData.name} - Imagen ${index + 1}`} 
+                                class="w-full h-full object-cover gallery-image"
+                                loading="lazy"
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================== -->
+        <!-- ========= SECCIÓN 3: RUTA Y RECOMENDACIONES ======== -->
+        <!-- ================================================== -->
+        <section class="relative w-full min-h-screen text-white flex items-center justify-center ">
+            <!-- Imagen de Fondo -->
+            <img src={serviceData.mediaFiles.urlBG2} alt={`Paisaje del tour ${serviceData.name}`} class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125" />
+            <!-- Superposición oscura para contraste general -->
+            <div class="absolute inset-0 bg-black/40"></div>
+
+            <!-- Bloque de contenido principal (alineado a la derecha) -->
+            <div class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16">
+                
+                <h2 class="text-3xl md:text-4xl self-center font-bold text-white mb-4">Ruta y Consejos de Viaje</h2>
+                <p class="text-lg text-gray-300 mb-8 max-w-3xl">
+                    Prepárate para la aventura. Aquí tienes el mapa del recorrido y algunos consejos para que disfrutes al máximo.
+                </p>
+
+                <!-- Imagen del Recorrido -->
+                <img src={serviceData.mediaFiles.urlTrip} alt={`Mapa del recorrido de ${serviceData.name}`} class="w-full max-w-2xl rounded-lg shadow-lg my-4" />
+
+                <!-- Contenedor de dos columnas para recomendaciones y adicionales -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-8">
+                    <!-- Columna Izquierda: Recomendaciones -->
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Recomendaciones</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-300">
+                            {recomendationItems.map(item => <li>{item}</li>)}
+                        </ul>
+                    </div>
+                    <!-- Columna Derecha: Información Adicional -->
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-semibold mb-4 text-naranja-c">Información Adicional</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-300">
+                            {additionalItems.map(item => <li>{item}</li>)}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <!-- ======================================== -->
+    <!-- ========= MODAL PARA IMÁGENES ======== -->
+    <!-- ======================================== -->
+    <div id="image-modal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+        <button id="modal-close" class="absolute top-4 right-4 text-white text-4xl font-bold">&times;</button>
+        <img id="modal-image" src="" alt="Vista ampliada de la imagen" class="max-w-full max-h-full rounded-lg" />
+    </div>
+
     <Footer />
+
+    <script>
+        const modal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image') as HTMLImageElement;
+        const closeModalBtn = document.getElementById('modal-close');
+        const galleryImages = document.querySelectorAll('.gallery-image');
+
+        function openModal(src: string) {
+            if (modal && modalImage) {
+                modalImage.src = src;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden'; // Evita el scroll del fondo
+            }
+        }
+
+        function closeModal() {
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = ''; // Restaura el scroll
+            }
+        }
+
+        galleryImages.forEach(img => {
+            img.addEventListener('click', () => openModal((img as HTMLImageElement).src));
+        });
+
+        closeModalBtn?.addEventListener('click', closeModal);
+        modal?.addEventListener('click', (e) => {
+            // Cierra el modal si se hace clic en el fondo (fuera de la imagen)
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // --- Lógica para el botón "Ver todo" ---
+        const toggleBtn = document.getElementById('toggle-gallery-btn');
+        const galleryContainer = document.getElementById('gallery-container');
+        const galleryItems = document.querySelectorAll('.gallery-item');
+
+        toggleBtn?.addEventListener('click', () => {
+            const isExpanded = galleryContainer?.classList.contains('grid');
+
+            if (isExpanded) {
+                // Colapsar a vista de scroll
+                galleryContainer?.classList.remove('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4');
+                galleryContainer?.classList.add('flex', 'overflow-x-auto', 'pb-4', '-mb-4');
+                galleryItems.forEach(item => item.classList.add('w-80', 'h-56'));
+                toggleBtn.textContent = 'Ver todo';
+            } else {
+                // Expandir a vista de grid
+                galleryContainer?.classList.remove('flex', 'overflow-x-auto', 'pb-4', '-mb-4');
+                galleryContainer?.classList.add('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4');
+                galleryItems.forEach(item => item.classList.remove('w-80', 'h-56'));
+                toggleBtn.textContent = 'Ver menos';
+            }
+        });
+
+    </script>
 </body>
 </html>
-
