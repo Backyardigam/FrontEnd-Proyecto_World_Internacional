@@ -16,6 +16,7 @@ export interface CartItem {
   serviceId: string; // ID del servicio/producto
   serviceName: string; // Nombre para mostrar en la UI
   price: number; // Precio unitario
+  urlImagen:string,
 
   // Datos que se completarán en el formulario de checkout
   quantity: number;
@@ -51,18 +52,20 @@ export function addServiceToCart(service: {
   id: string;
   name: string;
   price: number;
+  urlImagen:string;
 }) {
   const currentItems = $cart.get().items;
 
   const newItem: CartItem = {
-    id: `${service.id}-${Date.now()}`, // ID único para el item
+    id: `${service.id}-${Date.now()}`,
     serviceId: service.id,
     serviceName: service.name,
     price: service.price,
+    urlImagen:service.urlImagen,
     quantity: 1,
     fecha: null,
     horario: null,
-    buyerData: null, // <-- CAMBIO: Inicia como nulo
+    buyerData: null,
     status: "pending",
   };
   $cart.set({ items: [...currentItems, newItem] });
@@ -97,7 +100,6 @@ export function updateItemDetails(
       ? {
           ...item,
           ...details,
-          // Un item se considera 'filled' si ya tiene los datos del comprador y una fecha/horario.
           status: (details.buyerData && details.fecha && details.horario) ? statusf : statusp,
         }
       : item

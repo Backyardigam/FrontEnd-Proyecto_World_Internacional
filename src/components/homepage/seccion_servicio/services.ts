@@ -1,9 +1,9 @@
 import { apiGet } from "../../../utils/apiClient";
 
 export interface MediaFiles {
-  urlBG1: string;
-  urlBG2: string;
-  urlGallery: string[];
+  urlBg1: string;
+  urlBg2: string;
+  urlGalery: string[];
   urlTrip: string;
 }
 
@@ -64,7 +64,6 @@ interface ApiService {
  * @returns Un objeto con la estructura ServiceDetails.
  */
 function transformApiService(apiService: ApiService): ServiceDetails {
-  // Ahora que la API devuelve la estructura correcta, la transformación es más simple.
   const { id, id_name, ...content } = apiService;
 
   return {
@@ -76,15 +75,14 @@ function transformApiService(apiService: ApiService): ServiceDetails {
   };
 }
 
-// Cache en memoria para evitar múltiples llamadas durante el build
 let cachedServices: ServiceDetails[];
 
+//para mejorar el proceso en build retornamos lo mismo si ya existe(caché)
 export async function getAllServices(): Promise<ServiceDetails[]> {
   if (cachedServices) {
     return cachedServices;
   }
   const apiServices = await apiGet<ApiService[]>("/services/all");
-  // Transformamos los datos de la API a nuestra estructura ideal y los cacheamos.
   cachedServices = apiServices.map(transformApiService);
   return cachedServices;
 }

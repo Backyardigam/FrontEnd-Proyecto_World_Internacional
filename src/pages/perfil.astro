@@ -19,18 +19,13 @@ import "../styles/global.css";
     </main>
 
     <script>
-      // Script de protección de ruta
       import { $auth } from "../utils/authStore";
 
-      // Nos suscribimos a los cambios en el estado de autenticación.
       const unsubscribe = $auth.subscribe((auth) => {
-        // Esperamos a que termine la carga inicial para tomar una decisión.
         if (!auth.loading) {
-          // Si el usuario no está autenticado o es un invitado, lo redirigimos al login.
-          if (!auth.isAuthenticated || auth.user?.rol === "guest") {
+          if (!auth.isAuthenticated || auth.user?.role === "guest") {
             window.location.replace("/login?redirect=/perfil");
           }
-          // Una vez que hemos hecho la verificación, ya no necesitamos seguir escuchando.
           unsubscribe();
         }
       });

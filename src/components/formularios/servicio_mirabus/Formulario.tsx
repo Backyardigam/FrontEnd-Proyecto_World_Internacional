@@ -27,7 +27,7 @@ export default function Formulario({ onFormDataChange }: FormularioProps) {
   }, [nombreCompleto, celular, dni, correo, onFormDataChange]);
 
   return (
-    <div className="space-y-4 font-redhat m-1.5 md:w-180">
+    <div className="space-y-4 font-redhat m-1.5 md:w-auto">
       <div className="font-bold text-lg mt-5 mb-5">
         Ingrese su informacion para la reserva
       </div>

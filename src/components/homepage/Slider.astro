@@ -1,5 +1,4 @@
 ---
-// Importamos los estilos base y de los módulos que usaremos en Swiper.
 import "swiper/css";
 import { Image } from "astro:assets";
 import "swiper/css/pagination";
@@ -7,8 +6,7 @@ import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 import "swiper/css/autoplay";
 import "swiper/css/parallax";
-// --- CONTENIDO DE LOS SLIDES ---
-// Definimos el contenido aquí para que sea fácil de actualizar.
+// Esta informacion tiene que venir de una API
 const slides = [
   {
     image:
@@ -31,7 +29,7 @@ const slides = [
     buttonLink: "/ofertas",
   },
   {
-    image: "/images/slider/slider3.jpg", // Asegúrate de tener esta imagen en public/images/slider/
+    image: "/images/slider/slider3.jpg",
     alt: "Ciudad europea histórica al atardecer",
     tagline: "Cultura e Historia",
     title: "Sumérgete en Nuevas Culturas",
@@ -51,10 +49,9 @@ const slides = [
     opacity: "var(--scroll-opacity, 1)",
   }}
 >
-  <!-- Contenedor de Swiper con Parallax -->
+  
   <div class="swiper h-full" data-swiper-parallax="-23%">
     <div class="swiper-wrapper">
-      <!-- Generamos los slides dinámicamente -->
       {
         slides.map((slide, index) => (
           <div class="swiper-slide">
@@ -101,10 +98,7 @@ const slides = [
         ))
       }
     </div>
-    <!-- Paginación personalizada -->
     <div class="swiper-pagination swiper-pagination-white"></div>
-
-    <!-- Botones de Navegación personalizados -->
     <div
       class="swiper-button-prev after:!text-2xl !text-white !left-2 drop-shadow-md"
     >
@@ -117,7 +111,6 @@ const slides = [
 </section>
 
 <style>
-  /* Estilos para la animación de entrada del texto */
   .swiper-slide-active .tagline,
   .swiper-slide-active .title,
   .swiper-slide-active .subtitle,
@@ -138,7 +131,6 @@ const slides = [
     transition-delay: 0.3s;
   }
 
-  /* Estilos para la paginación (barras en lugar de puntos) */
   :global(.swiper-pagination-bullet) {
     width: 24px;
     height: 4px;
@@ -167,12 +159,12 @@ const slides = [
     loop: true,
     effect: "fade",
     fadeEffect: { crossFade: true },
-    speed: 800, // Velocidad de la transición entre slides
-    parallax: true, // Habilitamos el efecto parallax
-    // autoplay: {
-    //   delay: 15000, // 5 segundos
-    //   disableOnInteraction: false,
-    // },
+    speed: 800,
+    parallax: true,
+    autoplay: {
+      delay: 5000, 
+      disableOnInteraction: false,
+    },
     pagination: {
       el: ".swiper-pagination",
       clickable: true,
@@ -183,7 +175,6 @@ const slides = [
     },
   });
 
-  // --- LÓGICA PARA ANIMACIÓN EN SCROLL ---
   const sliderSection = document.getElementById("hero-slider-section");
 
   if (sliderSection) {
@@ -192,11 +183,10 @@ const slides = [
         const scrollY = window.scrollY;
         const sectionHeight = sliderSection.offsetHeight;
 
-        // Solo animar mientras la sección está en la vista
         if (scrollY < sectionHeight) {
           const scrollProgress = scrollY / sectionHeight;
 
-          const scale = 1 - scrollProgress * 0.1; // Escala disminuye para efecto de alejamiento (zoom out)
+          const scale = 1 - scrollProgress * 0.1; 
           const opacity = Math.max(0, 1 - scrollProgress * 1.5);
 
           sliderSection.style.setProperty("--scroll-scale", scale.toString());

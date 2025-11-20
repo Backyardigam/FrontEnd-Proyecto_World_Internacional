@@ -7,7 +7,7 @@ export default function CartBubble() {
   const itemCount = items.length;
 
   if (itemCount === 0) {
-    return null; // No renderizar nada si el carrito está vacío
+    return null;
   }
 
   return (

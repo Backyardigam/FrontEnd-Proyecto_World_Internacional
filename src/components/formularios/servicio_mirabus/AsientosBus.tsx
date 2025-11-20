@@ -8,18 +8,14 @@ interface AsientoBusProps {
 }
 
 export default function AsientoBus({ seats, onSeatSelect }: AsientoBusProps) {
-  // Este estado local SÍ es necesario para la UI. Contendrá los asientos
-  const [grid, setGrid] = useState<(Seat | null)[][]>([]); // Solo necesitamos el estado de la cuadrícula final
-
-  // Este efecto ahora solo construye la cuadrícula visual a partir de los asientos que recibe.
-  // La lógica de qué asientos están 'bloqueados' ya no vive aquí.
+  const [grid, setGrid] = useState<(Seat | null)[][]>([]);
   useEffect(() => {
     if (seats.length === 0) {
       setGrid([]);
       return;
     }
 
-    // Construir la cuadrícula visual a partir de los asientos recibidos en las props.
+    // construccion de la cuadrícula a partir de los asientos recibidos en las props
     const maxRows = Math.max(...seats.map((s) => s.y));
     const maxCols = Math.max(...seats.map((s) => s.x));
     const newGrid = Array(maxRows).fill(null).map((): (Seat | null)[] => Array(maxCols).fill(null));

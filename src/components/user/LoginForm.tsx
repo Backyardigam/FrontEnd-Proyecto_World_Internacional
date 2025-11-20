@@ -36,12 +36,10 @@ export default function LoginForm() {
       return;
     }
 
-    // Si los términos ya se muestran y están aceptados, procede.
     setError(null);
     setIsLoading(true);
     try {
       await continueAsGuest();
-      // La redirección se maneja después de una acción exitosa.
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect") || "/";
       window.location.replace(redirectTo);
@@ -123,7 +121,6 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={handleContinueAsGuest}
-          // El botón se deshabilita si estamos cargando o si los términos se muestran pero no han sido aceptados.
           disabled={isLoading || (showGuestTerms && !guestTermsAccepted)}
           className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -131,7 +128,6 @@ export default function LoginForm() {
         </button>
       </div>
 
-      {/* El checkbox de Términos y Condiciones solo aparece después del primer clic */}
       {showGuestTerms && (
         <div className="mt-4">
           <div className="flex items-center">

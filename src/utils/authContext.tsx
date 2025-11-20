@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-// 1. Importar la tienda de Nanostores
 import { $auth } from "./authStore";
-// Importar las interfaces compartidas
 import type { User, AuthState } from "../utils/auth";
 
 export interface AuthContextType {
@@ -13,8 +11,6 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
-
-// Provider principal
 
 export const USER_STORAGE_KEY = "app_user_data";
 

@@ -10,9 +10,6 @@ export default function CartView() {
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
-    // La página de checkout será la que requiera autenticación.
-    // Si el usuario no está autenticado, lo redirigimos al login,
-    // y le decimos al login que nos devuelva a la página de checkout después.
     if (!isAuthenticated) {
       window.location.href = "/login?redirect=/checkout";
     } else {
@@ -28,7 +25,7 @@ export default function CartView() {
           Parece que aún no has añadido ningún servicio.
         </p>
         <a
-          href="/#Servicios"
+          href="/servicios"
           className="mt-6 inline-block bg-naranja-c text-white font-bold py-2 px-6 rounded-lg hover:bg-naranja-f transition-colors"
         >
           Explorar Servicios
@@ -45,9 +42,8 @@ export default function CartView() {
                 {items.map((item) => (
                 <li key={item.id} className="flex flex-col sm:flex-row py-6 px-4 sm:px-6">
                     <div className="flex-shrink-0">
-                        {/* Placeholder para imagen del servicio */}
-                        <div className="w-24 h-24 rounded-md bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-500 text-xs">Imagen</span>
+                        <div className="max-w-24 max-h-24 rounded-md bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <img src={item.urlImagen} alt="Imagen del servicio" className="w-full object-cover"/>
                         </div>
                     </div>
 
@@ -59,7 +55,6 @@ export default function CartView() {
                         <p className="mt-1 text-sm text-gray-500">Precio por persona</p>
 
                         <div className="mt-4 flex items-center justify-between">
-                            {/* Selector de cantidad */}
                             <div className="flex items-center gap-2">
                                 <label htmlFor={`quantity-${item.id}`} className="text-sm font-medium text-gray-700">Pasajeros:</label>
                                 <div className="flex items-center border border-gray-300 rounded-md">
@@ -82,8 +77,6 @@ export default function CartView() {
                                     >+</button>
                                 </div>
                             </div>
-
-                            {/* Botón de eliminar */}
                             <button
                                 onClick={() => removeServiceFromCart(item.id)}
                                 type="button"
@@ -97,7 +90,6 @@ export default function CartView() {
                 ))}
             </ul>
 
-            {/* Resumen y Checkout */}
             <div className="border-t border-gray-200 py-6 px-4 sm:px-6">
                 <div className="flex justify-between text-xl font-bold text-gray-900">
                     <p>Subtotal</p>
@@ -115,7 +107,7 @@ export default function CartView() {
                 <div className="mt-6 flex justify-center text-sm text-center text-gray-500">
                     <p>
                         o{' '}
-                        <a href="/#Servicios" className="text-naranja-c font-medium hover:text-naranja-f">
+                        <a href="/servicios" className="text-naranja-c font-medium hover:text-naranja-f">
                             continuar explorando
                             <span aria-hidden="true"> &rarr;</span>
                         </a>

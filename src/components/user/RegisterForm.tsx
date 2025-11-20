@@ -18,7 +18,6 @@ export default function RegisterForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Estado para el formulario de verificación
   const [verificationCode, setVerificationCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -26,7 +25,6 @@ export default function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Efecto para manejar el temporizador de reenvío de código
   useEffect(() => {
     if (currentStep === "verify" && resendCooldown > 0) {
       const timer = setTimeout(() => {
@@ -51,9 +49,8 @@ export default function RegisterForm() {
 
     try {
       await registerUser({ email, password }); //fullName,phoneNumber
-      // Si el registro es exitoso, cambiamos al paso de verificación
       setCurrentStep("verify");
-      setResendCooldown(60); // Iniciar temporizador de 60 segundos
+      setResendCooldown(60);
     } catch (err: any) {
       let errorMessage = "Ocurrió un error durante el registro.";
       if (err && err.message) {
@@ -62,13 +59,13 @@ export default function RegisterForm() {
           if (errorData.error === "El usuario ya existe pero no fue verificado. Se envió un nuevo código.") {
             setCurrentStep("verify");
             setResendCooldown(60);
-            setError(null); // Limpiar cualquier error previo
-            return; // Salir temprano ya que hemos manejado este caso específico
+            setError(null); 
+            return;
           } else {
             errorMessage = errorData.error || errorMessage;
           }
         } catch (parseError) {
-          errorMessage = err.message; // Si err.message no es un JSON válido, usarlo directamente
+          errorMessage = err.message;
         }
       }
       setError(errorMessage);
@@ -86,8 +83,7 @@ export default function RegisterForm() {
 
     try {
       await verifyAndLoginUser(email, verificationCode);
-      // Si la verificación es exitosa, redirigimos al perfil o a la página principal.
-      window.location.href = "/"; // O '/'
+      window.location.href = "/"; 
     } catch (err: any) {
       setError(
         err.message || "El código de verificación es incorrecto o ha expirado."
@@ -99,13 +95,10 @@ export default function RegisterForm() {
 
   const handleResendCode = async () => {
     if (resendCooldown > 0) return;
-
-    // Usamos un estado de carga temporal para no bloquear el input principal
     setError(null);
     try {
-      // Llamamos a la nueva acción específica para reenviar el código.
       await resendVerificationCode(email, "register");
-      setResendCooldown(60); // Reiniciar el temporizador
+      setResendCooldown(60);
     } catch (err: any) {
       setError(
         err.message || "No se pudo reenviar el código. Intenta más tarde."
@@ -180,7 +173,6 @@ export default function RegisterForm() {
       )}
 
       <div className="rounded-md shadow-sm -space-y-px">
-        {/* Correo electrónico */}
         <div>
           <label htmlFor="email-address" className="sr-only">
             Correo electrónico
@@ -198,7 +190,6 @@ export default function RegisterForm() {
             disabled={isLoading}
           />
         </div>
-        {/* Contraseña y Repetir Contraseña en la misma fila */}
         <div className="flex -space-x-px">
           <div className="w-full">
             <label htmlFor="password" className="sr-only">
@@ -237,7 +228,6 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      {/* Términos y Condiciones */}
       <div className="flex items-center">
         <input
           id="terms-and-conditions"

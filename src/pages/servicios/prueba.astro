@@ -93,7 +93,14 @@ const additionalItems = serviceData.additional;
     />
     <title>{serviceData.name} - Tour en World International</title>
   </head>
-  <body class="bg-gray-50 font-redhat">
+  <body
+  serviceImagen!
+    class="bg-gray-50 font-redhat"
+    data-service-id={serviceData.id}
+    data-service-name={serviceData.name}
+    data-service-cost={serviceData.cost}
+    data-service-imagen={serviceData.mediaFiles.urlBG1}
+  >
     <Header />
     <main>
       <!-- ================================================== -->
@@ -294,17 +301,22 @@ const additionalItems = serviceData.additional;
     </main>
 
     <!-- Contenedor que sirve de límite para el botón sticky -->
-    <div id="reservar-fixed-btn" class="flex gap-8 fixed bottom-8 place-self-center">
-        <a
-          href={`/reservar?servicio=${serviceData.id_name}`}
-          class=" bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
-          >Reservar Ya</a
-        >
-        <a
-          href={`/reservar?servicio=${serviceData.id_name}`}
-          class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
-          >Reservar Ya</a
-        >
+    <div
+      id="reservar-fixed-btn"
+      class="flex gap-8 fixed bottom-8 place-self-center"
+    >
+      <button
+        id="add-to-cart-btn"
+        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+      >
+        Agregar al carrito
+      </button>
+
+      <a
+        href={`/reservar?servicio=${serviceData.id_name}`}
+        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+        >Reservar Ya</a
+      >
     </div>
     <!-- ======================================== -->
     <!-- ========= MODAL PARA IMÁGENES ======== -->
@@ -326,7 +338,22 @@ const additionalItems = serviceData.additional;
       />
     </div>
     <Footer />
+    <script>
+      import { handleAddToCart } from "./funcionesServicio";
 
+      const service = {
+        id: document.body.dataset.serviceId!,
+        name: document.body.dataset.serviceName!,
+        price: parseFloat(document.body.dataset.serviceCost!),
+        urlImagen:document.body.dataset.serviceImagen!,
+      };
+
+      const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+      addToCartBtn?.addEventListener("click", () => {
+        handleAddToCart(service);
+      });
+    </script>
     <script>
       const modal = document.getElementById("image-modal");
       const modalImage = document.getElementById(
@@ -411,32 +438,31 @@ const additionalItems = serviceData.additional;
 
       // --- Lógica para anclar el botón de reserva al final ---
       const reservarBtn = document.getElementById("reservar-fixed-btn");
-const anchorContainer = document.getElementById("contenedor-btn");
+      const anchorContainer = document.getElementById("contenedor-btn");
 
-if (reservarBtn && anchorContainer) {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          // El contenedor ya alcanzó la zona donde está el botón
-          anchorContainer.appendChild(reservarBtn);
-          reservarBtn.style.position = "absolute";
-        } else {
-          // El contenedor aún no llega → botón sigue fijo en pantalla
-          document.body.appendChild(reservarBtn);
-          reservarBtn.style.position = "fixed";
-        }
-      });
-    },
-    {
-      root: null,     // usamos el viewport
-      threshold: 0,   // apenas el contenedor entra en el área del botón
-    }
-  );
+      if (reservarBtn && anchorContainer) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                // El contenedor ya alcanzó la zona donde está el botón
+                anchorContainer.appendChild(reservarBtn);
+                reservarBtn.style.position = "absolute";
+              } else {
+                // El contenedor aún no llega → botón sigue fijo en pantalla
+                document.body.appendChild(reservarBtn);
+                reservarBtn.style.position = "fixed";
+              }
+            });
+          },
+          {
+            root: null, // usamos el viewport
+            threshold: 0, // apenas el contenedor entra en el área del botón
+          }
+        );
 
-  observer.observe(anchorContainer);
-}
-
+        observer.observe(anchorContainer);
+      }
     </script>
   </body>
 </html>

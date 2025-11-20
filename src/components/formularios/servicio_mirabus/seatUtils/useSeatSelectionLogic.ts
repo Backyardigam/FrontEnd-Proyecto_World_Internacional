@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import type { Seat } from "./interfaceBus.tsx"; // Importar Seat desde interfaceBus.tsx
-import { getAdjacentSeats } from "./seatFunctions"; // Importar getAdjacentSeats desde el nuevo archivo
+import type { Seat } from "./interfaceBus.tsx";
+import { getAdjacentSeats } from "./seatFunctions";
 
 interface UseSeatSelectionLogicResult {
   seatAdjacencyMap: Map<string, string[]>;
@@ -10,7 +10,7 @@ interface UseSeatSelectionLogicResult {
 
 export function useSeatSelectionLogic(initialSeatsData: Seat[]): UseSeatSelectionLogicResult {
 
-  // ENFOQUE DE GRAFO: Pre-calculamos el mapa de adyacencias de todo el bus UNA SOLA VEZ.
+  //Mapa de adyacencias
   const seatAdjacencyMap = useMemo(() => {
     const map = new Map<string, string[]>();
     initialSeatsData.forEach(seat => {
@@ -18,10 +18,10 @@ export function useSeatSelectionLogic(initialSeatsData: Seat[]): UseSeatSelectio
       map.set(seat.id, neighbors.map(n => n.id));
     });
     return map;
-  }, [initialSeatsData]); // initialSeatsData es estable, por lo que esto solo se ejecuta una vez.
+  }, [initialSeatsData]);
 
 
-  // REGLA 1: Valida que todos los asientos seleccionados formen un único bloque.
+  // REGLA 1: Valida que todos los asientos seleccionados formen un unico bloque
   const areSeatsContiguous = useCallback((selectedSeats: Seat[]): boolean => {
     if (selectedSeats.length <= 1) {
       return true;
@@ -35,7 +35,7 @@ export function useSeatSelectionLogic(initialSeatsData: Seat[]): UseSeatSelectio
       const current = queue.shift()!;
       const neighborIds = seatAdjacencyMap.get(current.id) || [];
 
-      // Filtramos para obtener solo los vecinos que también están en la selección actual.
+      // Filtramos para obtener solo los vecinos que también están en la seleccion actual
       const neighbors = selectedSeats.filter(s => neighborIds.includes(s.id));
 
       for (const neighbor of neighbors) {
@@ -48,13 +48,13 @@ export function useSeatSelectionLogic(initialSeatsData: Seat[]): UseSeatSelectio
     return visited.size === selectedSeats.length;
   }, [seatAdjacencyMap]);
 
-  // REGLA 2: Valida que al deseleccionar no se parta el bloque en dos.
+  // REGLA 2: Valida que al deseleccionar no se parta el bloque en dos
   const wouldSplitBlock = useCallback((seatIdToDeselect: string, currentSelection: Seat[]): boolean => {
     if (currentSelection.length <= 2) {
-      return false; // No se puede partir un bloque de 2 o menos asientos.
+      return false;
     }
     const remainingSelection = currentSelection.filter(s => s.id !== seatIdToDeselect);
-    // Si los asientos restantes no son contiguos, la deselección partiría el bloque.
+    // Si los asientos restantes no son contiguos, la deseleccion partiría el bloque
     return !areSeatsContiguous(remainingSelection);
   }, [areSeatsContiguous]);
 

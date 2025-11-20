@@ -11,14 +11,12 @@ export default function UserProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sincroniza el formulario con los datos del usuario cuando entra en modo edición
   useEffect(() => {
     if (user) {
       setFormData({ name: user.name || "", phoneNumber: user.phoneNumber || "" });
     }
   }, [user, isEditing]);
 
-  // Esqueleto de carga
   if (loading || !user) {
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 animate-pulse">
@@ -43,7 +41,7 @@ export default function UserProfile() {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
       });
-      setIsEditing(false); // Salir del modo edición al guardar con éxito
+      setIsEditing(false);
     } catch (err: any) {
       setError(err.message || "No se pudieron guardar los cambios.");
     } finally {
@@ -65,11 +63,9 @@ export default function UserProfile() {
   return (
     <div className="min-h-screen py-10">
       <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        {/* Sección de Datos del Usuario */}
         <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6">
-              {/* Avatar */}
               <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden self-center mb-4 sm:mb-0">
                 {user.avatar ? (
                   <img
@@ -83,7 +79,6 @@ export default function UserProfile() {
                   </div>
                 )}
               </div>
-              {/* Información */}
               <div className="text-center sm:text-left">
                 {isEditing ? (
                   <div className="space-y-2">
@@ -113,7 +108,6 @@ export default function UserProfile() {
               </div>
             </div>
             {error && <div className="mt-4 p-2 text-red-700 bg-red-100 rounded-lg text-center">{error}</div>}
-            {/* Botones de acción */}
             <div className="mt-6 text-right space-x-4">
               {isEditing ? (
                 <>
@@ -143,13 +137,11 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Sección de Historial de Boletos */}
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Historial de Boletos
             </h2>
-            {/* Placeholder para el historial */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <p className="text-gray-500">
                 Aquí se mostrará tu historial de boletos comprados.

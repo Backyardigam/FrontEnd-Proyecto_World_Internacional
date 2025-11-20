@@ -74,7 +74,6 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
       let lastScrollY = window.scrollY;
 
       function handleHeaderVisibility() {
-        // Aparece después de un pequeño scroll inicial
         if (window.scrollY > 100) {
           header?.classList.remove("opacity-0", "-translate-y-full");
         } else {
@@ -123,14 +122,12 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Selecciona todos los enlaces de navegación que apuntan a un ancla en la página de inicio.
       const navLinks = document.querySelectorAll('header nav a[href^="/#"]');
 
       navLinks.forEach((link) => {
         link.addEventListener("click", (event) => {
-          // Solo aplicamos la lógica de scroll suave si estamos en la página de inicio.
           if (window.location.pathname === "/") {
-            event.preventDefault(); // Prevenimos la navegación por defecto.
+            event.preventDefault(); 
 
             const href = link.getAttribute("href");
             if (!href) return;

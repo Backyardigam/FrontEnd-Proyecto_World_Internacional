@@ -11,9 +11,8 @@ import "../../styles/global.css";
 
 export const prerender = false;
 
-const { servicio: id_name } = Astro.params; // pbtenemos el 'id_name' de la URL
+const { servicio: id_name } = Astro.params;
 let serviceData: ServiceContent;
-
 
 try {
   const allServices: ServiceDetails[] = await getAllServices();
@@ -62,26 +61,27 @@ const additionalItems = serviceData.additional ?? [];
     />
     <title>{serviceData.name} - Tour en World International</title>
   </head>
-  <body class="bg-gray-50 font-redhat">
+  <body
+    class="bg-gray-50 font-redhat"
+    data-service-id={id_name}
+    data-service-name={serviceData.name}
+    data-service-cost={serviceData.cost}
+    data-service-imagen={serviceData.mediaFiles.urlBg1}
+  >
     <Header />
     <main>
-      
-      
-      
       <section
         id="hero-section"
         class="relative w-full min-h-screen text-white flex items-center justify-center pt-14"
       >
-        
         <img
-          src={serviceData.mediaFiles.urlBG1}
+          src={serviceData.mediaFiles.urlBg1}
           alt={`Paisaje del tour ${serviceData.name}`}
           class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125"
         />
-        
+
         <div class="absolute inset-0 bg-black/40"></div>
 
-        
         <div
           class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16"
         >
@@ -107,11 +107,9 @@ const additionalItems = serviceData.additional ?? [];
 
           <hr class="border-t-1 border-white my-8" />
 
-          
           <div
             class="grid self-center grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl"
           >
-            
             <div class="flex flex-col">
               <h3 class="text-xl font-semibold mb-4 text-naranja-c">
                 Lugares que visitarás
@@ -121,7 +119,6 @@ const additionalItems = serviceData.additional ?? [];
               </ul>
             </div>
 
-            
             <div
               class="bg-stone-100/90 text-slate-800 rounded-lg p-6 shadow-lg"
             >
@@ -147,9 +144,6 @@ const additionalItems = serviceData.additional ?? [];
         </div>
       </section>
 
-      
-      
-      
       <section class="py-16 md:py-24 bg-gray-100">
         <div class="container mx-auto px-4">
           <h2
@@ -162,7 +156,6 @@ const additionalItems = serviceData.additional ?? [];
             circuito.
           </p>
 
-          
           <div class="text-center mb-8 place-self-end">
             <button
               id="toggle-gallery-btn"
@@ -172,13 +165,12 @@ const additionalItems = serviceData.additional ?? [];
             </button>
           </div>
 
-          
           <div
             id="gallery-container"
             class="flex gap-4 overflow-x-auto pb-4 -mb-4 transition-all duration-500"
           >
             {
-              serviceData.mediaFiles.urlGallery.map((url, index) => (
+              serviceData.mediaFiles.urlGalery.map((url, index) => (
                 <div class="gallery-item flex-shrink-0 w-80 h-56 rounded-lg overflow-hidden shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300">
                   <img
                     src={url}
@@ -193,22 +185,17 @@ const additionalItems = serviceData.additional ?? [];
         </div>
       </section>
 
-      
-      
-      
       <section
         class="relative w-full min-h-screen text-white flex flex-col items-center justify-center"
       >
-        
         <img
-          src={serviceData.mediaFiles.urlBG2}
+          src={serviceData.mediaFiles.urlBg2}
           alt={`Paisaje del tour ${serviceData.name}`}
           class="absolute inset-0 w-full h-full object-cover filter sepia-[.20] saturate-125"
         />
-        
+
         <div class="absolute inset-0 bg-black/40"></div>
 
-        
         <div
           class="relative w-full md:w-[65%] min-h-screen bg-slate-600/30 backdrop-blur-sm flex flex-col justify-center p-8 sm:p-12 md:p-16"
         >
@@ -224,18 +211,15 @@ const additionalItems = serviceData.additional ?? [];
             algunos consejos para que disfrutes al máximo.
           </p>
 
-          
           <img
             src={serviceData.mediaFiles.urlTrip}
             alt={`Mapa del recorrido de ${serviceData.name}`}
-            class="w-full max-w-2xl self-center rounded-lg shadow-lg my-4"
+            class="w-full max-h-80 self-center object-contain rounded-lg shadow-lg my-4"
           />
 
-          
           <div
-            class="grid self-center grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-8"
+            class="grid self-center grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mt-8 mb-20"
           >
-            
             <div class="flex flex-col">
               <h3 class="text-xl font-semibold mb-4 text-naranja-c">
                 Recomendaciones
@@ -244,7 +228,7 @@ const additionalItems = serviceData.additional ?? [];
                 {recomendationItems.map((item) => <li>{item}</li>)}
               </ul>
             </div>
-            
+
             <div class="flex flex-col">
               <h3 class="text-xl font-semibold mb-4 text-naranja-c">
                 Información Adicional
@@ -254,33 +238,38 @@ const additionalItems = serviceData.additional ?? [];
               </ul>
             </div>
           </div>
-          
-          <div id="contenedor-btn" class="relative w-full h-10 mt-20">
-            
-          </div>
+
+          <div id="contenedor-btn" class="absolute bottom-0 w-full h-10 mt-20 self-center"></div>
         </div>
       </section>
     </main>
 
-    
     <div
       id="reservar-fixed-btn"
       class="flex gap-8 fixed bottom-8 place-self-center"
     >
+      {
+        serviceData.type === "tour" && (
+          <button
+            id="add-to-cart-btn"
+            class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+          >
+            Agregar al carrito
+          </button>
+        ) || null
+      }
+
+      {serviceData.type === "mirabus" ? (
+        <a href={`/reservar/formirabus?servicio=${id_name}`} class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105">Reservar Ya</a>
+      ) : (
       <a
         href={`/reservar?servicio=${id_name}`}
         class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
         >Reservar Ya</a
       >
-      <a
-        href={`/reservar?servicio=${id_name}`}
-        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
-        >Reservar Ya</a
-      >
+      )}
     </div>
-    
-    
-    
+
     <div
       id="image-modal"
       class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
@@ -298,7 +287,22 @@ const additionalItems = serviceData.additional ?? [];
       />
     </div>
     <Footer />
+    <script>
+      import { handleAddToCart } from "./funcionesServicio";
 
+      const service = {
+        id: document.body.dataset.serviceId!,
+        name: document.body.dataset.serviceName!,
+        price: parseFloat(document.body.dataset.serviceCost!),
+        urlImagen: document.body.dataset.serviceImagen!,
+      };
+
+      const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+      addToCartBtn?.addEventListener("click", () => {
+        handleAddToCart(service);
+      });
+    </script>
     <script>
       const modal = document.getElementById("image-modal");
       const modalImage = document.getElementById(

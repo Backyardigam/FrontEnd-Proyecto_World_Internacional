@@ -40,24 +40,23 @@ export interface RequestSeatDeselectionPayload {
 export type InitialSeatStatePayload = Bus[];
 
 export interface SeatStatusUpdatedPayload {
-  busOrden: string; // <-- AÑADIDO: Para saber en qué bus ocurrió el cambio
+  busOrden: string;
   seatId: string;
   newStatus: SeatStatus;
-  userId: string; // Para saber quién hizo el cambio
+  userId: string;
 }
 
 export interface SelectionFailedPayload {
-  busOrden: string; // <-- AÑADIDO: Para saber en qué bus falló
+  busOrden: string;
   seatId: string;
   reason: string;
-  currentState: Seat; // El estado actual real del asiento para corregir la UI
+  currentState: Seat;
 }
 
 export interface SessionExpiredPayload {
   reason: string;
 }
 
-// Mapa de tipos para usar con un cliente de socket.io tipado
 export interface ServerToClientEvents {
   [SocketEvents.INITIAL_SEAT_STATE]: (payload: InitialSeatStatePayload) => void;
   [SocketEvents.SEAT_STATUS_UPDATED]: (

@@ -27,7 +27,7 @@ const { servicio, style } = Astro.props;
   data-service-card
 >
   {servicio.type === 'mirabus' && <TagMirabus />}
-  <div class="">
+  <div class="overflow-hidden">
     <img src={servicio.mediaFiles[0]} alt={`Imagen del tour ${servicio.name}`} class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
   </div>
   <div class="p-5 gap-4 flex flex-col flex-grow">
@@ -56,9 +56,7 @@ const { servicio, style } = Astro.props;
             </p>
           </div>
           <div class="bg-naranja-c  rounded-sm p-2 text-white min-w-[106px]">
-            <!-- <a href={`/servicios/${servicio.id_name}`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a> -->
-             <!-- Por mientras usamos el de prueba ya que el oficial aun no esta terminado -->
-            <a href={`/servicios/prueba`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a>
+            <a href={`/servicios/${servicio.id_name}`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a>
           </div>
         </div>
       </div>

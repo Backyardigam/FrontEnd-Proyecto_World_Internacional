@@ -1,6 +1,6 @@
 export type SeatStatus =
   | "available"
-  | "pending" // Ideal para cuando otro usuario está en proceso de selección
+  | "pending" 
   | "selected"
   | "occupied"
   | "reserved"
@@ -14,7 +14,7 @@ export interface Seat {
 }
 
 export interface Bus {
-  ordenBus: string; //codigo de bus
+  ordenBus: string;
   seats: Seat[];
 }
 
