@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $cart, removeServiceFromCart, updateServiceQuantity } from "../../utils/cartStore";
 import { $auth } from "../../utils/authStore";
+import { $discounts } from "../../utils/discountStore";
+import { getDiscountInfo } from "../../utils/discountUtils";
+import DiscountTag from "../generales/DiscountTag";
 
 export default function CartView() {
   const { items } = useStore($cart);
   const { isAuthenticated } = useStore($auth);
+  const allDiscounts = useStore($discounts);
   const [hasMounted, setHasMounted] = useState(false);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
@@ -13,7 +17,11 @@ export default function CartView() {
     setHasMounted(true);
   }, []);
 
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = items.reduce((acc, item) => {
+    const itemDiscount = allDiscounts[item.id];
+    const { finalPrice } = getDiscountInfo(item.price, itemDiscount);
+    return acc + finalPrice * item.quantity;
+  }, 0);
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -68,7 +76,9 @@ export default function CartView() {
                     <div className="ml-0 sm:ml-6 mt-4 sm:mt-0 flex-1 flex flex-col">
                         <div className="flex justify-between">
                             <h3 className="text-lg font-medium text-gray-900">{item.serviceName}</h3>
-                            <p className="ml-4 text-lg font-semibold text-gray-900">S/ {item.price.toFixed(2)}</p>
+                            <div className="ml-4">
+                                <DiscountTag original={item.price} discount={allDiscounts[item.id]} variant="compact" />
+                            </div>
                         </div>
                         <p className="mt-1 text-sm text-gray-500">Precio por persona</p>
 

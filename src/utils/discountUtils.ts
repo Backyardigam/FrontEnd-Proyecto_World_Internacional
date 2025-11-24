@@ -16,7 +16,7 @@ export function getDiscountInfo(originalPrice: number, discount?: Discount) {
       isActive: false,
       finalPrice: originalPrice,
       percent: 0,
-      expiresSoon: false,
+      expirationMessage: null,
       expired: false,
     };
   }
@@ -35,15 +35,19 @@ export function getDiscountInfo(originalPrice: number, discount?: Discount) {
     ? Math.round((discount.discountAmount / originalPrice) * 100)
     : 0;
 
-  const expiresSoon =
-    isActive &&
-    expirationDate.getTime() - now.getTime() < 1000 * 60 * 60 * 24 * 3; // <3 días
+  let expirationMessage: string | null = null;
+  if (isActive) {
+    const day = expirationDate.getDate().toString().padStart(2, '0');
+    const month = (expirationDate.getMonth() + 1).toString().padStart(2, '0'); // getMonth() es 0-indexed
+    const year = expirationDate.getFullYear();
+    expirationMessage = `Oferta disponible hasta el ${day}/${month}/${year}`;
+  }
 
   return {
     isActive,
     expired,
     finalPrice,
     percent,
-    expiresSoon,
+    expirationMessage,
   };
 }

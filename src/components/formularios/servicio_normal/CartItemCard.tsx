@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import type { CartItem, PassengerFormData } from "../../../utils/cartStore";
 import {
   updateItemDetails,
   removeServiceFromCart,
   updateServiceQuantity,
 } from "../../../utils/cartStore";
+import { $discounts } from "../../../utils/discountStore";
+import DiscountTag from "../../generales/DiscountTag";
 import Formulario from "../servicio_mirabus/Formulario";
 
 interface CartItemCardProps {
@@ -12,6 +15,9 @@ interface CartItemCardProps {
 }
 
 export default function CartItemCard({ item }: CartItemCardProps) {
+  const allDiscounts = useStore($discounts);
+  const itemDiscount = allDiscounts[item.id];
+
   const [fecha, setFecha] = useState(item.fecha || "");
   const [horario, setHorario] = useState(item.horario || "");
   const [buyerData, setBuyerData] = useState<PassengerFormData | null>(
@@ -53,12 +59,14 @@ export default function CartItemCard({ item }: CartItemCardProps) {
         <img src={item.urlImagen} alt={item.serviceName} className="w-full md:w-48 h-32 object-cover rounded-md" />
         <div className="flex-grow">
           <div className="flex justify-between items-start">
-            <h3 className="text-xl font-bold text-gray-800">{item.serviceName}</h3>
+            <h3 className="text-xl font-bold text-gray-800 pr-4">{item.serviceName}</h3>
             <button onClick={handleRemove} className="text-red-500 hover:text-red-700 font-semibold">
               Eliminar
             </button>
           </div>
-          <p className="text-lg font-semibold text-naranja-c mt-1">S/ {item.price.toFixed(2)}</p>
+          <div className="mt-1">
+            <DiscountTag original={item.price} discount={itemDiscount} variant="compact" />
+          </div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>

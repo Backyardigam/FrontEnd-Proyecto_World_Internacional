@@ -1,6 +1,6 @@
 ---
-import TagIcon from "../../iconos/TagIcon.astro";
 import TagMirabus from "../TagMirabus.astro";
+import ServicePrice from "./ServicePrice.tsx";
 
 export interface Props {
   servicio: CardData;
@@ -48,14 +48,12 @@ const { servicio, style } = Astro.props;
             ))}
           </ul>
         </div>
-        <div class="flex flex-col gap-2 items-center">
-          <div class="flex gap-2">
-            <TagIcon style="w-4" />
-            <p>
-              S/. {servicio.cost}
-            </p>
-          </div>
-          <div class="bg-naranja-c  rounded-sm p-2 text-white min-w-[106px]">
+        <div class="flex flex-col items-center gap-2">
+          <ServicePrice 
+            serviceId={servicio.id_name} 
+            originalPrice={parseFloat(servicio.cost)} 
+            client:visible />
+          <div class="bg-naranja-c rounded-sm p-2 text-white min-w-[106px] text-center">
             <a href={`/servicios/${servicio.id_name}`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a>
           </div>
         </div>

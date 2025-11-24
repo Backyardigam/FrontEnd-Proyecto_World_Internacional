@@ -7,6 +7,7 @@ import {
 import { ApiError } from "../../utils/apiClient";
 import Header from "../../components/generales/Header.astro";
 import Footer from "../../components/generales/Footer.astro";
+import ServicePrice from "../../components/homepage/seccion_servicio/ServicePrice.tsx";
 import "../../styles/global.css";
 
 export const prerender = false;
@@ -127,6 +128,15 @@ const additionalItems = serviceData.additional ?? [];
               <h3 class="text-2xl font-bold mb-4 text-naranja-c">
                 Detalles del Tour
               </h3>
+              <div class="mb-4 border-b border-gray-300 pb-4">
+                <h4 class="font-semibold mb-2">Precio por persona:</h4>
+                <ServicePrice
+                  serviceId={id_name!}
+                  originalPrice={parseFloat(serviceData.cost)}
+                  variant="full"
+                  client:load
+                />
+              </div>
               <h4 class="font-semibold mb-2">Incluye:</h4>
               <ul class="list-disc list-inside space-y-1 mb-4 font-medium">
                 {serviceData.tag.map((item) => <li>{item}</li>)}
@@ -267,13 +277,15 @@ const additionalItems = serviceData.additional ?? [];
       }
 
       {
-        <button
-          id="reserve-now-btn"
-          data-service-type={serviceData.type}
-          class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
-        >
-          Reservar Ya
-        </button>
+        (
+          <button
+            id="reserve-now-btn"
+            data-service-type={serviceData.type}
+            class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+          >
+            Reservar Ya
+          </button>
+        )
       }
     </div>
 
@@ -300,9 +312,11 @@ const additionalItems = serviceData.additional ?? [];
         handleReserveNow,
         handleReserveMirabus,
       } from "./funcionesServicio";
-      import type {Schedule} from "../../components/homepage/seccion_servicio/services";
+      import type { Schedule } from "../../components/homepage/seccion_servicio/services";
 
-      const schedule:Schedule = JSON.parse(document.body.dataset.serviceSchedule!);
+      const schedule: Schedule = JSON.parse(
+        document.body.dataset.serviceSchedule!
+      );
 
       const service = {
         id: document.body.dataset.serviceId!,
@@ -321,7 +335,7 @@ const additionalItems = serviceData.additional ?? [];
 
       reserveNowBtn?.addEventListener("click", () => {
         const serviceType = (reserveNowBtn as HTMLElement).dataset.serviceType;
-        if (serviceType === 'mirabus') {
+        if (serviceType === "mirabus") {
           handleReserveMirabus(service.id);
         } else {
           handleReserveNow(service);
