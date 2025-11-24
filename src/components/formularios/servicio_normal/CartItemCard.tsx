@@ -16,7 +16,7 @@ interface CartItemCardProps {
 
 export default function CartItemCard({ item }: CartItemCardProps) {
   const allDiscounts = useStore($discounts);
-  const itemDiscount = allDiscounts[item.id];
+  const itemDiscount = allDiscounts[item.uuid];
 
   const [fecha, setFecha] = useState(item.fecha || "");
   const [horario, setHorario] = useState(item.horario || "");

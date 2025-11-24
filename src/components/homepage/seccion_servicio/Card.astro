@@ -51,7 +51,8 @@ const { servicio, style } = Astro.props;
         <div class="flex flex-col items-center gap-2">
           <ServicePrice 
             serviceId={servicio.id} 
-            originalPrice={parseFloat(servicio.cost)} 
+            originalPrice={parseFloat(servicio.cost)}
+            variant="minimal"
             client:visible />
           <div class="bg-naranja-c rounded-sm p-2 text-white min-w-[106px] text-center">
             <a href={`/servicios/${servicio.id_name}`} aria-label={`Conoce más sobre el tour ${servicio.name}`}>Conoce más</a>

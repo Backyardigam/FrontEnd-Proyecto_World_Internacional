@@ -1,4 +1,4 @@
-import { map } from "nanostores";
+import { map, atom } from "nanostores";
 import { apiGet } from "./apiClient";
 import type { Discount } from "./discountUtils";
 
@@ -22,6 +22,7 @@ export interface ApiDiscountResponse {
  * }
  */
 export const $discounts = map<Record<string, Discount>>({});
+export const $discountsLoading = atom<boolean>(true);
 
 let hasFetched = false;
 
@@ -32,6 +33,7 @@ let hasFetched = false;
 export async function fetchAllDiscounts() {
   if (hasFetched) return;
 
+  $discountsLoading.set(true);
   try {
     const responseFromApi = await apiGet<ApiDiscountResponse[]>("/services/discount");
     const discountsMap: Record<string, Discount> = {};
@@ -54,5 +56,7 @@ export async function fetchAllDiscounts() {
     hasFetched = true;
   } catch (error) {
     console.error("Error fetching discounts:", error);
+  } finally {
+    $discountsLoading.set(false);
   }
 }

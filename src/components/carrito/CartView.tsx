@@ -77,7 +77,7 @@ export default function CartView() {
                         <div className="flex justify-between">
                             <h3 className="text-lg font-medium text-gray-900">{item.serviceName}</h3>
                             <div className="ml-4">
-                                <DiscountTag original={item.price} discount={allDiscounts[item.id]} variant="compact" />
+                                <DiscountTag original={item.price} discount={allDiscounts[item.uuid]} variant="compact" />
                             </div>
                         </div>
                         <p className="mt-1 text-sm text-gray-500">Precio por persona</p>
