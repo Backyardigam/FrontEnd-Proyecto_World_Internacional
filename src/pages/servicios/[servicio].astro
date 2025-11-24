@@ -15,6 +15,7 @@ const { servicio: id_name } = Astro.params;
 let serviceData: ServiceContent;
 
 try {
+  //Guardar el id para los descuentos
   const allServices: ServiceDetails[] = await getAllServices();
   const currentService = allServices.find(
     (service) => service.id_name === id_name

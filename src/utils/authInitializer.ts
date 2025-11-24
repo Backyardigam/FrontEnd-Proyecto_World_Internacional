@@ -1,5 +1,6 @@
 import { apiGet } from "./apiClient";
 import { $auth } from "./authStore";
+import { fetchAllDiscounts } from "./discountStore";
 import { isBrowser } from "./environment";
 import type { User } from "./auth";
 
@@ -9,6 +10,7 @@ const USER_STORAGE_KEY = 'app_user_data';
  * Esta función se ejecuta en el lado del cliente en cada carga de pagina.
  * Su unico proposito es verificar si existe una sesion valida y actualizar
  * la tienda global de Nanostores ($auth) en consecuencia
+ * Adicional, tambien traer los descuentos de los productos
  */
 async function initializeAuthStore() {
   
@@ -31,5 +33,9 @@ async function initializeAuthStore() {
 }
 
 if (isBrowser) {
+  // Inicializa el store de autenticacion
   initializeAuthStore();
+
+  // Inicializa el store de descuentos
+  fetchAllDiscounts();
 }

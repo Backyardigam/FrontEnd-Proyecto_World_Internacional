@@ -55,7 +55,7 @@ interface ApiService {
   recomendations: string[];
   additional: string[];
   schedule: Schedule;
-  mediaFiles: MediaFiles; // La API devolverá el objeto MediaFiles estructurado.
+  mediaFiles: MediaFiles;
 }
 
 /**

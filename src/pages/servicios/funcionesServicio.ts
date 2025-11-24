@@ -39,13 +39,7 @@ export function handleReserveNow(service: {
     addServiceToCart(service);
     window.location.href = "/reservar";
   } else {
-    // Guardamos la intención y redirigimos al login
-    const postLoginAction = {
-      action: "RESERVE_NOW",
-      service: service,
-    };
-    sessionStorage.setItem("postLoginAction", JSON.stringify(postLoginAction));
-    window.location.href = "/login";
+    window.location.href = "/login?redirect=/reservar";
   }
 }
 
@@ -61,11 +55,6 @@ export function handleReserveMirabus(serviceIdName: string) {
     window.location.href = `/reservar/formirabus?servicio=${serviceIdName}`;
   } else {
     // Si no, guarda la intención de ir al formulario y redirige a login
-    const postLoginAction = {
-      action: "REDIRECT",
-      url: `/reservar/formirabus?servicio=${serviceIdName}`,
-    };
-    sessionStorage.setItem("postLoginAction", JSON.stringify(postLoginAction));
-    window.location.href = "/login";
+    window.location.href = "/login?redirect=/formirabus?servicio=${serviceIdName}";
   }
 }
