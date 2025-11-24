@@ -7,6 +7,8 @@ import { useAuth } from "../../../utils/authContext";
 import { apiPost } from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
+//Manejar la llamada de datos desde una ruta API
+
 const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
   console.log(`Buscando horarios para ${fecha}`);
   // Simula una llamada a la API para obtener horarios

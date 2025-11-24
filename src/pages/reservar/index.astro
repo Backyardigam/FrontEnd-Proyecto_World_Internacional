@@ -1,3 +1,21 @@
 ---
-//Aca va el formulario por defecto de los servicios
+import Header from "../../components/generales/Header.astro";
+import Footer from "../../components/generales/Footer.astro";
+import CheckoutPage from "../../components/formularios/servicio_normal/CheckoutPage.tsx";
+import "../../styles/global.css";
 ---
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/logosolo0.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - World International</title>
+</head>
+<body class="bg-gray-100">
+    <Header />
+    <main>
+        <CheckoutPage client:load />
+    </main>
+    <Footer />
+</body>
+</html>

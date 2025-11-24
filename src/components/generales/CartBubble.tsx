@@ -1,13 +1,24 @@
 import React from 'react';
 import { useStore } from '@nanostores/react';
 import { $cart } from '../../utils/cartStore';
+import { useEffect, useState } from 'react';
 
 export default function CartBubble() {
-  const { items } = useStore($cart);
-  const itemCount = items.length;
+  const cart = useStore($cart);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  if (itemCount === 0) {
-    return null;
+  // Este useEffect solo se ejecuta en el navegador, después del primer render.
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const itemCount = cart.items.length;
+
+  // Si el componente no se ha montado en el cliente O no hay items,
+  // no mostramos la burbuja. Esto asegura que el render del servidor y
+  // el primer render del cliente sean idénticos.
+  if (!hasMounted || itemCount === 0) {
+    return null; // O puedes retornar el icono base sin el contador
   }
 
   return (

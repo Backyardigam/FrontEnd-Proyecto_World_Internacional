@@ -67,6 +67,7 @@ const additionalItems = serviceData.additional ?? [];
     data-service-name={serviceData.name}
     data-service-cost={serviceData.cost}
     data-service-imagen={serviceData.mediaFiles.urlBg1}
+    data-service-schedule={JSON.stringify(serviceData.schedule)}
   >
     <Header />
     <main>
@@ -239,7 +240,11 @@ const additionalItems = serviceData.additional ?? [];
             </div>
           </div>
 
-          <div id="contenedor-btn" class="absolute bottom-0 w-full h-10 mt-20 self-center"></div>
+          <div
+            id="contenedor-btn"
+            class="absolute bottom-0 w-full h-10 mt-20 self-center"
+          >
+          </div>
         </div>
       </section>
     </main>
@@ -249,25 +254,26 @@ const additionalItems = serviceData.additional ?? [];
       class="flex gap-8 fixed bottom-8 place-self-center"
     >
       {
-        serviceData.type === "tour" && (
+        (serviceData.type === "tour" && (
           <button
             id="add-to-cart-btn"
             class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
           >
             Agregar al carrito
           </button>
-        ) || null
+        )) ||
+          null
       }
 
-      {serviceData.type === "mirabus" ? (
-        <a href={`/reservar/formirabus?servicio=${id_name}`} class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105">Reservar Ya</a>
-      ) : (
-      <a
-        href={`/reservar?servicio=${id_name}`}
-        class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
-        >Reservar Ya</a
-      >
-      )}
+      {
+        <button
+          id="reserve-now-btn"
+          data-service-type={serviceData.type}
+          class="bg-naranja-c min-w-fit max-h-fit text-white font-bold py-3 px-6 rounded-full shadow-lg z-40 hover:bg-naranja-f hover:scale-105"
+        >
+          Reservar Ya
+        </button>
+      }
     </div>
 
     <div
@@ -288,19 +294,37 @@ const additionalItems = serviceData.additional ?? [];
     </div>
     <Footer />
     <script>
-      import { handleAddToCart } from "./funcionesServicio";
+      import {
+        handleAddToCart,
+        handleReserveNow,
+        handleReserveMirabus,
+      } from "./funcionesServicio";
+      import type {Schedule} from "../../components/homepage/seccion_servicio/services";
+
+      const schedule:Schedule = JSON.parse(document.body.dataset.serviceSchedule!);
 
       const service = {
         id: document.body.dataset.serviceId!,
         name: document.body.dataset.serviceName!,
         price: parseFloat(document.body.dataset.serviceCost!),
         urlImagen: document.body.dataset.serviceImagen!,
+        schedule: schedule,
       };
 
       const addToCartBtn = document.getElementById("add-to-cart-btn");
+      const reserveNowBtn = document.getElementById("reserve-now-btn");
 
       addToCartBtn?.addEventListener("click", () => {
         handleAddToCart(service);
+      });
+
+      reserveNowBtn?.addEventListener("click", () => {
+        const serviceType = (reserveNowBtn as HTMLElement).dataset.serviceType;
+        if (serviceType === 'mirabus') {
+          handleReserveMirabus(service.id);
+        } else {
+          handleReserveNow(service);
+        }
       });
     </script>
     <script>

@@ -1,4 +1,5 @@
 import { persistentAtom } from "@nanostores/persistent";
+import type { Schedule } from "../components/homepage/seccion_servicio/services";
 
 // --- TIPOS DE DATOS --- 
 
@@ -17,6 +18,7 @@ export interface CartItem {
   serviceName: string; // Nombre para mostrar en la UI
   price: number; // Precio unitario
   urlImagen:string,
+  availableSchedules: Schedule; // <-- NUEVA PROPIEDAD
 
   // Datos que se completarán en el formulario de checkout
   quantity: number;
@@ -53,6 +55,7 @@ export function addServiceToCart(service: {
   name: string;
   price: number;
   urlImagen:string;
+  schedule: Schedule; // <-- AÑADIMOS SCHEDULE
 }) {
   const currentItems = $cart.get().items;
 
@@ -62,6 +65,7 @@ export function addServiceToCart(service: {
     serviceName: service.name,
     price: service.price,
     urlImagen:service.urlImagen,
+    availableSchedules: service.schedule, // <-- GUARDAMOS LOS HORARIOS
     quantity: 1,
     fecha: null,
     horario: null,
