@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $cart, removeServiceFromCart, updateServiceQuantity } from "../../utils/cartStore";
 import { $auth } from "../../utils/authStore";
@@ -6,18 +6,31 @@ import { $auth } from "../../utils/authStore";
 export default function CartView() {
   const { items } = useStore($cart);
   const { isAuthenticated } = useStore($auth);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
-      window.location.href = "/login?redirect=/checkout";
+      window.location.href = "/login?redirect=/reservar";
     } else {
-      window.location.href = "/checkout";
+      window.location.href = "/reservar";
     }
   };
 
-  if (items.length === 0) {
+  const handleRemoveItem = (itemId: string) => {
+    setRemovingItemId(itemId);
+    setTimeout(() => {
+      removeServiceFromCart(itemId);
+    }, 300); // Coincide con la duración de la animación
+  };
+
+  if (!hasMounted || items.length === 0) {
     return (
       <div className="text-center bg-white p-10 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold text-gray-700">Tu carrito está vacío</h2>
@@ -40,7 +53,12 @@ export default function CartView() {
         <div className="bg-white shadow-lg rounded-lg">
             <ul role="list" className="divide-y divide-gray-200">
                 {items.map((item) => (
-                <li key={item.id} className="flex flex-col sm:flex-row py-6 px-4 sm:px-6">
+                <li
+                  key={item.id}
+                  className={`flex flex-col sm:flex-row py-6 px-4 sm:px-6 transition-opacity duration-300 ${
+                    removingItemId === item.id ? 'opacity-0' : 'opacity-100'
+                  }`}
+                >
                     <div className="flex-shrink-0">
                         <div className="max-w-24 max-h-24 rounded-md bg-gray-200 flex items-center justify-center overflow-hidden">
                             <img src={item.urlImagen} alt="Imagen del servicio" className="w-full object-cover"/>
@@ -78,9 +96,9 @@ export default function CartView() {
                                 </div>
                             </div>
                             <button
-                                onClick={() => removeServiceFromCart(item.id)}
+                                onClick={() => handleRemoveItem(item.id)}
                                 type="button"
-                                className="ml-4 text-sm font-medium text-red-600 hover:text-red-800"
+                                className="ml-4 text-sm font-medium text-red-600 hover:text-red-800 hover:underline underline-offset-4"
                             >
                                 Eliminar
                             </button>

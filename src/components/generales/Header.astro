@@ -3,6 +3,7 @@ import Logo from "../iconos/Logo.astro";
 import CartIcon from "../iconos/CartIcon.astro";
 import SesionButton from "../user/SesionButton";
 import CartBubble from "./CartBubble";
+import NotificationsContainer from "../../utils/NotificationsContainer";
 
 const { pathname } = Astro.url;
 const isHomePage = pathname === "/";
@@ -48,6 +49,7 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
       <SesionButton client:load />
     </div>
 
+    <NotificationsContainer client:load />
     <button
       id="menu-btn"
       class="md:hidden focus:outline-none z-50 flex flex-col gap-1.5"

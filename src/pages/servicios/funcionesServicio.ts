@@ -1,4 +1,5 @@
 import { addServiceToCart, clearCart } from "../../utils/cartStore";
+import { addNotification } from "../../utils/notificationStore";
 import { $auth } from "../../utils/authStore";
 import type { Schedule } from "../../components/homepage/seccion_servicio/services";
 
@@ -17,8 +18,7 @@ export function handleAddToCart(service: {
   schedule: Schedule;
 }) {
   addServiceToCart(service);
-  //cambiar por uno mejor
-  alert(`"${service.name}" ha sido añadido al carrito.`);
+  addNotification(`"${service.name}" añadido al carrito.`, "success");
 }
 
 /**
