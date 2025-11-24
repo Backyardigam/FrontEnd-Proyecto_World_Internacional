@@ -37,9 +37,16 @@ export async function fetchAllDiscounts() {
     const discountsMap: Record<string, Discount> = {};
 
     for (const item of responseFromApi) {
-      // Si el objeto de descuento existe (no es null), lo añadimos al mapa.
+      // Si el objeto de descuento existe (no es null), lo añadimos al mapa
       if (item.discounts) {
-        discountsMap[item.id] = item.discounts;
+        // CORRECCIÓN: Convertimos discountAmount de string a numero antes de guardarlo
+        //OJOOOOOO: Esto deberia estar corregido en el backend pero fue p
+        const cleanDiscount: Discount = {
+          ...item.discounts,
+          discountAmount: parseFloat(item.discounts.discountAmount as any),
+        };
+
+        discountsMap[item.id] = cleanDiscount;
       }
     }
 

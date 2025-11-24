@@ -14,7 +14,7 @@ export const prerender = false;
 
 const { servicio: id_name } = Astro.params;
 let serviceData: ServiceContent;
-
+let idService;
 try {
   //Guardar el id para los descuentos
   const allServices: ServiceDetails[] = await getAllServices();
@@ -24,7 +24,7 @@ try {
   if (!currentService) {
     return new Response("Servicio no encontrado", { status: 404 });
   }
-
+  idService = currentService.id 
   serviceData = currentService.data;
 
   Astro.response.headers.set(
@@ -65,6 +65,7 @@ const additionalItems = serviceData.additional ?? [];
   </head>
   <body
     class="bg-gray-50 font-redhat"
+    data-service-uid={idService}
     data-service-id={id_name}
     data-service-name={serviceData.name}
     data-service-cost={serviceData.cost}
@@ -131,7 +132,7 @@ const additionalItems = serviceData.additional ?? [];
               <div class="mb-4 border-b border-gray-300 pb-4">
                 <h4 class="font-semibold mb-2">Precio por persona:</h4>
                 <ServicePrice
-                  serviceId={id_name!}
+                  serviceId={idService!}
                   originalPrice={parseFloat(serviceData.cost)}
                   variant="full"
                   client:load
@@ -319,6 +320,7 @@ const additionalItems = serviceData.additional ?? [];
       );
 
       const service = {
+        uid: document.body.dataset.serviceUid!,
         id: document.body.dataset.serviceId!,
         name: document.body.dataset.serviceName!,
         price: parseFloat(document.body.dataset.serviceCost!),

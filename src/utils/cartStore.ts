@@ -2,6 +2,14 @@ import { persistentAtom } from "@nanostores/persistent";
 import type { Schedule } from "../components/homepage/seccion_servicio/services";
 
 // --- TIPOS DE DATOS --- 
+export interface Service{
+  uid:string
+  id: string;
+  name: string;
+  price: number;
+  urlImagen:string;
+  schedule: Schedule;
+}
 
 export interface PassengerFormData {
   nombreCompleto: string;
@@ -13,6 +21,7 @@ export interface PassengerFormData {
 export type StatusItem = "pending" | "filled";
 
 export interface CartItem {
+  uuid:string;
   id: string; // ID único para este item en el carrito (ej: serviceId + timestamp)
   serviceId: string; // ID del servicio/producto
   serviceName: string; // Nombre para mostrar en la UI
@@ -50,16 +59,11 @@ export const $cart = persistentAtom<CartState>(
 
 // --- ACCIONES PARA MANIPULAR LA TIENDA ---
 
-export function addServiceToCart(service: {
-  id: string;
-  name: string;
-  price: number;
-  urlImagen:string;
-  schedule: Schedule; // <-- AÑADIMOS SCHEDULE
-}) {
+export function addServiceToCart(service: Service) {
   const currentItems = $cart.get().items;
 
   const newItem: CartItem = {
+    uuid:service.uid,
     id: `${service.id}-${Date.now()}`,
     serviceId: service.id,
     serviceName: service.name,
