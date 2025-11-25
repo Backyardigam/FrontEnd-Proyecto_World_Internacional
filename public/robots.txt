@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /core-tacana-wits-7b345/
+
+Sitemap: https://front-end-proyecto-wor-git-ceef90-benjaminpari1478557s-projects.vercel.app/sitemap-index.xml

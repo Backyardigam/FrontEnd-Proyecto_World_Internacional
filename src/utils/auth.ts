@@ -9,7 +9,7 @@ export interface User {
   email: string | null;
   phoneNumber: string | null;
   avatar: { url: string } | null;
-  role: 'guest' | 'user'; // |admin|employee|superadmin Rol del usuario que se registro
+  role: 'guest' | 'user' | null;
 }
 
 /**

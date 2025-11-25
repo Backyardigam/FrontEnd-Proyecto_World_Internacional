@@ -1,0 +1,31 @@
+---
+import PanelAdmin from "../../components/panel_admin/panel_admin";
+
+// Esta es la "autenticación agresiva" a nivel de página.
+// Se ejecuta en el servidor o en el momento de la construcción (dependiendo de tu `output`).
+// Para una app dinámica (output: 'server'), esto es muy seguro.
+const { cookies, redirect } = Astro;
+
+// Aquí leeríamos la cookie de sesión para obtener el rol.
+// Como las cookies son HttpOnly, no podemos leerlas desde el JS del cliente,
+// pero Astro (en modo SSR) sí puede.
+// Por ahora, simularemos la redirección si no hay una cookie de sesión hipotética.
+
+// if (!cookies.has('session') /* o una validación más robusta del token */) {
+//   return redirect('/core-tacana-wits-7b345');
+// }
+---
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>Document</title>
+    </head>
+    <body>
+        <main class="">
+    <!-- Este componente es la SPA que se encargará de toda la gestión -->
+    <PanelAdmin client:load />
+  </main>
+    </body>
+</html>

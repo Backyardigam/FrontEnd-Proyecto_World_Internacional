@@ -11,7 +11,7 @@ export interface Discount {
  * @returns 
  */
 export function getDiscountInfo(originalPrice: number, discount?: Discount) {
-  if (!discount) {
+  if (!discount || discount === null) {
     return {
       isActive: false,
       finalPrice: originalPrice,

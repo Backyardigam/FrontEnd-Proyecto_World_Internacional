@@ -14,6 +14,7 @@ export class ApiError extends Error {
 }
 export interface AuthenticatedFetchOptions extends RequestInit {
   handle401?: boolean;
+  redirectPath?: string;
 }
 
 /**
@@ -30,7 +31,7 @@ export async function authenticatedFetch(
   url: string,
   options: AuthenticatedFetchOptions = {}
 ): Promise<Response> {
-  const { handle401 = true, ...fetchOptions } = options;
+  const { handle401 = true, redirectPath = '/login', ...fetchOptions } = options;
   const fullUrl = `${import.meta.env.PUBLIC_API_URL || ''}${url}`;
   const response = await fetch(fullUrl, {
     ...fetchOptions,
@@ -38,10 +39,14 @@ export async function authenticatedFetch(
   });
 
   if (response.status === 401 && handle401) {
-    console.error('Error 401: No autorizado. Redirigiendo a /login...');
+    console.error(`Error 401: No autorizado. Redirigiendo a ${redirectPath}...`);
     if (isBrowser) {
       const currentPath = window.location.pathname + window.location.search;
-      window.location.href = `/login?session_expired=true&redirect=${encodeURIComponent(currentPath)}`;
+      // Mantenemos la lógica de `redirect` para el login de clientes, pero no para el de admin.
+      const finalRedirectUrl = redirectPath === '/login'
+        ? `${redirectPath}?session_expired=true&redirect=${encodeURIComponent(currentPath)}`
+        : redirectPath;
+      window.location.href = finalRedirectUrl;
     }
     return new Promise(() => {});
   }
@@ -140,5 +145,46 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
     throw new ApiError(errorDetails, response.status);
   }
   
+  return response.json() as Promise<T>;
+}
+
+/**
+ * Realiza una petición POST/PUT autenticada con un cuerpo `multipart/form-data`.
+ * Ideal para subir archivos junto con datos JSON.
+ * @param url La URL del endpoint.
+ * @param data El objeto de datos que se enviará como un campo JSON llamado 'data'.
+ * @param files Un objeto donde las claves son el 'fieldname' y los valores son los archivos (File o File[]).
+ * @param options Opciones adicionales de fetch, incluyendo el método ('POST' o 'PUT').
+ * @returns Una promesa que resuelve con los datos JSON de la respuesta.
+ * @throws Lanza un error si la respuesta no es 'ok'.
+ */
+export async function apiPostFormData<T = any>(url: string, data: any, files: Record<string, File | File[]>, options: AuthenticatedFetchOptions = {}): Promise<T> {
+  const formData = new FormData();
+
+  // 1. Añadir los datos de texto como un único campo JSON.
+  formData.append('data', JSON.stringify(data));
+
+  // 2. Añadir los archivos, cada uno con su 'fieldname'.
+  for (const fieldname in files) {
+    const fileOrFiles = files[fieldname];
+    if (Array.isArray(fileOrFiles)) {
+      fileOrFiles.forEach(file => formData.append(fieldname, file));
+    } else if (fileOrFiles) {
+      formData.append(fieldname, fileOrFiles);
+    }
+  }
+
+  // 3. Realizar la petición. No establecemos 'Content-Type', el navegador lo hará automáticamente para FormData.
+  const response = await authenticatedFetch(url, { ...options, body: formData });
+
+  if (!response.ok) {
+    let errorDetails = `Error HTTP: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorDetails = errorData.message || JSON.stringify(errorData);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    throw new ApiError(errorDetails, response.status);
+  }
+
   return response.json() as Promise<T>;
 }

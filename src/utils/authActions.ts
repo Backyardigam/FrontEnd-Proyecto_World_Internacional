@@ -5,17 +5,35 @@ import type { User, RegisterPayload } from "./auth";
 const USER_STORAGE_KEY = 'app_user_data';
 
 /**
- * Inicia la sesión del usuario.
+ * Inicia la sesion del usuario.
  * @param email 
  * @param password 
  */
 export const loginUser = async (email: string, password: string, options: AuthenticatedFetchOptions = {}) => {
   await apiPost<{ user: User }>("/auth/login", { email, password }, options);
-  // Usamos `cache: 'no-store'` para obtener el perfil fresco del usuario que acaba de iniciar sesión.
   const user = await apiGet<User>("/profile/", { cache: 'no-store' });
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   
   $auth.set({ isAuthenticated: true, user , loading: false });
+};
+
+/**
+ * Inicia sesión y verifica si el usuario tiene permisos de administrador.
+ * Este es el método de login seguro para el panel de administración.
+ * @param email 
+ * @param password 
+ */
+export const loginAdminUser = async (email: string, password: string) => {
+  await loginUser(email, password);
+  try {
+    await apiGet("/auth/login", { cache: 'no-store' });
+  } catch (error: any) {
+    await logoutUser();
+    throw new Error("No tienes los permisos necesarios para acceder a este panel.");
+  }
+  localStorage.setItem(USER_STORAGE_KEY, "");
+  
+  $auth.set({ isAuthenticated: true, user : null , loading: false });
 };
 
 /**

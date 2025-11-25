@@ -1,6 +1,6 @@
 import React, { createRef } from "react";
 import { useStore } from "@nanostores/react";
-import { $notifications, removeNotification, type Notification } from "../utils/notificationStore";
+import { $notifications, removeNotification, type Notification } from "../../utils/notificationStore";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 const icons: Record<Notification["type"], React.ReactNode> = {
