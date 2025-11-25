@@ -29,7 +29,8 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
          flex-col items-center justify-center gap-8
          transform -translate-y-full opacity-0 pointer-events-none
          transition-transform duration-300 ease-in-out
-         md:text-base md:mx-2 md:static md:h-auto md:w-auto md:translate-y-0 md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:gap-10"
+         md:text-base md:mx-4 md:static md:h-auto md:w-[50%] md:translate-y-0 
+         md:opacity-100 md:pointer-events-auto md:flex md:flex-row md:justify-between md:gap-0"
     >
       <a href="/" class={navLinkClasses}>Inicio</a>
       <a href="/servicios" class={navLinkClasses}>Servicios</a>
@@ -37,11 +38,11 @@ const navLinkClasses = "hover:underline underline-offset-4 md:block";
       <a href="/#footer" class={navLinkClasses}>Contáctanos</a>
     </nav>
 
-    <div class="z-10 flex gap-6 items-center">
+    <div class="z-10 flex gap-4 items-center">
       <a
         href="/carrito"
         aria-label="Ver carrito de compras"
-        class="relative hover:scale-110 hover:bg-naranja-f transition w-20 h-auto aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
+        class="relative hover:scale-110 hover:bg-naranja-f transition w-20 h-auto min-h-10 aspect-4/2 bg-naranja-c rounded-xl flex justify-center items-center"
       >
         <CartIcon />
         <CartBubble client:load />

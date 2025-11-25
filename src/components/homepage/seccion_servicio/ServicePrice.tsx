@@ -19,11 +19,17 @@ export default function ServicePrice({ serviceId, originalPrice, variant }: Serv
   const isLoading = useStore($discountsLoading);
   const serviceDiscount = allDiscounts[serviceId];
 
-  // Si los descuentos aún se están cargando, no renderizamos nada.
-  // Esto asegura que el primer render en el cliente coincida con el del servidor (vacío),
-  // evitando el error de hidratación.
+  // Si los descuentos aún se están cargando, mostramos el precio original como placeholder.
+  // Esto evita el error de hidratación y el "layout shift" (salto de diseño).
+  // Cuando isLoading cambie a false, el hook `useStore` provocará un re-render con el precio final.
   if (isLoading) {
-    return null;
+    return (
+      <div className="flex flex-col">
+        <span className="text-lg font-semibold text-gray-800 animate-pulse">
+          S/ {originalPrice.toFixed(2)}
+        </span>
+      </div>
+    );
   }
 
   return (

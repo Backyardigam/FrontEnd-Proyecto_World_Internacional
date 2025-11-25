@@ -80,7 +80,7 @@ export default function SesionButton() {
     }
 
     return (
-        <a href="/login" className="px-4 py-2 text-sm font-semibold bg-naranja-c text-white rounded-md hover:bg-naranja-f transition-colors">
+        <a href="/login" className="px-4 py-2 text-sm font-semibold bg-naranja-c text-white rounded-md hover:bg-naranja-f transition-colors min-w-fit">
             Iniciar Sesión
         </a>
     );

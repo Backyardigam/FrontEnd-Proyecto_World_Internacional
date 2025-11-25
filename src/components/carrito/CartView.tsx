@@ -56,7 +56,7 @@ export default function CartView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center md:text-left">Tu Carrito</h1>
         <div className="bg-white shadow-lg rounded-lg">
             <ul role="list" className="divide-y divide-gray-200">
