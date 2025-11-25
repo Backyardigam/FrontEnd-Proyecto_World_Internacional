@@ -293,10 +293,11 @@ export default function FormularioMirabus() {
     <>
       {renderWhenReady(
         <div className="w-full flex flex-col justify-center items-center font-redhat py-25 bg-gray-100 max-h-full">
-          <div className="font-baloo text-3xl mb-10 text-gray-400 md:text-5xl">
+          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 self-start">
             Reserva de tours
           </div>
-          <div className="p-5 align-center items-center inline-block bg-white rounded-2xl w-full max-w-4/5 md:max-w-3/5 ">
+          <div className="align-center items-center inline-block bg-white
+          w-full max-w-4/5 md:max-w-3/5 p-4 rounded-lg shadow-md border border-gray-200">
             <Formulario onFormDataChange={setPassengerData} />
             <div className="flex items-center align-center flex-col my-5">
               <div className="font-bold text-lg mt-5 mb-5 self-start">

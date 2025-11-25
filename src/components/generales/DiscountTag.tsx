@@ -53,7 +53,7 @@ export default function DiscountTag({
 
   if (variant === "minimal") {
     return (
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-col-reverse items-center">
         <span className="text-lg font-semibold text-green-600">
           S/ {finalPrice.toFixed(2)}
         </span>
