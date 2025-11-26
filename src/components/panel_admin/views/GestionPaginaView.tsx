@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { apiGet } from "../../../utils/apiClient";
 import ServiceForm from "./ServiceForm";
+import Boton from "../admin_utils/Boton";
 
 interface Service {
   id: string;
@@ -66,6 +67,7 @@ export default function GestionPaginaView() {
             Crear Servicio
           </button>
         </div>
+        
 
         {loading && <p>Cargando servicios...</p>}
         {error && <p className="text-red-500">{error}</p>}
@@ -84,6 +86,7 @@ export default function GestionPaginaView() {
                   <button className="text-sm text-gray-500 hover:underline">Desactivar</button>
                   <button className="text-sm text-red-600 hover:underline">Eliminar</button>
                   <button className="text-sm text-purple-600 hover:underline">Promoción</button>
+                  <Boton text="Editar" style="bg-blue-600" onPress={() => handleEdit(service.id)} />
                 </div>
               </li>
             ))}
