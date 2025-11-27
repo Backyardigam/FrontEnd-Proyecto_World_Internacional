@@ -30,9 +30,10 @@ export const loginAdminUser = async (email: string, password: string): Promise<{
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
     handle401: false, // Manejamos el 401 manualmente
+    redirectPath: "/core-tacana-wits-7b345", // Aseguramos la redirección correcta en caso de un 401 inesperado
   });
 
-  if (response.status === 302) {
+  if (response.status === 202 || response.status === 302) {
     // El backend indica que se necesita un segundo factor (verificación por código)
     return { nextStep: 'NEEDS_VERIFICATION' };
   }
