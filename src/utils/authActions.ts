@@ -39,10 +39,18 @@ export const loginAdminUser = async (email: string, password: string): Promise<{
   }
 
   if (response.status === 300 || response.ok) {
-    // El login fue directo y exitoso.
-    const user = await apiGet<User>("/profile/", { cache: 'no-store' });
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    $auth.set({ isAuthenticated: true, user, loading: false });
+    // El login fue directo y exitoso. La respuesta contiene los datos del funcionario.
+    const adminData = await response.json();
+    const adminUser: User = {
+      name: adminData.name || 'Funcionario',
+      email: email, // Usamos el email con el que se logueó
+      phoneNumber: null,
+      avatar: null,
+      role: 'user', // Asignamos un rol genérico, ya que es un funcionario
+    };
+
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
+    $auth.set({ isAuthenticated: true, user: adminUser, loading: false });
     return { nextStep: 'LOGIN_SUCCESS' };
   }
 
@@ -106,12 +114,19 @@ export const registerUser = async (payload: RegisterPayload) => {
  * @param code - El código de verificación recibido por email.
  */
 export const verifyAndLoginUser = async (email: string, code: string) => {
-  await apiPost("/auth/verify", { email, code }); 
+  // La respuesta de /auth/verify contiene los datos del funcionario
+  const adminData = await apiPost<{ name: string }>("/auth/verify", { email, code }); 
 
-  const user = await apiGet<User>("/profile/");
+  const adminUser: User = {
+    name: adminData.name || 'Funcionario',
+    email: email,
+    phoneNumber: null,
+    avatar: null,
+    role: 'user',
+  };
 
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-  $auth.set({ isAuthenticated: true, user, loading: false });
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
+  $auth.set({ isAuthenticated: true, user: adminUser, loading: false });
 };
 
 /**
