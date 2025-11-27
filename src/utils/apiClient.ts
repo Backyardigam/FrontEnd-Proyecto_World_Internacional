@@ -149,6 +149,65 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
 }
 
 /**
+ * Realiza una petición PATCH autenticada con un cuerpo JSON y parsea la respuesta JSON.
+ * Ideal para actualizaciones parciales de un recurso.
+ * @param url La URL del endpoint.
+ * @param body El objeto con los campos a actualizar.
+ * @param options Opciones adicionales de fetch.
+ * @returns Una promesa que resuelve con los datos JSON de la respuesta.
+ * @throws Lanza un error si la respuesta no es 'ok'.
+ */
+export async function apiPatch<T = any>(url: string, body: any, options: AuthenticatedFetchOptions = {}): Promise<T> {
+  const response = await authenticatedFetch(url, {
+    ...options,
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    let errorDetails = `Error HTTP: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorDetails = errorData.message || JSON.stringify(errorData);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    throw new ApiError(errorDetails, response.status);
+  }
+  
+  return response.json() as Promise<T>;
+}
+
+/**
+ * Realiza una petición DELETE autenticada.
+ * @param url La URL del endpoint del recurso a eliminar.
+ * @param options Opciones adicionales de fetch.
+ * @returns Una promesa que resuelve con los datos JSON de la respuesta (si los hay, ej. un mensaje de confirmación).
+ * @throws Lanza un error si la respuesta no es 'ok'.
+ */
+export async function apiDelete<T = any>(url: string, options: AuthenticatedFetchOptions = {}): Promise<T> {
+  const response = await authenticatedFetch(url, { ...options, method: 'DELETE' });
+
+  if (!response.ok) {
+    let errorDetails = `Error HTTP: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorDetails = errorData.message || JSON.stringify(errorData);
+    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
+    throw new ApiError(errorDetails, response.status);
+  }
+  
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+/**
  * Realiza una petición POST/PUT autenticada con un cuerpo `multipart/form-data`.
  * Ideal para subir archivos junto con datos JSON.
  * @param url La URL del endpoint.

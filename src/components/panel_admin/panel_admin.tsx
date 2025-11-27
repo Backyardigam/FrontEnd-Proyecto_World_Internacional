@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../utils/authStore";
 import { logoutUser } from "../../utils/authActions";
@@ -30,12 +30,13 @@ type MenuItem = {
 
 export default function PanelAdmin() {
   const { user } = useStore($auth);
-  const [activeView, setActiveView] = useState<AdminView>('dashboard');
+  const [activeView, setActiveView] = useState<AdminView>('gestion');
+  const sidebarRef = useRef<HTMLElement>(null);
 
   // useEffect(() => {
   //   const verifyAccess = async () => {
   //     try {
-  //       await apiGet("/auth/check-admin", { cache: 'no-store', redirectPath: '/core-tacana-wits-7b345' });
+  //       await apiGet("/admin/check-admin", { cache: 'no-store', redirectPath: '/core-tacana-wits-7b345' });
   //     } catch (error) {
   //       console.log("xdd")
         // window.location.href = "/core-tacana-wits-7b345"; //por si el server falla
@@ -44,10 +45,31 @@ export default function PanelAdmin() {
   //   verifyAccess();
   // }, []);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const handleLogout = async () => {
     await logoutUser();
     window.location.href = "/core-tacana-wits-7b345";
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Si el sidebar está abierto, el ref existe y el clic fue fuera del sidebar...
+      if (isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    // Añadir el listener solo cuando el sidebar está abierto
+    if (isSidebarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Limpiar el listener cuando el componente se desmonte o el sidebar se cierre
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSidebarOpen]); // El efecto se re-ejecuta cada vez que 'isSidebarOpen' cambia
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon:<Dashboard/>},
@@ -60,7 +82,7 @@ export default function PanelAdmin() {
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-white flex flex-col">
+      <aside ref={sidebarRef} className={`fixed inset-y-0 left-0 w-64 bg-gray-800 text-white flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-30`}>
         <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-gray-700">
           Admin Panel
         </div>
@@ -69,7 +91,13 @@ export default function PanelAdmin() {
             <a
               key={item.id}
               href="#"
-              onClick={() => setActiveView(item.id as AdminView)}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveView(item.id as AdminView);
+                if (window.innerWidth < 768) { // Cierra el sidebar en móvil al seleccionar una opción
+                  setIsSidebarOpen(false);
+                }
+              }}
               className={`flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${activeView === item.id ? 'bg-blue-600' : 'hover:bg-gray-700'}`}
             >
               {typeof item.icon === 'string' ? (
@@ -94,8 +122,15 @@ export default function PanelAdmin() {
 
       {/* Contenido de la seccion */}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden md:ml-0">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+          {/* Btn para celulares */}
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+          {/* Perfil */}
           <h1 className="text-xl font-semibold text-gray-700 capitalize">{activeView}</h1>
           <div className="text-right">
             <p className="font-semibold text-gray-800">{user?.name || "Administrador"}</p>

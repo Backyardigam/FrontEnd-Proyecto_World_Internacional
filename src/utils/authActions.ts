@@ -26,7 +26,7 @@ export const loginUser = async (email: string, password: string, options: Authen
 export const loginAdminUser = async (email: string, password: string) => {
   await loginUser(email, password);
   try {
-    await apiGet("/auth/login", { cache: 'no-store' });
+    await apiGet("/admin/login", { cache: 'no-store' });
   } catch (error: any) {
     await logoutUser();
     throw new Error("No tienes los permisos necesarios para acceder a este panel.");
