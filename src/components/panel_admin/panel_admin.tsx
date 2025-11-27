@@ -12,10 +12,11 @@ import BoletosView from './views/BoletosView';
 import GestionPaginaView from './views/GestionPaginaView';
 import UsuariosView from './views/UsuariosView';
 import AuditoriaView  from './views/AuditoriaView';
+import PromocionesView from './views/PromocionesView';
 import Mirabus  from './views/Mirabus';
 
 // Tipo para controlar la vista activa en el panel
-type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'usuarios' | 'auditoria' | 'mirabus';
+type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus';
 
 const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -69,6 +70,7 @@ export default function PanelAdmin() {
     { id: 'mirabus', label: 'Mirabus', icon:<MirabusIcon />},
     { id: 'boletos', label: 'Boletos', icon: <Boleto />},
     { id: 'gestion', label: 'Gestión de Página', icon: "M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" },
+    { id: 'promociones', label: 'Promociones', icon: "M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" },
     { id: 'usuarios', label: 'Usuarios', icon: <Usuario/> },
     { id: 'auditoria', label: 'Auditoría', icon: "M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" },
   ];
@@ -96,9 +98,7 @@ export default function PanelAdmin() {
             >
               {typeof item.icon === 'string' ? (
                 <Icon path={item.icon} />
-              ) : (
-                <span className="w-6 h-6">{item.icon}</span>
-              )}
+              ) : ( item.icon )}
               <span className="ml-4">{item.label}</span>
             </a>
           ))}
@@ -137,6 +137,7 @@ export default function PanelAdmin() {
           {activeView === 'mirabus' && <Mirabus />}
           {activeView === 'boletos' && <BoletosView />}
           {activeView === 'gestion' && <GestionPaginaView />}
+          {activeView === 'promociones' && <PromocionesView />}
           {activeView === 'usuarios' && <UsuariosView />}
           {activeView === 'auditoria' && <AuditoriaView />}
         </main>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { apiGet } from "../../../utils/apiClient";
+import { apiGet, apiPatch } from "../../../utils/apiClient";
 import ServiceForm from "./ServiceForm";
+import ServicePreview from "./ServicePreview";
 import Boton from "../admin_utils/Boton";
 
 interface Service {
@@ -22,6 +23,7 @@ export default function GestionPaginaView() {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
     null
   );
+  const [previewServiceId, setPreviewServiceId] = useState<string | null>(null);
 
   const fetchServices = () => {
     setLoading(true);
@@ -88,12 +90,46 @@ export default function GestionPaginaView() {
     setIsFormOpen(true);
   };
 
+  const handlePreview = (id: string) => {
+    setPreviewServiceId(id);
+  };
+
+  const handleCloseForms = () => {
+    setIsFormOpen(false);
+    setPreviewServiceId(null);
+    setSelectedServiceId(null);
+  }
+
+  const handleToggleState = async (service: Service) => {
+    const { id, serviceState } = service;
+    const newState = serviceState === 'visible' ? 'hidden' : 'visible';
+    const actionText = newState === 'hidden' ? 'desactivar' : 'activar';
+
+    // Usamos un confirm para seguridad
+    if (!window.confirm(`¿Estás seguro de que quieres ${actionText} el servicio "${service.name}"?`)) {
+      return;
+    }
+
+    try {
+      await apiPatch(`/manage/service/${id}`, { state: newState }, { handle403: 'notify' });
+      fetchServices(); // Refrescamos la lista para ver el cambio
+    } catch (err) {
+      console.error(`Error al ${actionText} el servicio:`, err);
+    }
+  };
+
   return (
-    isFormOpen ? (
+    previewServiceId ? (
+      // --- VISTA DE VISTA PREVIA ---
+      <ServicePreview
+        serviceId={previewServiceId}
+        onClose={handleCloseForms}
+      />
+    ) : isFormOpen ? (
       // --- VISTA DE FORMULARIO ---
       <ServiceForm
         serviceId={selectedServiceId}
-        onClose={() => setIsFormOpen(false)}
+        onClose={handleCloseForms}
         onSave={fetchServices}
         // Pasamos el estado actual del servicio solo si estamos en modo edición
         initialServiceState={
@@ -154,9 +190,13 @@ export default function GestionPaginaView() {
                     </p>
                   </div>
                   <div className="flex items-center flex-wrap gap-2 mt-4 md:mt-0">
-                    <Boton text="Vista Previa" style="bg-blue-600" onPress={() => ""} />
+                    <Boton text="Vista Previa" style="bg-blue-600" onPress={() => handlePreview(service.id)} />
                     <Boton text="Editar" style="bg-yellow-600" onPress={() => handleEdit(service.id)} />
-                    <Boton text="Desactivar" style="bg-gray-600" onPress={() => ""} />
+                    <Boton
+                      text={service.serviceState === 'visible' ? 'Desactivar' : 'Activar'}
+                      style={service.serviceState === 'visible' ? 'bg-gray-600' : 'bg-teal-600'}
+                      onPress={() => handleToggleState(service)}
+                    />
                     <Boton text="Eliminar" style="bg-red-600" onPress={() => ""} />
                     <Boton text="Promocion" style="bg-naranja-c" onPress={() => ""} />
                   </div>
