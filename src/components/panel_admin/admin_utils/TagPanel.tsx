@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet, apiPost } from '../../../utils/apiClient';
-// Asumiremos que apiDelete se añadirá a apiClient.ts
-// import { apiGet, apiPost, apiDelete } from '../../../utils/apiClient';
+
+import { apiGet, apiPost, apiDelete } from '../../../utils/apiClient';
 
 interface TagPanelProps {
   // Tags actualmente seleccionadas para el servicio (ej: "Aventura;Paisaje")
@@ -26,14 +25,14 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
   const fetchTags = async () => {
     try {
 // Simulación de API GET /manage/tag/
-      const mockTags = ["Aventura", "Paisaje", "Full Day", "Gastronomía", "Cultural", "Nocturno"];
-      setTimeout(() => {
-        setAllTags(mockTags);
-        setLoading(false);
-      }, 500);
+      // const mockTags = ["Aventura", "Paisaje", "Full Day", "Gastronomía", "Cultural", "Nocturno"];
+      // setTimeout(() => {
+      //   setAllTags(mockTags);
+      //   setLoading(false);
+      // }, 500);
       
-      // const tags = await apiGet<string[]>('/manage/tag/');
-      // setAllTags(tags);
+      const tags = await apiGet<string[]>('/manage/tag/');
+      setAllTags(tags);
     } catch (err) {
       setError('No se pudieron cargar los tags.');
     } finally {
@@ -63,7 +62,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       return;
     }
     try {
-      // await apiPost('/manage/tag/', { name: newTagName });
+      await apiPost('/manage/tag/', { name: newTagName });
       setAllTags([...allTags, newTagName]); // Actualiza la UI inmediatamente
       setNewTagName('');
       setError(null);
@@ -75,7 +74,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
   // Eliminar un tag
   const handleDeleteTag = async (tagToDelete: string) => {
     try {
-      // await apiDelete(`/manage/tag/${tagToDelete}`);
+      await apiDelete(`/manage/tag/${tagToDelete}`);
       setAllTags(allTags.filter(t => t !== tagToDelete)); // Actualiza la UI
       // También lo eliminamos de la selección actual si estaba seleccionado
       if (selectedTags.includes(tagToDelete)) {

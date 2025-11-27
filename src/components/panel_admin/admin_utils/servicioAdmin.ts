@@ -16,7 +16,7 @@ interface Service{
     recomendations:string[],
     additional: string[],
     schedule:Schedule,
-    mediaFiles:MediaFiles,
+    mediaFiles?:MediaFiles,
 }
 
 /**

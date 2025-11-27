@@ -191,7 +191,13 @@ export const checkAdminSession = async () => {
   try {
     // Esta llamada solo tendrá éxito si la cookie de sesión es de un admin/superusuario.
     await apiGet("/admin/check-admin", { redirectPath: "/core-tacana-wits-7b345" });
-  } catch (error) {
-    // El `apiGet` ya maneja la redirección en caso de 401, así que no necesitamos hacer nada más.
+  } catch (error: any) {
+    // El `apiGet` ya maneja la redirección en caso de 401.
+    // Adicionalmente, si el error es un 403 (Forbidden), también debemos redirigir.
+    // Esto ocurre si un usuario normal (no admin) intenta acceder a una ruta de admin.
+    if (error instanceof ApiError && error.status === 403) {
+      window.location.href = "/core-tacana-wits-7b345";
+    }
+    // Para otros errores (ej. 500), no hacemos nada y dejamos que se muestre un error en consola.
   }
 };

@@ -1,4 +1,5 @@
 import { isBrowser } from "./environment";
+import { addNotification } from "./notificationStore";
 
 /**
  * Error personalizado para representar errores de la API.
@@ -15,6 +16,11 @@ export class ApiError extends Error {
 export interface AuthenticatedFetchOptions extends RequestInit {
   handle401?: boolean;
   redirectPath?: string;
+  /**
+   * Si se establece a 'notify', mostrará una notificación de error global en un error 403.
+   * El error seguirá siendo lanzado para que el componente lo maneje.
+   */
+  handle403?: 'notify' | false;
 }
 
 /**
@@ -31,7 +37,7 @@ export async function authenticatedFetch(
   url: string,
   options: AuthenticatedFetchOptions = {}
 ): Promise<Response> {
-  const { handle401 = true, redirectPath = '/login', ...fetchOptions } = options;
+  const { handle401 = true, redirectPath = '/login', handle403 = false, ...fetchOptions } = options;
   const fullUrl = `${import.meta.env.PUBLIC_API_URL || ''}${url}`;
   const response = await fetch(fullUrl, {
     ...fetchOptions,
@@ -51,6 +57,24 @@ export async function authenticatedFetch(
     return new Promise(() => {});
   }
 
+  // Manejo centralizado de 403 (Forbidden)
+  if (response.status === 403 && handle403 === 'notify') {
+    let errorMessage = "No tienes permisos para realizar esta acción.";
+    try {
+      // Clonamos la respuesta para poder leer el cuerpo sin consumirlo.
+      const errorData = await response.clone().json();
+      if (errorData && errorData.error) {
+        errorMessage = errorData.error; // Usamos el mensaje de error del backend.
+      }
+    } catch (e) {
+      // Si el cuerpo no es JSON o está vacío, usamos el mensaje por defecto.
+    }
+    addNotification(errorMessage, "error");
+
+    // IMPORTANTE: Volvemos a lanzar el error para que el `catch` del componente pueda actuar.
+    throw new ApiError(errorMessage, response.status);
+  }
+
   return response;
 }
 
@@ -67,13 +91,11 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
   const response = await authenticatedFetch(url, { ...options, method: 'GET' });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
+    // El error 403 ya se maneja arriba. Para otros errores, lanzamos un ApiError.
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    // Lanzamos nuestro error personalizado con el mensaje y el estado.
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
   
   // Verificamos si la respuesta tiene contenido antes de intentar parsearla como JSON.
@@ -106,12 +128,10 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
   });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
   
   return response.json() as Promise<T>;
@@ -137,12 +157,10 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
   });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
   
   return response.json() as Promise<T>;
@@ -169,12 +187,10 @@ export async function apiPatch<T = any>(url: string, body: any, options: Authent
   });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
   
   return response.json() as Promise<T>;
@@ -191,12 +207,10 @@ export async function apiDelete<T = any>(url: string, options: AuthenticatedFetc
   const response = await authenticatedFetch(url, { ...options, method: 'DELETE' });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
   
   const contentType = response.headers.get("content-type");
@@ -237,12 +251,10 @@ export async function apiPostFormData<T = any>(url: string, data: any, files: Re
   const response = await authenticatedFetch(url, { ...options, body: formData });
 
   if (!response.ok) {
-    let errorDetails = `Error HTTP: ${response.status}`;
     try {
       const errorData = await response.json();
-      errorDetails = errorData.message || JSON.stringify(errorData);
-    } catch (e) { /* El cuerpo del error no es JSON o está vacío */ }
-    throw new ApiError(errorDetails, response.status);
+      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
   }
 
   return response.json() as Promise<T>;

@@ -1,10 +1,10 @@
 import { apiGet } from "../../../utils/apiClient";
 
 export interface MediaFiles {
-  urlBg1: string;
-  urlBg2: string;
-  urlGalery: string[];
-  urlTrip: string;
+  urlBg1?: string;
+  urlBg2?: string;
+  urlGalery?: string[];
+  urlTrip?: string;
 }
 
 export interface Schedule {

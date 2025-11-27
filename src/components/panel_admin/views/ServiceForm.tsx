@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPostFormData } from "../../../utils/apiClient";
+import { apiGet, apiPostFormData , ApiError } from "../../../utils/apiClient";
 import type { IServiceRequest, ServiceGet, IMediaUrl } from "../admin_utils/servicioAdmin";
 import TagPanel from "../admin_utils/TagPanel";
 import ImageManager from "../admin_utils/ImageManager";
@@ -39,97 +39,101 @@ export default function   ServiceForm({
       setLoading(true);
 
       
-      // --- SIMULACIÓN DE API GET /manage/service/{id} ---
-      const mockServiceGet: ServiceGet = {
-        service: {
-          id: "cmi3f8s8m0002tg1i7cxkhvg6",
-          id_name: "tacna_tarata",
-          name: "Tacna Tarata",
-          cost: 200,
-          type: "tour",
-          tag: ["Aventura", "Paisaje"],
-          fullDescription: "Una descripción completa y detallada del tour a Tarata.",
-          itinerary: ["Salida de Tacna", "Visita a los petroglifos", "Almuerzo en Tarata", "Retorno a Tacna"],
-          recomendations: ["Llevar bloqueador solar", "Usar sombrero", "Calzado cómodo"],
-          additional: ["Incluye guía turístico", "No incluye bebidas"],
-          schedule: { "Lunes a Domingo": { startTrip: "08:00", endTrip: "17:00" } },
-          mediaFiles: {
-            urlBg1: "https://ik.imagekit.io/world/bg1_tarata.jpg",
-            urlBg2: "https://ik.imagekit.io/world/bg2_tarata.jpg",
-            // urlBg1: "",
-            // urlBg2: "",
-            urlGalery: [
-              "https://ik.imagekit.io/world/gal1_tarata.jpg",
-              "https://ik.imagekit.io/world/gal2_tarata.jpg",
-            ],
-            urlTrip: "https://ik.imagekit.io/world/trip_tarata.jpg",
-          },
-        },
-        card: {
-          compactDescription: "Descubre la histórica ciudad de Tarata en un tour de día completo.",
-          mediaFiles: ["https://ik.imagekit.io/world/card_tarata.jpg"],
-        },
-      };
+      // // --- SIMULACIÓN DE API GET /manage/service/{id} ---
+      // const mockServiceGet: ServiceGet = {
+      //   service: {
+      //     id: "cmi3f8s8m0002tg1i7cxkhvg6",
+      //     id_name: "tacna_tarata",
+      //     name: "Tacna Tarata",
+      //     cost: 200,
+      //     type: "tour",
+      //     tag: ["Aventura", "Paisaje"],
+      //     fullDescription: "Una descripción completa y detallada del tour a Tarata.",
+      //     itinerary: ["Salida de Tacna", "Visita a los petroglifos", "Almuerzo en Tarata", "Retorno a Tacna"],
+      //     recomendations: ["Llevar bloqueador solar", "Usar sombrero", "Calzado cómodo"],
+      //     additional: ["Incluye guía turístico", "No incluye bebidas"],
+      //     schedule: { "Lunes a Domingo": { startTrip: "08:00", endTrip: "17:00" } },
+      //     mediaFiles: {
+      //       urlBg1: "https://ik.imagekit.io/world/bg1_tarata.jpg",
+      //       urlBg2: "https://ik.imagekit.io/world/bg2_tarata.jpg",
+      //       // urlBg1: "",
+      //       // urlBg2: "",
+      //       urlGalery: [
+      //         "https://ik.imagekit.io/world/gal1_tarata.jpg",
+      //         "https://ik.imagekit.io/world/gal2_tarata.jpg",
+      //       ],
+      //       urlTrip: "https://ik.imagekit.io/world/trip_tarata.jpg",
+      //     },
+      //   },
+      //   card: {
+      //     compactDescription: "Descubre la histórica ciudad de Tarata en un tour de día completo.",
+      //     mediaFiles: ["https://ik.imagekit.io/world/card_tarata.jpg"],
+      //   },
+      // };
 
-      setTimeout(() => {
-        // Transformar los datos de la API al formato del formulario (IServiceRequest)
-        const { service, card } = mockServiceGet;
-        const transformedData: Partial<IServiceRequest> = {
-          name: service.name,
-          cost: service.cost,
-          type: service.type,
-          serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
-          tag: service.tag.join(';'), // Array a string
-          compactDescription: card.compactDescription,
-          fullDescription: service.fullDescription,
-          itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
-          recomendations: service.recomendations.join('\n'),
-          additional: service.additional.join('\n'),
-          schedule: Object.entries(service.schedule).map(([_, value]) => ({
-            startTrip: value.startTrip,
-            endTrip: value.endTrip,
-          })),
-          // El campo mediaFiles para borrar se manejará por separado
-        };
-        setFormData(transformedData);
-        // Guardamos las URLs existentes para mostrarlas en la UI
-        setExistingImages(service.mediaFiles);
-        setExistingCardImages(card.mediaFiles);
-        setLoading(false);
-      }, 800);
+      // setTimeout(() => {
+      //   // Transformar los datos de la API al formato del formulario (IServiceRequest)
+      //   const { service, card } = mockServiceGet;
+      //   const transformedData: Partial<IServiceRequest> = {
+      //     name: service.name,
+      //     cost: service.cost,
+      //     type: service.type,
+      //     serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
+      //     tag: service.tag.join(';'), // Array a string
+      //     compactDescription: card.compactDescription,
+      //     fullDescription: service.fullDescription,
+      //     itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
+      //     recomendations: service.recomendations.join('\n'),
+      //     additional: service.additional.join('\n'),
+      //     schedule: Object.entries(service.schedule).map(([_, value]) => ({
+      //       startTrip: value.startTrip,
+      //       endTrip: value.endTrip,
+      //     })),
+      //     // El campo mediaFiles para borrar se manejará por separado
+      //   };
+      //   setFormData(transformedData);
+      //   // Guardamos las URLs existentes para mostrarlas en la UI
+      //   setExistingImages(service.mediaFiles ?? null); // Si mediaFiles es undefined, usamos null
+      //   setExistingCardImages(card.mediaFiles ?? []); // Si mediaFiles es undefined, usamos un array vacío
+      //   setLoading(false);
+      // }, 800);
 
-      // apiGet<ServiceGet>(`/manage/service/${serviceId}`, { redirectPath: "/core-tacana-wits-7b345" })
-      //   .then((data) => {
-      //     // Transformar los datos de la API al formato del formulario (IServiceRequest)
-      //     const { service, card } = data;
-      //     const transformedData: Partial<IServiceRequest> = {
-      //       name: service.name,
-      //       cost: service.cost,
-      //       type: service.type,
-      //       serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
-      //       tag: service.tag.join(';'), // Array a string
-      //       compactDescription: card.compactDescription,
-      //       fullDescription: service.fullDescription,
-      //       itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
-      //       recomendations: service.recomendations.join('\n'),
-      //       additional: service.additional.join('\n'),
-      //       schedule: Object.entries(service.schedule).map(([_, value]) => ({
-      //         startTrip: value.startTrip,
-      //         endTrip: value.endTrip,
-      //       })),
-      //       // El campo mediaFiles para borrar se manejará por separado
-      //     };
-      //     setFormData(transformedData);
-      //     // Guardamos las URLs existentes para mostrarlas en la UI
-      //     setExistingImages(service.mediaFiles);
-      //     setExistingCardImages(card.mediaFiles);
-      //   })
-      //   .catch((err) => {
-      //     setError({ source: 'general', message: "Error al cargar los datos del servicio." });
-      //   })
-      //   .finally(() => {
-      //     setLoading(false);
-      //   });
+      apiGet<ServiceGet>(`/manage/service/${serviceId}`, { redirectPath: "/core-tacana-wits-7b345" })
+        .then((data) => {
+          // Transformar los datos de la API al formato del formulario (IServiceRequest)
+          const { service, card } = data;
+          const transformedData: Partial<IServiceRequest> = {
+            name: service.name,
+            cost: service.cost,
+            type: service.type,
+            serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
+            tag: service.tag.join(';'), // Array a string
+            compactDescription: card.compactDescription,
+            fullDescription: service.fullDescription,
+            itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
+            recomendations: service.recomendations.join('\n'),
+            additional: service.additional.join('\n'),
+            schedule: Object.entries(service.schedule).map(([_, value]) => ({
+              startTrip: value.startTrip,
+              endTrip: value.endTrip,
+            })),
+            // El campo mediaFiles para borrar se manejará por separado
+          };
+          setFormData(transformedData);
+          // Guardamos las URLs existentes para mostrarlas en la UI
+          setExistingImages(service.mediaFiles ?? null);
+          setExistingCardImages(card.mediaFiles ?? []);
+        })
+        .catch((err) => {
+          if (err instanceof ApiError && err.status === 403) {
+            setError({ source: 'general', message: "No tienes permisos para editar este servicio." });
+            return; // Detenemos la carga para no mostrar un formulario vacío y roto.
+          }
+          setError({ source: 'general', message: "Error al cargar los datos del servicio." });
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       // Resetea el formulario para el modo 'Crear'
       setFormData({
@@ -243,7 +247,7 @@ export default function   ServiceForm({
   };
 
   // Helper para obtener las URLs existentes de una sección
-  const getExistingUrlsFor = (section: keyof ServiceGet['service']['mediaFiles']): string[] => {
+  const getExistingUrlsFor = (section: keyof NonNullable<ServiceGet['service']['mediaFiles']>): string[] => {
     if (!existingImages || !existingImages[section]) return [];    
     const urlsOrString = existingImages[section];
     // Devuelve TODAS las URLs, sin filtrar. El filtrado se hace donde se necesita.
@@ -305,6 +309,10 @@ export default function   ServiceForm({
       onSave(); // Llama a la función para refrescar la lista
       onClose(); // Cierra el formulario
     } catch (err: any) {
+      if (err instanceof ApiError && err.status === 403) {
+        setError({ source: 'general', message: `No tienes permisos para ${isEditMode ? 'actualizar' : 'crear'} servicios.` });
+        return;
+      }
       setError({ source: 'general', message: err.message || "Ocurrió un error al guardar el servicio." });
     } finally {
       setLoading(false);
