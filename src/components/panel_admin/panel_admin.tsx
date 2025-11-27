@@ -14,6 +14,7 @@ import UsuariosView from './views/UsuariosView';
 import AuditoriaView  from './views/AuditoriaView';
 import PromocionesView from './views/PromocionesView';
 import Mirabus  from './views/Mirabus';
+import type { JSX } from "astro/jsx-runtime";
 
 // Tipo para controlar la vista activa en el panel
 type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus';
@@ -27,7 +28,7 @@ const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: strin
 type MenuItem = {
   id: AdminView;
   label: string;
-  icon: string | React.ReactNode; // Puede ser un 'path' de SVG o un componente de React
+  icon: string | JSX.Element; // Puede ser un 'path' de SVG o un componente de React
 };
 
 export default function PanelAdmin() {
