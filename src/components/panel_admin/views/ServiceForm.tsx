@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiGet, apiPostFormData , ApiError } from "../../../utils/apiClient";
-import type { IServiceRequest, ServiceGet, IMediaUrl } from "../admin_utils/servicioAdmin";
+import type { IServiceRequest, ServiceGet, IMediaUrl, IScheduleInput } from "../admin_utils/servicioAdmin";
 import TagPanel from "../admin_utils/TagPanel";
 import ImageManager from "../admin_utils/ImageManager";
 
@@ -27,7 +27,11 @@ export default function ServiceForm({
   initialServiceState
 }: ServiceFormProps) {
   const [formData, setFormData] = useState<Partial<IServiceRequest>>({});
-  const [schedule, setSchedule] = useState<{ startTrip: string; endTrip?: string; }[]>([{ startTrip: "09:00", endTrip: "18:00" }]);
+  // El 'schedule' se maneja por separado porque su estructura (array de objetos)
+  // no es compatible con el 'handleChange' genérico que maneja strings.
+  // Para 'Crear', se usa un valor por defecto. Para 'Editar', se carga desde la API.
+  const [schedule, setSchedule] = useState<IScheduleInput[]>([{ startTrip: "09:00", endTrip: "18:00" }]);
+
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [existingImages, setExistingImages] = useState<ServiceGet['service']['mediaFiles'] | null>(null);
   const [existingCardImages, setExistingCardImages] = useState<string[]>([]);
@@ -151,7 +155,7 @@ export default function ServiceForm({
       });
       setExistingImages(null);
       setExistingCardImages([]);
-      setSchedule([{ startTrip: "09:00", endTrip: "18:00" }]);
+      setSchedule([{ startTrip: "09:00", endTrip: "18:00" }]); // Valor por defecto para nuevos servicios
     }
   }, [serviceId, isEditMode]);
 
@@ -395,6 +399,14 @@ export default function ServiceForm({
             <label htmlFor="additional" className="block text-sm font-medium text-gray-700">Información Adicional (una por línea)</label>
             <textarea id="additional" name="additional" value={formData.additional || ''} onChange={handleChange} rows={3} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md" />
           </div>
+
+          {/* --- SECCIÓN DE HORARIOS (SCHEDULE) --- */}
+          {/* 
+            TODO: Implementar una UI para editar los horarios.
+            Esta UI debería poder añadir/eliminar filas y editar los campos 'startTrip' y 'endTrip' para cada una.
+            Por ahora, los datos del horario se conservan en el estado 'schedule' pero no se muestran en el formulario.
+            Al guardar, se enviarán los datos existentes o los por defecto.
+          */}
 
           <div>
             <h4 className="font-medium text-gray-700 pt-2">Imágenes de la Página</h4>
