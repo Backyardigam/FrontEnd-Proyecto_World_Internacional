@@ -25,23 +25,31 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   const fetchTags = async () => {
     try {
-      // Simulación de API GET /manage/tag/
+// Simulación de API GET /manage/tag/
       const mockTags = ["Aventura", "Paisaje", "Full Day", "Gastronomía", "Cultural", "Nocturno"];
       setTimeout(() => {
         setAllTags(mockTags);
         setLoading(false);
       }, 500);
+      
       // const tags = await apiGet<string[]>('/manage/tag/');
       // setAllTags(tags);
     } catch (err) {
       setError('No se pudieron cargar los tags.');
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
 
   // Manejar la selección/deselección de un tag
   const handleToggleTag = (tag: string) => {
+    // Si el usuario intenta AÑADIR un tag y ya ha alcanzado el límite de 2...
+    if (!selectedTags.includes(tag) && selectedTags.length >= 2) {
+      setError('No se pueden seleccionar más de 2 tags.');
+      return; // ...no hacemos nada
+    }
+    setError(null); // Limpiamos cualquier error anterior
+
     const newSelectedTags = selectedTags.includes(tag)
       ? selectedTags.filter(t => t !== tag)
       : [...selectedTags, tag];
@@ -49,8 +57,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
   };
 
   // Crear un nuevo tag
-  const handleCreateTag = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateTag = async () => {
     if (!newTagName || allTags.includes(newTagName)) {
       setError('El tag no puede estar vacío o ya existe.');
       return;
@@ -67,9 +74,6 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   // Eliminar un tag
   const handleDeleteTag = async (tagToDelete: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar el tag "${tagToDelete}" de forma global?`)) {
-      return;
-    }
     try {
       // await apiDelete(`/manage/tag/${tagToDelete}`);
       setAllTags(allTags.filter(t => t !== tagToDelete)); // Actualiza la UI
@@ -104,7 +108,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       </div>
 
       {/* Formulario para crear nuevo tag */}
-      <form onSubmit={handleCreateTag} className="flex items-center gap-2 border-t pt-4">
+      <div className="flex items-center gap-2 border-t pt-4">
         <input
           type="text"
           value={newTagName}
@@ -112,10 +116,10 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
           placeholder="Nombre del nuevo tag"
           className="flex-grow px-3 py-1.5 text-sm border border-gray-300 rounded-md"
         />
-        <button type="submit" className="px-4 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700">
+        <button type="button" onClick={handleCreateTag} className="px-4 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700">
           Crear Tag
         </button>
-      </form>
+      </div>
     </div>
   );
 }

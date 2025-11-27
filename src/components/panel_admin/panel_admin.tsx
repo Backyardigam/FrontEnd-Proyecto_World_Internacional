@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../utils/authStore";
-import { logoutUser } from "../../utils/authActions";
+import { logoutUser, checkAdminSession } from "../../utils/authActions";
 import { apiGet } from "../../utils/apiClient";
 import '../../styles/global.css';
-import { Usuario , Dashboard } from "../iconos/Usuario";
+import { Usuario , Dashboard , MirabusIcon} from "../iconos/Usuario";
 import { Boleto } from "../iconos/Boleto"
 
 import DashboardView from './views/DashboardView';
@@ -12,9 +12,10 @@ import BoletosView from './views/BoletosView';
 import GestionPaginaView from './views/GestionPaginaView';
 import UsuariosView from './views/UsuariosView';
 import AuditoriaView  from './views/AuditoriaView';
+import Mirabus  from './views/Mirabus';
 
 // Tipo para controlar la vista activa en el panel
-type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'usuarios' | 'auditoria';
+type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'usuarios' | 'auditoria' | 'mirabus';
 
 const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -32,25 +33,17 @@ export default function PanelAdmin() {
   const { user } = useStore($auth);
   const [activeView, setActiveView] = useState<AdminView>('gestion');
   const sidebarRef = useRef<HTMLElement>(null);
-
-  // useEffect(() => {
-  //   const verifyAccess = async () => {
-  //     try {
-  //       await apiGet("/admin/check-admin", { cache: 'no-store', redirectPath: '/core-tacana-wits-7b345' });
-  //     } catch (error) {
-  //       console.log("xdd")
-        // window.location.href = "/core-tacana-wits-7b345"; //por si el server falla
-  //     }
-  //   }
-  //   verifyAccess();
-  // }, []);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutUser();
     window.location.href = "/core-tacana-wits-7b345";
   };
+
+  // Al cargar el panel, verificamos si la sesión es de un administrador.
+  useEffect(() => {
+    checkAdminSession();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,6 +66,7 @@ export default function PanelAdmin() {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon:<Dashboard/>},
+    { id: 'mirabus', label: 'Mirabus', icon:<MirabusIcon />},
     { id: 'boletos', label: 'Boletos', icon: <Boleto />},
     { id: 'gestion', label: 'Gestión de Página', icon: "M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" },
     { id: 'usuarios', label: 'Usuarios', icon: <Usuario/> },
@@ -138,14 +132,13 @@ export default function PanelAdmin() {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
-
           {/* Renderizado condicional de la vista activa */}
           {activeView === 'dashboard' && <DashboardView />}
+          {activeView === 'mirabus' && <Mirabus />}
           {activeView === 'boletos' && <BoletosView />}
           {activeView === 'gestion' && <GestionPaginaView />}
           {activeView === 'usuarios' && <UsuariosView />}
           {activeView === 'auditoria' && <AuditoriaView />}
-          
         </main>
       </div>
     </div>

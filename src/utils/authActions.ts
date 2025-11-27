@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, type AuthenticatedFetchOptions } from "./apiClient";
+import { apiGet, apiPost, apiPut, type AuthenticatedFetchOptions, authenticatedFetch, ApiError } from "./apiClient";
 import { $auth } from "./authStore";
 import type { User, RegisterPayload } from "./auth";
 
@@ -23,17 +23,35 @@ export const loginUser = async (email: string, password: string, options: Authen
  * @param email 
  * @param password 
  */
-export const loginAdminUser = async (email: string, password: string) => {
-  await loginUser(email, password);
-  try {
-    await apiGet("/admin/login", { cache: 'no-store' });
-  } catch (error: any) {
-    await logoutUser();
-    throw new Error("No tienes los permisos necesarios para acceder a este panel.");
+export const loginAdminUser = async (email: string, password: string): Promise<{ nextStep: 'NEEDS_VERIFICATION' | 'LOGIN_SUCCESS' }> => {
+  // Usamos authenticatedFetch para poder inspeccionar el status code
+  const response = await authenticatedFetch("/auth/login", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    handle401: false, // Manejamos el 401 manualmente
+  });
+
+  if (response.status === 302) {
+    // El backend indica que se necesita un segundo factor (verificación por código)
+    return { nextStep: 'NEEDS_VERIFICATION' };
   }
-  localStorage.setItem(USER_STORAGE_KEY, "");
-  
-  $auth.set({ isAuthenticated: true, user : null , loading: false });
+
+  if (response.status === 300 || response.ok) {
+    // El login fue directo y exitoso.
+    const user = await apiGet<User>("/profile/", { cache: 'no-store' });
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    $auth.set({ isAuthenticated: true, user, loading: false });
+    return { nextStep: 'LOGIN_SUCCESS' };
+  }
+
+  // Si la respuesta no fue ok, 300 o 302, lanzamos un error.
+  try {
+    const errorData = await response.json();
+    throw new ApiError(errorData.message || 'Credenciales incorrectas', response.status);
+  } catch (e) {
+    throw new ApiError('Error de red o credenciales incorrectas', response.status);
+  }
 };
 
 /**
@@ -146,5 +164,18 @@ export const logoutUser = async () => {
   } catch (error) {
     // Si la API falla, el usuario ya está deslogueado en el frontend.
     console.error("La llamada a /auth/logout falló, pero el cliente ya ha sido limpiado.", error);
+  }
+};
+
+/**
+ * Verifica si el usuario actual tiene una sesión de administrador válida.
+ * Redirige al login de admin si no es así.
+ */
+export const checkAdminSession = async () => {
+  try {
+    // Esta llamada solo tendrá éxito si la cookie de sesión es de un admin/superusuario.
+    await apiGet("/admin/check-admin", { redirectPath: "/core-tacana-wits-7b345" });
+  } catch (error) {
+    // El `apiGet` ya maneja la redirección en caso de 401, así que no necesitamos hacer nada más.
   }
 };

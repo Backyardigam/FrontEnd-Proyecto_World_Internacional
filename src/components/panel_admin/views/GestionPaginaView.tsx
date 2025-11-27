@@ -25,19 +25,6 @@ export default function GestionPaginaView() {
 
   const fetchServices = () => {
     setLoading(true);
-  //   apiGet<Service[]>("/manage/services/", { redirectPath: "/core-tacana-wits-7b345" })
-  //     .then((data) => {
-  //       setServices(data);
-  //       setError(null);
-  //     })
-  //     .catch((err) => {
-  //       setError("Error al cargar los servicios. Inténtalo de nuevo.");
-  //       console.error(err);
-  //     })
-  //     .finally(() => {
-  //       setLoading(false);
-  //     });
-  // };
 
     // --- SIMULACIÓN DE API ---
     const mockData: Service[] = [
@@ -72,6 +59,19 @@ export default function GestionPaginaView() {
       setError(null);
       setLoading(false);
     }, 300); // 0.8 segundos de retraso para simular la red
+
+    // apiGet<Service[]>("/manage/services/", { redirectPath: "/core-tacana-wits-7b345" })
+    //   .then((data) => {
+    //     setServices(data);
+    //     setError(null);
+    //   })
+    //   .catch((err) => {
+    //     setError("Error al cargar los servicios. Inténtalo de nuevo.");
+    //     console.error(err);
+    //   })
+    //   .finally(() => {
+    //     setLoading(false);
+    //   });
   };
 
   useEffect(() => {
