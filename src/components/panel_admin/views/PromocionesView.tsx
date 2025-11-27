@@ -14,7 +14,7 @@ export default function PromocionesView() {
       setError(null);
       try {
         // 1. Obtener la lista de todos los servicios
-        const services = await apiGet<IServiceListItem[]>("/manage/services/");
+        const services = await apiGet<IServiceListItem[]>("/manage/service/");
 
         // 2. Crear un array de promesas para obtener la promoción de cada servicio
         const promotionPromises = services.map(service =>

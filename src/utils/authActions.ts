@@ -187,10 +187,15 @@ export const logoutUser = async () => {
  * Verifica si el usuario actual tiene una sesión de administrador válida.
  * Redirige al login de admin si no es así.
  */
-export const checkAdminSession = async () => {
+export const checkAdminSession = async (onSuccess?: 'redirect_to_panel') => {
   try {
     // Esta llamada solo tendrá éxito si la cookie de sesión es de un admin/superusuario.
     await apiGet("/admin/check-admin", { redirectPath: "/core-tacana-wits-7b345" });
+
+    // Si la llamada tiene éxito y se especificó la acción, redirigimos al panel.
+    if (onSuccess === 'redirect_to_panel') {
+      window.location.href = "/core-tacana-wits-7b345/panel";
+    }
   } catch (error: any) {
     // El `apiGet` ya maneja la redirección en caso de 401.
     // Adicionalmente, si el error es un 403 (Forbidden), también debemos redirigir.

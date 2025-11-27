@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { checkAdminSession } from "../../utils/authActions";
 import { loginAdminUser, verifyAndLoginUser } from "../../utils/authActions";
 import { $auth } from "../../utils/authStore";
 
 export default function LoginAdmin() {
-  const [step, setStep] = useState<'credentials' | 'verifyCode'>('credentials');
+  const [step, setStep] = useState<"credentials" | "verifyCode">("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Al cargar el componente, verifica si hay una sesión de administrador activa.
+    // Si tiene éxito, le decimos que redirija al panel.
+    checkAdminSession('redirect_to_panel');
+  }, []);
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +31,9 @@ export default function LoginAdmin() {
     try {
       const result = await loginAdminUser(email, password);
 
-      if (result.nextStep === 'NEEDS_VERIFICATION') {
+      if (result.nextStep === "NEEDS_VERIFICATION") {
         // Si se necesita verificación, cambiamos al paso de introducir el código.
-        setStep('verifyCode');
+        setStep("verifyCode");
       } else {
         // Si el login fue directo (ej. rol con menos privilegios), redirigimos.
         window.location.href = "/core-tacana-wits-7b345/panel";
@@ -62,14 +69,17 @@ export default function LoginAdmin() {
     }
   };
 
-  if (step === 'credentials') {
+  if (step === "credentials") {
     return (
       <form onSubmit={handleCredentialSubmit} className="space-y-6">
         {error && (
           <div className="p-3 text-red-700 bg-red-100 rounded-lg">{error}</div>
         )}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Correo Electrónico
           </label>
           <input
@@ -82,7 +92,10 @@ export default function LoginAdmin() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
             Contraseña
           </label>
           <input
@@ -108,13 +121,17 @@ export default function LoginAdmin() {
   return (
     <form onSubmit={handleCodeSubmit} className="space-y-6">
       <p className="text-sm text-gray-600">
-        Se ha enviado un código de verificación a <strong>{email}</strong>. Por favor, ingrésalo a continuación.
+        Se ha enviado un código de verificación a <strong>{email}</strong>. Por
+        favor, ingrésalo a continuación.
       </p>
       {error && (
         <div className="p-3 text-red-700 bg-red-100 rounded-lg">{error}</div>
       )}
       <div>
-        <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="code"
+          className="block text-sm font-medium text-gray-700"
+        >
           Código de Verificación
         </label>
         <input
