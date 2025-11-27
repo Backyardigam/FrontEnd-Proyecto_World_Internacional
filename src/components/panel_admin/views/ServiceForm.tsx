@@ -27,6 +27,7 @@ export default function ServiceForm({
   initialServiceState
 }: ServiceFormProps) {
   const [formData, setFormData] = useState<Partial<IServiceRequest>>({});
+  const [schedule, setSchedule] = useState<{ startTrip: string; endTrip?: string; }[]>([{ startTrip: "09:00", endTrip: "18:00" }]);
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [existingImages, setExistingImages] = useState<ServiceGet['service']['mediaFiles'] | null>(null);
   const [existingCardImages, setExistingCardImages] = useState<string[]>([]);
@@ -84,11 +85,7 @@ export default function ServiceForm({
       //     fullDescription: service.fullDescription,
       //     itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
       //     recomendations: service.recomendations.join('\n'),
-      //     additional: service.additional.join('\n'),
-      //     schedule: Object.entries(service.schedule).map(([_, value]) => ({
-      //       startTrip: value.startTrip,
-      //       endTrip: value.endTrip,
-      //     })),
+      //     additional: service.additional.join('\n')
       //     // El campo mediaFiles para borrar se manejará por separado
       //   };
       //   setFormData(transformedData);
@@ -96,6 +93,10 @@ export default function ServiceForm({
       //   setExistingImages(service.mediaFiles ?? null); // Si mediaFiles es undefined, usamos null
       //   setExistingCardImages(card.mediaFiles ?? []); // Si mediaFiles es undefined, usamos un array vacío
       //   setLoading(false);
+      //   setSchedule(Object.entries(service.schedule).map(([_, value]) => ({
+      //     startTrip: value.startTrip,
+      //     endTrip: value.endTrip,
+      //   })));
       // }, 800);
 
       apiGet<ServiceGet>(`/manage/service/${serviceId}`, { redirectPath: "/core-tacana-wits-7b345" })
@@ -112,15 +113,15 @@ export default function ServiceForm({
             fullDescription: service.fullDescription,
             itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
             recomendations: service.recomendations.join('\n'),
-            additional: service.additional.join('\n'),
-            schedule: Object.entries(service.schedule).map(([_, value]) => ({
-              startTrip: value.startTrip,
-              endTrip: value.endTrip,
-            })),
+            additional: service.additional.join('\n')
             // El campo mediaFiles para borrar se manejará por separado
           };
           setFormData(transformedData);
           // Guardamos las URLs existentes para mostrarlas en la UI
+          setSchedule(Object.entries(service.schedule).map(([_, value]) => ({
+            startTrip: value.startTrip,
+            endTrip: value.endTrip,
+          })));
           setExistingImages(service.mediaFiles ?? null);
           setExistingCardImages(card.mediaFiles ?? []);
         })
@@ -146,11 +147,11 @@ export default function ServiceForm({
         fullDescription: "",
         itinerary: "",
         recomendations: "",
-        additional: "",
-        schedule: [{ startTrip: "09:00", endTrip: "18:00" }],
+        additional: ""
       });
       setExistingImages(null);
       setExistingCardImages([]);
+      setSchedule([{ startTrip: "09:00", endTrip: "18:00" }]);
     }
   }, [serviceId, isEditMode]);
 
@@ -293,6 +294,7 @@ export default function ServiceForm({
       itinerary: formData.itinerary?.split('\n').join(';'),
       recomendations: formData.recomendations?.split('\n').join(';'),
       additional: formData.additional?.split('\n').join(';'),
+      schedule: schedule, // Añadimos el estado de schedule aquí
       mediaFiles: imagesToDelete.map(url => ({ url })) as IMediaUrl[],
     };
 
