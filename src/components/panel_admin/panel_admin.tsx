@@ -76,6 +76,8 @@ export default function PanelAdmin() {
     { id: 'auditoria', label: 'Auditoría', icon: "M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" },
   ];
 
+  console.log("--- PanelAdmin: Renderizando componente principal ---");
+
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
       {/* Sidebar */}
@@ -84,7 +86,12 @@ export default function PanelAdmin() {
           Admin Panel
         </div>
         <nav className="flex-1 px-2 py-4 space-y-2">
-          {menuItems.map((item) => (
+          {menuItems.map((item, index) => {
+            // --- CONSOLE LOG DE DEPURACIÓN ---
+            console.log(`[${index}] Renderizando item de menú: ${item.label}`);
+            console.log(`Tipo de ícono: ${typeof item.icon}`, item.icon);
+
+            return (
             <a
               key={item.id}
               href="#"
@@ -102,7 +109,8 @@ export default function PanelAdmin() {
               ) : ( <>{item.icon}</> )}
               <span className="ml-4">{item.label}</span>
             </a>
-          ))}
+            );
+          })}
         </nav>
         <div className="px-2 py-4 border-t border-gray-700">
           <button
