@@ -25,7 +25,7 @@ export const loginUser = async (email: string, password: string, options: Authen
  */
 export const loginAdminUser = async (email: string, password: string): Promise<{ nextStep: 'NEEDS_VERIFICATION' | 'LOGIN_SUCCESS' }> => {
   // Usamos authenticatedFetch para poder inspeccionar el status code
-  const response = await authenticatedFetch("/auth/login", {
+  const response = await authenticatedFetch("/admin/login", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
