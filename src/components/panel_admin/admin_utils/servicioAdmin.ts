@@ -44,6 +44,8 @@ interface IScheduleInput {
 }
 
 type TServiceType= "mirabus"|"tour";
+
+//ahora en vez de un patch va a ser un put
 type TServiceState= "visible"| "hidden";
 
 // Interface for media files when updating a service
@@ -71,4 +73,8 @@ export interface IServiceRequest {
   additional: string; // "add1;add2"
   schedule: IScheduleInput[];
   mediaFiles?: IMediaUrl[]; // URLs de las imagenes que se borran en actualizaciones
+}
+//para la estructura patch
+interface request extends Partial<IServiceRequest>{
+
 }

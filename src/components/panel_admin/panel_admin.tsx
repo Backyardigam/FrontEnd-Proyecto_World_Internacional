@@ -98,7 +98,7 @@ export default function PanelAdmin() {
             >
               {typeof item.icon === 'string' ? (
                 <Icon path={item.icon} />
-              ) : ( item.icon )}
+              ) : ( <>{item.icon}</> )}
               <span className="ml-4">{item.label}</span>
             </a>
           ))}

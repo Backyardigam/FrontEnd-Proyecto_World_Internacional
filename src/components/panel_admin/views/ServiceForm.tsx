@@ -20,7 +20,7 @@ interface FormError {
   message: string;
 }
 
-export default function   ServiceForm({
+export default function ServiceForm({
   serviceId,
   onClose,
   onSave,
@@ -290,11 +290,9 @@ export default function   ServiceForm({
     // Pre-procesar datos antes de enviar
     const dataToSend = {
       ...formData,
-      // Asegurarse que los campos de texto multilínea se envíen como strings separados por ';'
       itinerary: formData.itinerary?.split('\n').join(';'),
       recomendations: formData.recomendations?.split('\n').join(';'),
       additional: formData.additional?.split('\n').join(';'),
-      // Añadir las URLs marcadas para eliminación
       mediaFiles: imagesToDelete.map(url => ({ url })) as IMediaUrl[],
     };
 
