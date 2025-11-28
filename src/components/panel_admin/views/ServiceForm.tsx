@@ -26,6 +26,9 @@ interface FormError {
   message: string;
 }
 
+// Para guardar el estado inicial en modo edición y comparar cambios
+type InitialState = { formData: Partial<IServiceRequest>, schedule: IScheduleInput[] };
+
 export default function ServiceForm({
   serviceId,
   onClose,
@@ -33,6 +36,7 @@ export default function ServiceForm({
   initialServiceState,
 }: ServiceFormProps) {
   const [formData, setFormData] = useState<Partial<IServiceRequest>>({});
+  const [initialState, setInitialState] = useState<InitialState | null>(null);
   // El 'schedule' se maneja por separado porque su estructura (array de objetos)
   // no es compatible con el 'handleChange' genérico que maneja strings.
   // Para 'Crear', se usa un valor por defecto. Para 'Editar', se carga desde la API.
@@ -80,7 +84,7 @@ export default function ServiceForm({
   useEffect(() => {
     if (isEditMode) {
       setLoading(true);
-      const prueba=true;
+      const prueba=false;
       if(prueba){
         // --- SIMULACIÓN DE API GET /manage/service/{id} ---
         const mockServiceGet: ServiceGet = {
@@ -152,16 +156,20 @@ export default function ServiceForm({
             // El campo mediaFiles para borrar se manejará por separado
           };
           setFormData(transformedData);
+
+          const initialSchedule = Object.entries(service.schedule).map(([_, value]) => ({
+            startTrip: convertTo24HourFormat(value.startTrip),
+            endTrip: convertTo24HourFormat(value.endTrip),
+          }));
+          setSchedule(initialSchedule);
+
+          // Guardamos el estado inicial para comparar en el submit
+          setInitialState({ formData: transformedData, schedule: initialSchedule });
+
           // Guardamos las URLs existentes para mostrarlas en la UI
           setExistingImages(service.mediaFiles ?? null); // Si mediaFiles es undefined, usamos null
           setExistingCardImages(card.mediaFiles ?? []); // Si mediaFiles es undefined, usamos un array vacío
           setLoading(false);
-          setSchedule(
-            Object.entries(service.schedule).map(([_, value]) => ({
-              startTrip: convertTo24HourFormat(value.startTrip),
-              endTrip: convertTo24HourFormat(value.endTrip),
-            }))
-          );
         }, 800);
       }else{
 
@@ -186,11 +194,16 @@ export default function ServiceForm({
               // El campo mediaFiles para borrar se manejará por separado
             };
             setFormData(transformedData);
-            // Guardamos las URLs existentes para mostrarlas en la UI
-            setSchedule(Object.entries(service.schedule).map(([_, value]) => ({
+            const initialSchedule = Object.entries(service.schedule).map(([_, value]) => ({
               startTrip: convertTo24HourFormat(value.startTrip),
               endTrip: convertTo24HourFormat(value.endTrip),
-            })));
+            }));
+            setSchedule(initialSchedule);
+
+            // Guardamos el estado inicial para comparar en el submit
+            setInitialState({ formData: transformedData, schedule: initialSchedule });
+
+            // Guardamos las URLs existentes para mostrarlas en la UI
             setExistingImages(service.mediaFiles ?? null);
             setExistingCardImages(card.mediaFiles ?? []);
           })
@@ -224,6 +237,7 @@ export default function ServiceForm({
       setExistingImages(null);
       setExistingCardImages([]);
       setSchedule([{ startTrip: "09:00", endTrip: "18:00" }]); // Valor por defecto para nuevos servicios
+      setInitialState(null); // Limpiamos el estado inicial
     }
   }, [serviceId, isEditMode]);
 
@@ -410,18 +424,50 @@ export default function ServiceForm({
       setLoading(false);
       return;
     }
-    // Pre-procesar datos antes de enviar
-    const dataToSend = {
-      ...formData,
-      itinerary: formData.itinerary?.split("\n").join(";"),
-      recomendations: formData.recomendations?.split("\n").join(";"),
-      additional: formData.additional?.split("\n").join(";"),
-      schedule: schedule, // Añadimos el estado de schedule aquí
-      mediaFiles: imagesToDelete.map((url) => ({ url })) as IMediaUrl[],
-    };
+
+    let dataToSend: any;
+    const method = isEditMode ? "PATCH" : "POST";
 
     const url = isEditMode ? `/manage/service/${serviceId}` : "/manage/service";
-    const method = isEditMode ? "PUT" : "POST";
+
+    if (isEditMode && initialState) {
+      // --- MODO EDICIÓN (PATCH): CONSTRUIR PAYLOAD CON CAMBIOS ---
+      dataToSend = {};
+      // Compara campos de texto
+      Object.keys(formData).forEach(key => {
+        const formKey = key as keyof IServiceRequest;
+        if (formData[formKey] !== initialState.formData[formKey]) {
+          dataToSend[formKey] = formData[formKey];
+        }
+      });
+
+      // Compara horarios
+      if (JSON.stringify(schedule) !== JSON.stringify(initialState.schedule)) {
+        dataToSend.schedule = schedule;
+      }
+
+      // Transforma campos de texto con saltos de línea si han cambiado
+      ['itinerary', 'recomendations', 'additional'].forEach(key => {
+        if (dataToSend[key] !== undefined) {
+          dataToSend[key] = dataToSend[key].split('\n').join(';');
+        }
+      });
+
+    } else {
+      // --- MODO CREACIÓN (POST): ENVIAR TODO ---
+      dataToSend = {
+        ...formData,
+        itinerary: formData.itinerary?.split("\n").join(";"),
+        recomendations: formData.recomendations?.split("\n").join(";"),
+        additional: formData.additional?.split("\n").join(";"),
+        schedule: schedule,
+      };
+    }
+
+    // Siempre añadir las imágenes a borrar si las hay (en ambos modos)
+    if (imagesToDelete.length > 0) {
+      dataToSend.mediaFiles = imagesToDelete.map((url) => ({ url })) as IMediaUrl[];
+    }
 
     try {
       await apiPostFormData(url, dataToSend, files, {

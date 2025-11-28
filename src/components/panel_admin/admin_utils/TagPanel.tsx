@@ -60,8 +60,8 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       return;
     }
     try {
-      const newTag = await apiPost<Tag>('/manage/tag/', { name: newTagName });
-      setAllTags([...allTags, newTag]); // Actualiza la UI inmediatamente
+      const updatedTags = await apiPost<Tag[]>('/manage/tag/', { name: newTagName });
+      setAllTags(updatedTags); // El backend devuelve la lista completa de tags
       setNewTagName('');
       setError(null);
     } catch (err) {
@@ -71,9 +71,15 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   // Eliminar un tag
   const handleDeleteTag = async (tagToDelete: string) => {
+    const tagObject = allTags.find(t => t.name === tagToDelete);
+    if (!tagObject) {
+      setError('No se pudo encontrar el tag para eliminar.');
+      return;
+    }
+
     try {
-      await apiDelete(`/manage/tag/${tagToDelete}`);
-      setAllTags(allTags.filter(t => t.name !== tagToDelete)); // Actualiza la UI
+      const updatedTags = await apiDelete<Tag[]>(`/manage/tag/${tagObject.id}`);
+      setAllTags(updatedTags); // El backend devuelve la lista completa de tags
       // También lo eliminamos de la selección actual si estaba seleccionado
       if (selectedTags.includes(tagToDelete)) {
         handleToggleTag(tagToDelete);
