@@ -124,14 +124,14 @@ export default function FormularioMirabus() {
 
   const handleStartSelection = () => {
     if (tripSelection) {
-      if (!auth.isAuthenticated) {
-        // Redirigir a la página de login, guardando la URL actual para poder volver.
-        const currentPath = window.location.pathname;
-        window.location.href = `/login?redirect=${encodeURIComponent(
-          currentPath
-        )}`;
-        return;
-      }
+      // if (!auth.isAuthenticated) {
+      //   // Redirigir a la página de login, guardando la URL actual para poder volver.
+      //   const currentPath = window.location.pathname;
+      //   window.location.href = `/login?redirect=${encodeURIComponent(
+      //     currentPath
+      //   )}`;
+      //   return;
+      // }
 
       const servicio = serviceInfo?.name || "";
 
