@@ -55,9 +55,9 @@ export default function ServiceForm({
    * a formato 24h (ej: "08:00", "17:00") para los inputs de tipo 'time'.
    */
   const convertTo24HourFormat = (timeStr: string | undefined): string => {
-    if (!timeStr) return '';
+    if (!timeStr) return "";
 
-    const normalizedTime = timeStr.toLowerCase().replace(/\s/g, '');
+    const normalizedTime = timeStr.toLowerCase().replace(/\s/g, "");
     const match = normalizedTime.match(/(\d{1,2}):(\d{2})(am|pm)/);
 
     if (!match) {
@@ -67,12 +67,13 @@ export default function ServiceForm({
     let [_, hours, minutes, period] = match;
     let hoursInt = parseInt(hours, 10);
 
-    if (period === 'pm' && hoursInt < 12) {
+    if (period === "pm" && hoursInt < 12) {
       hoursInt += 12;
-    } else if (period === 'am' && hoursInt === 12) { // Caso especial para las 12:00 am (medianoche)
+    } else if (period === "am" && hoursInt === 12) {
+      // Caso especial para las 12:00 am (medianoche)
       hoursInt = 0;
     }
-    return `${String(hoursInt).padStart(2, '0')}:${minutes}`;
+    return `${String(hoursInt).padStart(2, "0")}:${minutes}`;
   };
   useEffect(() => {
     if (isEditMode) {
@@ -84,48 +85,47 @@ export default function ServiceForm({
       //     id: "cmi3f8s8m0002tg1i7cxkhvg6",
       //     id_name: "tacna_tarata",
       //     name: "Tacna Tarata",
-      //     cost: 200,
+      //     cost: "200",
       //     type: "tour",
-      //     tag: ["Aventura", "Paisaje"],
+      //     serviceState: "visible",
+      //     tag: ["salidas diarias", "almuerzo incluido"],
       //     fullDescription:
-      //       "Una descripción completa y detallada del tour a Tarata.",
-      //     itinerary: [
-      //       "Salida de Tacna",
-      //       "Visita a los petroglifos",
-      //       "Almuerzo en Tarata",
-      //       "Retorno a Tacna",
-      //     ],
+      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit. Sit amet consectetur adipiscing elit quisque faucibus ex. Adipiscing elit quisque faucibus ex sapien vitae pellentesque.",
+      //     itinerary: ["Mirador de la Apacheta", "Andeneria Preinca"],
       //     recomendations: [
-      //       "Llevar bloqueador solar",
-      //       "Usar sombrero",
-      //       "Calzado cómodo",
+      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
       //     ],
-      //     additional: ["Incluye guía turístico", "No incluye bebidas"],
+      //     additional: [
+      //       "Ingreso a baños termales S/ 10.00",
+      //       "lorem ipsum dolor sit amet",
+      //     ],
       //     schedule: {
       //       "1": {
-      //         startTrip: "08:00 am",
-      //         endTrip: "05:00 pm",
-      //       },"2": {
-      //         startTrip: "09:00 am",
-      //         endTrip: "6:00 pm",
+      //         startTrip: "8:00 am",
+      //         endTrip: "5:00 pm",
       //       },
       //     },
       //     mediaFiles: {
-      //       urlBg1: "https://ik.imagekit.io/world/bg1_tarata.jpg",
-      //       urlBg2: "https://ik.imagekit.io/world/bg2_tarata.jpg",
-      //       // urlBg1: "",
-      //       // urlBg2: "",
+      //       urlBg1:
+      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/tacna_vviejoParticular.jpg?updatedAt=1763651608200",
+      //       urlBg2:
+      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/world%20international%20logo.jpg?updatedAt=1763651608198",
       //       urlGalery: [
-      //         "https://ik.imagekit.io/world/gal1_tarata.jpg",
-      //         "https://ik.imagekit.io/world/gal2_tarata.jpg",
+      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/tacna_tarata.jpg?updatedAt=1763499714825",
+      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/world%20international%20logo.jpg?updatedAt=1763651587828",
       //       ],
-      //       urlTrip: "https://ik.imagekit.io/world/trip_tarata.jpg",
+      //       urlTrip:
+      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/routes/world%20international%20logo.jpg?updatedAt=1763651631393",
       //     },
       //   },
       //   card: {
       //     compactDescription:
-      //       "Descubre la histórica ciudad de Tarata en un tour de día completo.",
-      //     mediaFiles: ["https://ik.imagekit.io/world/card_tarata.jpg"],
+      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
+      //     mediaFiles: [
+      //       "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/card/tacna_tarata.jpg?updatedAt=1763390781959",
+      //     ],
       //   },
       // };
 
@@ -134,10 +134,13 @@ export default function ServiceForm({
       //   const { service, card } = mockServiceGet;
       //   const transformedData: Partial<IServiceRequest> = {
       //     name: service.name,
-      //     cost: service.cost,
+      //     cost: parseFloat(service.cost) || 0,
       //     type: service.type,
       //     serviceState: initialServiceState || "visible", // Usamos el estado pasado por props
-      //     tag: service.tag.join(";"), // Array a string
+      //     // Blindaje: Si el tag es un objeto {id, name}, extraemos el nombre. Si es un string, lo usamos.
+      //     tag: service.tag
+      //       .map((t: any) => (typeof t === "object" && t.name ? t.name : t))
+      //       .join(";"),
       //     compactDescription: card.compactDescription,
       //     fullDescription: service.fullDescription,
       //     itinerary: service.itinerary.join("\n"), // Array a string con saltos de línea
@@ -165,10 +168,12 @@ export default function ServiceForm({
           const { service, card } = data;
           const transformedData: Partial<IServiceRequest> = {
             name: service.name,
-            cost: service.cost,
+            cost: parseFloat(service.cost) || 0,
             type: service.type,
             serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
-            tag: service.tag.join(';'), // Array a string
+            tag: service.tag
+              .map((t: any) => (typeof t === 'object' && t.name ? t.name : t))
+              .join(';'),
             compactDescription: card.compactDescription,
             fullDescription: service.fullDescription,
             itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea

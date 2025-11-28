@@ -233,11 +233,21 @@ export async function apiDelete<T = any>(url: string, options: AuthenticatedFetc
  */
 export async function apiPostFormData<T = any>(url: string, data: any, files: Record<string, File | File[]>, options: AuthenticatedFetchOptions = {}): Promise<T> {
   const formData = new FormData();
-
-  // 1. Añadir los datos de texto como un único campo JSON.
-  formData.append('data', JSON.stringify(data));
-
-  // 2. Añadir los archivos, cada uno con su 'fieldname'.
+  // 1. Añadir cada campo de los datos de texto por separado.
+  // Esto coincide con la forma en que el backend (con Multer) espera recibir los campos.
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      const value = data[key];
+      // Los objetos complejos (como el array 'schedule' o 'mediaFiles') deben ser stringificados.
+      if (typeof value === 'object' && value !== null) {
+        formData.append(key, JSON.stringify(value));
+      } else if (value !== undefined && value !== null) {
+        // Los valores primitivos (string, number, boolean) se convierten a string.
+        formData.append(key, String(value));
+      }
+    }
+  }
+  // 2. Añadir los archivos, cada uno con su 'fieldname' (nombre de campo).
   for (const fieldname in files) {
     const fileOrFiles = files[fieldname];
     if (Array.isArray(fileOrFiles)) {
