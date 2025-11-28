@@ -30,9 +30,22 @@ interface UseSocketTripReturn {
   deselectSeat: (seatId: string, busOrden: string) => void;
 }
 
-// La URL del servidor de Socket.IO. En un proyecto real, esto debería
-// venir de una variable de entorno.
-const SOCKET_URL = import.meta.env.PUBLIC_SOCKET_URL || "http://localhost:3001";
+/**
+ * Construye dinámicamente la URL del servidor de Socket.IO.
+ * - En producción, siempre usará 'wss://'.
+ * - En desarrollo, usará 'ws://' para evitar problemas con certificados SSL locales.
+ * @returns La URL completa del socket.
+ */
+function getSocketUrl(): string {
+  const rawUrl = import.meta.env.PUBLIC_SOCKET_URL || "localhost:3001";
+
+  // Determina el protocolo. Usa 'ws' si la URL contiene 'localhost' o si no estamos en producción.
+  const isLocal = rawUrl.includes("localhost") || import.meta.env.DEV;
+  const protocol = isLocal ? 'ws' : 'wss';
+
+  // Limpia el prefijo http/https/ws/wss por si acaso y construye la URL final.
+  return `${protocol}://${rawUrl.replace(/^(https?|wss?):\/\//, '')}`;
+}
 
 /**
  * Hook personalizado para gestionar la lógica de selección de asientos
@@ -100,7 +113,7 @@ export function useSocketTrip(): UseSocketTripReturn {
     setSessionExpired(false);
 
     const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> =
-      io(SOCKET_URL, {
+      io(getSocketUrl(), {
         // Opciones de conexión
         withCredentials:true,
         reconnection: true, // Habilitar la reconexión si se pierde la conexión
