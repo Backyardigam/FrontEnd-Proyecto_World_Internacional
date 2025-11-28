@@ -27,56 +27,61 @@ export default function GestionPaginaView() {
 
   const fetchServices = () => {
     setLoading(true);
+    const prueba = true;
 
-    // --- SIMULACIÓN DE API ---
-    // const mockData: Service[] = [
-    //   {
-    //     "id": "cmi3f8s8m0002tg1i7cxkhvg6",
-    //     "id_name": "tacna_tarata",
-    //     "name": "Tacna Tarata",
-    //     "cost": "200",
-    //     "type": "tour",
-    //     "serviceState": "visible"
-    //   },
-    //   {
-    //     "id": "cmi3f8sy80003tg1isivywlbm",
-    //     "id_name": "valle_viejo",
-    //     "name": "Valle Viejo",
-    //     "cost": "50",
-    //     "type": "mirabus",
-    //     "serviceState": "visible"
-    //   },
-    //   {
-    //     "id": "cmi4po8k00000mn1iteykxz8k",
-    //     "id_name": "tacna_testeo",
-    //     "name": "Tacna Testeo",
-    //     "cost": "2000",
-    //     "type": "tour",
-    //     "serviceState": "visible"
-    //   }
-    // ];
+    if (prueba){
 
-    // setTimeout(() => {
-    //   setServices(mockData);
-    //   setError(null);
-    //   setLoading(false);
-    // }, 300);
-
-
-  //Funcion real
-    apiGet<Service[]>("/manage/service/", { redirectPath: "/core-tacana-wits-7b345" })
-      .then((data) => {
-        setServices(data);
+      // --- SIMULACIÓN DE API ---
+      const mockData: Service[] = [
+        {
+          "id": "cmi3f8s8m0002tg1i7cxkhvg6",
+          "id_name": "tacna_tarata",
+          "name": "Tacna Tarata",
+          "cost": "200",
+          "type": "tour",
+          "serviceState": "visible"
+        },
+        {
+          "id": "cmi3f8sy80003tg1isivywlbm",
+          "id_name": "valle_viejo",
+          "name": "Valle Viejo",
+          "cost": "50",
+          "type": "mirabus",
+          "serviceState": "visible"
+        },
+        {
+          "id": "cmi4po8k00000mn1iteykxz8k",
+          "id_name": "tacna_testeo",
+          "name": "Tacna Testeo",
+          "cost": "2000",
+          "type": "tour",
+          "serviceState": "visible"
+        }
+      ];
+  
+      setTimeout(() => {
+        setServices(mockData);
         setError(null);
-      })
-      .catch((err) => {
-        setError("Error al cargar los servicios. Inténtalo de nuevo.");
-        console.error(err);
-      })
-      .finally(() => {
         setLoading(false);
-      });
-      //FIn funcion ral
+      }, 300);
+    }else{
+      //Funcion real
+        apiGet<Service[]>("/manage/service/", { redirectPath: "/core-tacana-wits-7b345" })
+          .then((data) => {
+            setServices(data);
+            setError(null);
+          })
+          .catch((err) => {
+            setError("Error al cargar los servicios. Inténtalo de nuevo.");
+            console.error(err);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+          //FIn funcion ral
+    }
+
+
   };
 
   useEffect(() => {

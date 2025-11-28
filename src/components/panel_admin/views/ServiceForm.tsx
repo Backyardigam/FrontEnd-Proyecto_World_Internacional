@@ -75,132 +75,138 @@ export default function ServiceForm({
     }
     return `${String(hoursInt).padStart(2, "0")}:${minutes}`;
   };
+
+
   useEffect(() => {
     if (isEditMode) {
       setLoading(true);
+      const prueba=true;
+      if(prueba){
+        // --- SIMULACIÓN DE API GET /manage/service/{id} ---
+        const mockServiceGet: ServiceGet = {
+          service: {
+            id: "cmi3f8s8m0002tg1i7cxkhvg6",
+            id_name: "tacna_tarata",
+            name: "Tacna Tarata",
+            cost: "200",
+            type: "tour",
+            serviceState: "visible",
+            tag: ["salidas diarias", "almuerzo incluido"],
+            fullDescription:
+              "Lorem ipsum dolor sit amet consectetur adipiscing elit. Sit amet consectetur adipiscing elit quisque faucibus ex. Adipiscing elit quisque faucibus ex sapien vitae pellentesque.",
+            itinerary: ["Mirador de la Apacheta", "Andeneria Preinca"],
+            recomendations: [
+              "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+              "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+              "Lorem ipsum dolor sit amet consectetur adipiscing elit",
+            ],
+            additional: [
+              "Ingreso a baños termales S/ 10.00",
+              "lorem ipsum dolor sit amet",
+            ],
+            schedule: {
+              "1": {
+                startTrip: "8:00 am",
+                endTrip: "5:00 pm",
+              },
+            },
+            mediaFiles: {
+              urlBg1:
+                "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/tacna_vviejoParticular.jpg?updatedAt=1763651608200",
+              urlBg2:
+                "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/world%20international%20logo.jpg?updatedAt=1763651608198",
+              urlGalery: [
+                "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/tacna_tarata.jpg?updatedAt=1763499714825",
+                "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/world%20international%20logo.jpg?updatedAt=1763651587828",
+              ],
+              urlTrip:
+                "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/routes/world%20international%20logo.jpg?updatedAt=1763651631393",
+            },
+          },
+          card: {
+            compactDescription:
+              "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
+            mediaFiles: [
+              "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/card/tacna_tarata.jpg?updatedAt=1763390781959",
+            ],
+          },
+        };
 
-      // // --- SIMULACIÓN DE API GET /manage/service/{id} ---
-      // const mockServiceGet: ServiceGet = {
-      //   service: {
-      //     id: "cmi3f8s8m0002tg1i7cxkhvg6",
-      //     id_name: "tacna_tarata",
-      //     name: "Tacna Tarata",
-      //     cost: "200",
-      //     type: "tour",
-      //     serviceState: "visible",
-      //     tag: ["salidas diarias", "almuerzo incluido"],
-      //     fullDescription:
-      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit. Sit amet consectetur adipiscing elit quisque faucibus ex. Adipiscing elit quisque faucibus ex sapien vitae pellentesque.",
-      //     itinerary: ["Mirador de la Apacheta", "Andeneria Preinca"],
-      //     recomendations: [
-      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
-      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
-      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit",
-      //     ],
-      //     additional: [
-      //       "Ingreso a baños termales S/ 10.00",
-      //       "lorem ipsum dolor sit amet",
-      //     ],
-      //     schedule: {
-      //       "1": {
-      //         startTrip: "8:00 am",
-      //         endTrip: "5:00 pm",
-      //       },
-      //     },
-      //     mediaFiles: {
-      //       urlBg1:
-      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/tacna_vviejoParticular.jpg?updatedAt=1763651608200",
-      //       urlBg2:
-      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/background/world%20international%20logo.jpg?updatedAt=1763651608198",
-      //       urlGalery: [
-      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/tacna_tarata.jpg?updatedAt=1763499714825",
-      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/galery/world%20international%20logo.jpg?updatedAt=1763651587828",
-      //       ],
-      //       urlTrip:
-      //         "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/routes/world%20international%20logo.jpg?updatedAt=1763651631393",
-      //     },
-      //   },
-      //   card: {
-      //     compactDescription:
-      //       "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
-      //     mediaFiles: [
-      //       "https://ik.imagekit.io/if2foot75kw/services/tacna_tarata/card/tacna_tarata.jpg?updatedAt=1763390781959",
-      //     ],
-      //   },
-      // };
-
-      // setTimeout(() => {
-      //   // Transformar los datos de la API al formato del formulario (IServiceRequest)
-      //   const { service, card } = mockServiceGet;
-      //   const transformedData: Partial<IServiceRequest> = {
-      //     name: service.name,
-      //     cost: parseFloat(service.cost) || 0,
-      //     type: service.type,
-      //     serviceState: initialServiceState || "visible", // Usamos el estado pasado por props
-      //     // Blindaje: Si el tag es un objeto {id, name}, extraemos el nombre. Si es un string, lo usamos.
-      //     tag: service.tag
-      //       .map((t: any) => (typeof t === "object" && t.name ? t.name : t))
-      //       .join(";"),
-      //     compactDescription: card.compactDescription,
-      //     fullDescription: service.fullDescription,
-      //     itinerary: service.itinerary.join("\n"), // Array a string con saltos de línea
-      //     recomendations: service.recomendations.join("\n"),
-      //     additional: service.additional.join("\n"),
-      //     // El campo mediaFiles para borrar se manejará por separado
-      //   };
-      //   setFormData(transformedData);
-      //   // Guardamos las URLs existentes para mostrarlas en la UI
-      //   setExistingImages(service.mediaFiles ?? null); // Si mediaFiles es undefined, usamos null
-      //   setExistingCardImages(card.mediaFiles ?? []); // Si mediaFiles es undefined, usamos un array vacío
-      //   setLoading(false);
-      //   setSchedule(
-      //     Object.entries(service.schedule).map(([_, value]) => ({
-      //       startTrip: convertTo24HourFormat(value.startTrip),
-      //       endTrip: convertTo24HourFormat(value.endTrip),
-      //     }))
-      //   );
-      // }, 800);
-
-      // Funcion Real
-      apiGet<ServiceGet>(`/manage/service/${serviceId}`, { redirectPath: "/core-tacana-wits-7b345" })
-        .then((data) => {
+        setTimeout(() => {
           // Transformar los datos de la API al formato del formulario (IServiceRequest)
-          const { service, card } = data;
+          const { service, card } = mockServiceGet;
           const transformedData: Partial<IServiceRequest> = {
             name: service.name,
             cost: parseFloat(service.cost) || 0,
             type: service.type,
-            serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
+            serviceState: initialServiceState || "visible", // Usamos el estado pasado por props
+            // Blindaje: Si el tag es un objeto {id, name}, extraemos el nombre. Si es un string, lo usamos.
             tag: service.tag
-              .map((t: any) => (typeof t === 'object' && t.name ? t.name : t))
-              .join(';'),
+              .map((t: any) => (typeof t === "object" && t.name ? t.name : t))
+              .join(";"),
             compactDescription: card.compactDescription,
             fullDescription: service.fullDescription,
-            itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
-            recomendations: service.recomendations.join('\n'),
-            additional: service.additional.join('\n')
+            itinerary: service.itinerary.join("\n"), // Array a string con saltos de línea
+            recomendations: service.recomendations.join("\n"),
+            additional: service.additional.join("\n"),
             // El campo mediaFiles para borrar se manejará por separado
           };
           setFormData(transformedData);
           // Guardamos las URLs existentes para mostrarlas en la UI
-          setSchedule(Object.entries(service.schedule).map(([_, value]) => ({
-            startTrip: convertTo24HourFormat(value.startTrip),
-            endTrip: convertTo24HourFormat(value.endTrip),
-          })));
-          setExistingImages(service.mediaFiles ?? null);
-          setExistingCardImages(card.mediaFiles ?? []);
-        })
-        .catch((err) => {
-          if (err instanceof ApiError && err.status === 403) {
-            setError({ source: 'general', message: "No tienes permisos para editar este servicio." });
-            return; // Detenemos la carga para no mostrar un formulario vacío y roto.
-          }
-          setError({ source: 'general', message: "Error al cargar los datos del servicio." });
-        })
-        .finally(() => {
+          setExistingImages(service.mediaFiles ?? null); // Si mediaFiles es undefined, usamos null
+          setExistingCardImages(card.mediaFiles ?? []); // Si mediaFiles es undefined, usamos un array vacío
           setLoading(false);
-        });
-        //Fin del servicio real
+          setSchedule(
+            Object.entries(service.schedule).map(([_, value]) => ({
+              startTrip: convertTo24HourFormat(value.startTrip),
+              endTrip: convertTo24HourFormat(value.endTrip),
+            }))
+          );
+        }, 800);
+      }else{
+
+        // Funcion Real
+        apiGet<ServiceGet>(`/manage/service/${serviceId}`, { redirectPath: "/core-tacana-wits-7b345" })
+          .then((data) => {
+            // Transformar los datos de la API al formato del formulario (IServiceRequest)
+            const { service, card } = data;
+            const transformedData: Partial<IServiceRequest> = {
+              name: service.name,
+              cost: parseFloat(service.cost) || 0,
+              type: service.type,
+              serviceState: initialServiceState || 'visible', // Usamos el estado pasado por props
+              tag: service.tag
+                .map((t: any) => (typeof t === 'object' && t.name ? t.name : t))
+                .join(';'),
+              compactDescription: card.compactDescription,
+              fullDescription: service.fullDescription,
+              itinerary: service.itinerary.join('\n'), // Array a string con saltos de línea
+              recomendations: service.recomendations.join('\n'),
+              additional: service.additional.join('\n')
+              // El campo mediaFiles para borrar se manejará por separado
+            };
+            setFormData(transformedData);
+            // Guardamos las URLs existentes para mostrarlas en la UI
+            setSchedule(Object.entries(service.schedule).map(([_, value]) => ({
+              startTrip: convertTo24HourFormat(value.startTrip),
+              endTrip: convertTo24HourFormat(value.endTrip),
+            })));
+            setExistingImages(service.mediaFiles ?? null);
+            setExistingCardImages(card.mediaFiles ?? []);
+          })
+          .catch((err) => {
+            if (err instanceof ApiError && err.status === 403) {
+              setError({ source: 'general', message: "No tienes permisos para editar este servicio." });
+              return; // Detenemos la carga para no mostrar un formulario vacío y roto.
+            }
+            setError({ source: 'general', message: "Error al cargar los datos del servicio." });
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+          //Fin del servicio real
+      }
+
     } else {
       // Resetea el formulario para el modo 'Crear'
       setFormData({

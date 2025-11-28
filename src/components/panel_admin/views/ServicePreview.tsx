@@ -62,7 +62,7 @@ export default function ServicePreview({ serviceId, onClose }: ServicePreviewPro
               </ul>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <ServicePrice serviceId={service.id} originalPrice={service.cost} variant="minimal" />
+              <ServicePrice serviceId={service.id} originalPrice={parseFloat(service.cost)} variant="minimal" />
               <div className="bg-naranja-c rounded-sm p-2 text-white min-w-[106px] text-center">
                 <span aria-label={`Conoce más sobre el tour ${service.name}`}>Conoce más</span>
               </div>
@@ -117,7 +117,7 @@ export default function ServicePreview({ serviceId, onClose }: ServicePreviewPro
               <h3 className="text-2xl font-bold mb-4 text-naranja-c">Detalles del Tour</h3>
               <div className="mb-4 border-b border-gray-300 pb-4">
                 <h4 className="font-semibold mb-2">Precio por persona:</h4>
-                <ServicePrice serviceId={service.id} originalPrice={service.cost} variant="full" />
+                <ServicePrice serviceId={service.id} originalPrice={parseFloat(service.cost)} variant="full" />
               </div>
               <h4 className="font-semibold mb-2">Incluye:</h4>
               <ul className="list-disc list-inside space-y-1 mb-4 font-medium">

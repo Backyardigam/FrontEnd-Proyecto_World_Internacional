@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 
 import { apiGet, apiPost, apiDelete } from '../../../utils/apiClient';
 
+interface Tag {
+  id: number;
+  name: string;
+}
+
 interface TagPanelProps {
   // Tags actualmente seleccionadas para el servicio (ej: "Aventura;Paisaje")
   selectedTagsString: string;
@@ -10,7 +15,7 @@ interface TagPanelProps {
 }
 
 export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps) {
-  const [allTags, setAllTags] = useState<string[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,14 +29,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   const fetchTags = async () => {
     try {
-// Simulación de API GET /manage/tag/
-      // const mockTags = ["Aventura", "Paisaje", "Full Day", "Gastronomía", "Cultural", "Nocturno"];
-      // setTimeout(() => {
-      //   setAllTags(mockTags);
-      //   setLoading(false);
-      // }, 500);
-      
-      const tags = await apiGet<string[]>('/manage/tag/');
+      const tags = await apiGet<Tag[]>('/manage/tag/');
       setAllTags(tags);
     } catch (err) {
       setError('No se pudieron cargar los tags.');
@@ -57,13 +55,13 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   // Crear un nuevo tag
   const handleCreateTag = async () => {
-    if (!newTagName || allTags.includes(newTagName)) {
+    if (!newTagName || allTags.some(tag => tag.name === newTagName)) {
       setError('El tag no puede estar vacío o ya existe.');
       return;
     }
     try {
-      await apiPost('/manage/tag/', { name: newTagName });
-      setAllTags([...allTags, newTagName]); // Actualiza la UI inmediatamente
+      const newTag = await apiPost<Tag>('/manage/tag/', { name: newTagName });
+      setAllTags([...allTags, newTag]); // Actualiza la UI inmediatamente
       setNewTagName('');
       setError(null);
     } catch (err) {
@@ -75,7 +73,7 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
   const handleDeleteTag = async (tagToDelete: string) => {
     try {
       await apiDelete(`/manage/tag/${tagToDelete}`);
-      setAllTags(allTags.filter(t => t !== tagToDelete)); // Actualiza la UI
+      setAllTags(allTags.filter(t => t.name !== tagToDelete)); // Actualiza la UI
       // También lo eliminamos de la selección actual si estaba seleccionado
       if (selectedTags.includes(tagToDelete)) {
         handleToggleTag(tagToDelete);
@@ -94,12 +92,12 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       
       {/* Lista de tags seleccionables */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {allTags.map(tag => (
-          <div key={tag} className="flex items-center bg-gray-100 rounded-full">
-            <button type="button" onClick={() => handleToggleTag(tag)} className={`px-3 py-1 text-sm rounded-l-full transition-colors ${selectedTags.includes(tag) ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>
-              {tag}
+        {allTags.map(tagObj => (
+          <div key={tagObj.id} className="flex items-center bg-gray-100 rounded-full">
+            <button type="button" onClick={() => handleToggleTag(tagObj.name)} className={`px-3 py-1 text-sm rounded-l-full transition-colors ${selectedTags.includes(tagObj.name) ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>
+              {tagObj.name}
             </button>
-            <button type="button" onClick={() => handleDeleteTag(tag)} className="px-2 py-1 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-r-full transition-colors">
+            <button type="button" onClick={() => handleDeleteTag(tagObj.name)} className="px-2 py-1 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-r-full transition-colors">
               &#x2715;
             </button>
           </div>
