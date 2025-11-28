@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { loginUser, continueAsGuest } from "../../utils/authActions";
+import { ApiError } from "../../utils/apiClient";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -23,8 +24,12 @@ export default function LoginForm() {
         window.location.replace(redirectTo);
       }, 0);
 
-    } catch (err: any) {
-      setError(err.message || "Ocurrió un error. Por favor, intenta de nuevo.");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
+      }
     } finally {
       setIsLoading(false);
     }

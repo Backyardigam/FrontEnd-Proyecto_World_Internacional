@@ -62,6 +62,8 @@ export default function GestionPaginaView() {
     //   setLoading(false);
     // }, 300);
 
+
+  //Funcion real
     apiGet<Service[]>("/manage/service/", { redirectPath: "/core-tacana-wits-7b345" })
       .then((data) => {
         setServices(data);
@@ -74,6 +76,7 @@ export default function GestionPaginaView() {
       .finally(() => {
         setLoading(false);
       });
+      //FIn funcion ral
   };
 
   useEffect(() => {

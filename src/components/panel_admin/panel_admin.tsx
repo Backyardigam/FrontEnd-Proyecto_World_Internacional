@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../utils/authStore";
-import { logoutUser, checkAdminSession } from "../../utils/authActions";
+import { logoutUser, protectAdminRoute } from "../../utils/authActions";
 import { apiGet } from "../../utils/apiClient";
 import '../../styles/global.css';
 import { Usuario , Dashboard , MirabusIcon} from "../iconos/Usuario";
@@ -42,10 +42,10 @@ export default function PanelAdmin() {
     window.location.href = "/core-tacana-wits-7b345";
   };
 
-  // Al cargar el panel, verificamos si la sesión es de un administrador.
-  useEffect(() => {
-    checkAdminSession();
-  }, []);
+  // Al cargar el panel, protegemos la ruta. Si no hay sesión de admin, redirige al login.
+  // useEffect(() => {
+  //   protectAdminRoute();
+  // }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -87,9 +87,9 @@ export default function PanelAdmin() {
         </div>
         <nav className="flex-1 px-2 py-4 space-y-2">
           {menuItems.map((item, index) => {
-            // --- CONSOLE LOG DE DEPURACIÓN ---
-            console.log(`[${index}] Renderizando item de menú: ${item.label}`);
-            console.log(`Tipo de ícono: ${typeof item.icon}`, item.icon);
+
+            // console.log(`[${index}] Renderizando item de menu: ${item.label}`);
+            // console.log(`Tipo de ícono: ${typeof item.icon}`, item.icon);
 
             return (
             <a

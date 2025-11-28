@@ -38,7 +38,7 @@ export interface ServiceGet{
 // type TSectionName = "avatar" | "slider" | "background" | "galery" | "routes" | "logo" | "card";
 
 // The input schedule from the frontend
-interface IScheduleInput {
+export interface IScheduleInput {
   startTrip: string;
   endTrip?: string;
 }
@@ -74,6 +74,7 @@ export interface IServiceRequest {
   schedule: IScheduleInput[];
   mediaFiles?: IMediaUrl[]; // URLs de las imagenes que se borran en actualizaciones
 }
+
 //para la estructura patch
 interface request extends Partial<IServiceRequest>{
 

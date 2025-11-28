@@ -10,11 +10,17 @@ const USER_STORAGE_KEY = 'app_user_data';
  * @param password 
  */
 export const loginUser = async (email: string, password: string, options: AuthenticatedFetchOptions = {}) => {
-  await apiPost<{ user: User }>("/auth/login", { email, password }, options);
-  const user = await apiGet<User>("/profile/", { cache: 'no-store' });
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-  
-  $auth.set({ isAuthenticated: true, user , loading: false });
+  try {
+    await apiPost<{ user: User }>("/auth/login", { email, password }, options);
+    const user = await apiGet<User>("/profile/", { cache: 'no-store' });
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    
+    $auth.set({ isAuthenticated: true, user , loading: false });
+  } catch (error) {
+    // Si apiPost falla (ej. credenciales incorrectas), el error (ApiError) se captura aquí.
+    // Lo volvemos a lanzar para que el componente que llamó a loginUser (LoginForm) pueda manejarlo.
+    throw error;
+  }
 };
 
 /**
@@ -176,7 +182,7 @@ export const logoutUser = async () => {
   $auth.set({ isAuthenticated: false, user: null, loading: false });
 
   try {
-    await apiPost("/auth/logout", {});
+    await apiPost("/auth/logout", { cache: 'no-store'});
   } catch (error) {
     // Si la API falla, el usuario ya está deslogueado en el frontend.
     console.error("La llamada a /auth/logout falló, pero el cliente ya ha sido limpiado.", error);
@@ -184,25 +190,42 @@ export const logoutUser = async () => {
 };
 
 /**
- * Verifica si el usuario actual tiene una sesión de administrador válida.
- * Redirige al login de admin si no es así.
+ * FUNCIÓN PARA PÁGINAS PROTEGIDAS (ej. /panel_admin).
+ * Verifica si hay una sesión de admin activa. Si no la hay (o el usuario no tiene permisos),
+ * redirige a la página de login de administrador.
  */
-export const checkAdminSession = async (onSuccess?: 'redirect_to_panel') => {
+export const protectAdminRoute = async () => {
+  const adminLoginPath = "/core-tacana-wits-7b345";
   try {
     // Esta llamada solo tendrá éxito si la cookie de sesión es de un admin/superusuario.
-    await apiGet("/admin/check-admin", { redirectPath: "/core-tacana-wits-7b345" });
-
-    // Si la llamada tiene éxito y se especificó la acción, redirigimos al panel.
-    if (onSuccess === 'redirect_to_panel') {
-      window.location.href = "/core-tacana-wits-7b345/panel";
-    }
+    // Usamos handle401: false para manejar todos los errores en el catch.
+    await apiGet("/admin/check-admin", { cache: 'no-store', handle401: false });
+    // Si la llamada tiene éxito, no hacemos nada. El usuario puede quedarse en la página.
   } catch (error: any) {
-    // El `apiGet` ya maneja la redirección en caso de 401.
-    // Adicionalmente, si el error es un 403 (Forbidden), también debemos redirigir.
-    // Esto ocurre si un usuario normal (no admin) intenta acceder a una ruta de admin.
-    if (error instanceof ApiError && error.status === 403) {
-      window.location.href = "/core-tacana-wits-7b345";
-    }
-    // Para otros errores (ej. 500), no hacemos nada y dejamos que se muestre un error en consola.
+    // Si la llamada falla (401, 403, etc.), significa que no hay una sesión de admin válida.
+    // Redirigimos al login de admin.
+    console.error("Acceso no autorizado al panel de admin. Redirigiendo...", error);
+    window.location.href = adminLoginPath;
+  }
+};
+
+/**
+ * FUNCIÓN PARA LA PÁGINA DE LOGIN DE ADMIN (LoginAdmin.tsx).
+ * Verifica si ya existe una sesión de admin. Si es así, redirige directamente al panel
+ * para evitar que un admin ya logueado vea la pantalla de login de nuevo.
+ */
+export const redirectIfAdmin = async () => {
+  const adminPanelPath = "/core-tacana-wits-7b345/panel";
+  try {
+    // Intentamos verificar la sesión de admin.
+    await apiGet("/admin/check-admin", { cache: 'no-store', handle401: false });
+    // Si la llamada tiene éxito, significa que ya hay una sesión de admin activa.
+    // Redirigimos al panel.
+    console.log("Sesión de admin activa encontrada. Redirigiendo al panel...");
+    window.location.href = adminPanelPath;
+  } catch (error) {
+    // Si la llamada falla (401, 403), significa que no hay una sesión de admin.
+    // No hacemos NADA y dejamos que se muestre el formulario de login.
+    // Esto es intencional.
   }
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { checkAdminSession } from "../../utils/authActions";
+import { redirectIfAdmin } from "../../utils/authActions";
 import { loginAdminUser, verifyAndLoginUser } from "../../utils/authActions";
 import { $auth } from "../../utils/authStore";
 
@@ -12,9 +12,9 @@ export default function LoginAdmin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Al cargar el componente, verifica si hay una sesión de administrador activa.
-    // Si tiene éxito, le decimos que redirija al panel.
-    checkAdminSession('redirect_to_panel');
+    // Al cargar la página de login, verifica si ya hay una sesión de admin activa.
+    // Si es así, redirige directamente al panel para no mostrar el login de nuevo.
+    redirectIfAdmin();
   }, []);
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
