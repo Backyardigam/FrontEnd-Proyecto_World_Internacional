@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '../../../utils/apiClient';
 import type { IServiceListItem, IPromotion, IServiceWithPromotion } from '../admin_utils/promocionAdmin';
 import Boton from '../admin_utils/Boton';
@@ -12,13 +12,14 @@ interface PromotionFormData {
 
 export default function PromocionesView() {
   const [servicesWithPromotions, setServicesWithPromotions] = useState<IServiceWithPromotion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Para la carga inicial
+  const [isProcessing, setIsProcessing] = useState(false); // Para acciones en lote
   const [error, setError] = useState<string | null>(null);
 
   // Estados para la UI interactiva
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
-  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState<Partial<PromotionFormData>>({});
+  const [batchFormData, setBatchFormData] = useState<PromotionFormData>({ discountAmount: 0, discountExpiration: '', discountStock: null });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -62,99 +63,110 @@ export default function PromocionesView() {
     setSelectedServiceIds(newSelection);
   };
 
-  const handleStartEdit = (service: IServiceWithPromotion) => {
-    setEditingServiceId(service.id);
-    if (service.promotion) {
-      setEditFormData({
-        discountAmount: parseFloat(service.promotion.discountAmount as any),
-        discountExpiration: service.promotion.discountExpiration.split('T')[0], // Formato YYYY-MM-DD
-        discountStock: service.promotion.discountStock,
-      });
-    } else {
-      // Valores por defecto para una nueva promoción
-      setEditFormData({ discountAmount: 0, discountExpiration: '', discountStock: null });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingServiceId(null);
-    setEditFormData({});
-  };
-
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setEditFormData(prev => ({
+    setBatchFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? (value === '' ? null : parseFloat(value)) : value,
     }));
   };
 
-  // --- Lógica de API ---
+  // --- Lógica de API en Lote ---
 
-  const handleSave = async (serviceId: string) => {
-    const service = servicesWithPromotions.find(s => s.id === serviceId);
-    if (!service) return;
-
-    const method = service.promotion ? apiPatch : apiPost;
-    try {
-      const updatedPromotion = await method<IPromotion>(`/manage/promotion/${serviceId}`, editFormData);
-      // Actualizar la UI
-      setServicesWithPromotions(prev =>
-        prev.map(s => s.id === serviceId ? { ...s, promotion: updatedPromotion } : s)
-      );
-      handleCancelEdit();
-    } catch (err: any) {
-      setError(`Error al guardar: ${err.message}`);
+  const handleBatchApply = async () => {
+    if (selectedServiceIds.size === 0) {
+      setError("Por favor, selecciona al menos un servicio.");
+      return;
     }
+    if (!batchFormData.discountAmount || !batchFormData.discountExpiration) {
+      setError("El monto de descuento y la fecha de expiración son obligatorios.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    const promises = Array.from(selectedServiceIds).map(id => {
+      const service = servicesWithPromotions.find(s => s.id === id);
+      const method = service?.promotion ? apiPatch : apiPost;
+      return method<IPromotion>(`/manage/promotion/${id}`, batchFormData)
+        .then(updatedPromotion => ({ id, promotion: updatedPromotion, status: 'fulfilled' as const }))
+        .catch(err => ({ id, error: err, status: 'rejected' as const }));
+    });
+
+    const results = await Promise.all(promises);
+
+    // Actualizar el estado local con los resultados
+    setServicesWithPromotions(currentServices => {
+      const updatedMap = new Map(currentServices.map(s => [s.id, s]));
+      results.forEach(res => {
+        if (res.status === 'fulfilled') {
+          const existingService = updatedMap.get(res.id);
+          if (existingService) {
+            updatedMap.set(res.id, { ...existingService, promotion: res.promotion });
+          }
+        }
+      });
+      return Array.from(updatedMap.values());
+    });
+
+    const failedCount = results.filter(r => r.status === 'rejected').length;
+    if (failedCount > 0) {
+      setError(`${failedCount} promociones no se pudieron aplicar.`);
+    }
+
+    setIsProcessing(false);
+    setSelectedServiceIds(new Set()); // Deseleccionar todo
   };
 
-  const handleDelete = async (serviceId: string) => {
-    if (!window.confirm("¿Seguro que quieres eliminar esta promoción?")) return;
-    try {
-      await apiDelete(`/manage/promotion/${serviceId}`);
-      // Actualizar la UI
-      setServicesWithPromotions(prev =>
-        prev.map(s => s.id === serviceId ? { ...s, promotion: null } : s)
-      );
-    } catch (err: any) {
-      setError(`Error al eliminar: ${err.message}`);
+  const handleBatchRemove = async () => {
+    if (selectedServiceIds.size === 0) {
+      setError("Por favor, selecciona al menos un servicio para quitarle la promoción.");
+      return;
     }
+    if (!window.confirm(`¿Seguro que quieres eliminar las promociones de ${selectedServiceIds.size} servicios?`)) return;
+
+    setIsProcessing(true);
+    setError(null);
+
+    const promises = Array.from(selectedServiceIds).map(id =>
+      apiDelete(`/manage/promotion/${id}`)
+        .then(() => ({ id, status: 'fulfilled' as const }))
+        .catch(err => ({ id, error: err, status: 'rejected' as const }))
+    );
+
+    const results = await Promise.all(promises);
+
+    // Actualizar estado local
+    setServicesWithPromotions(currentServices =>
+      currentServices.map(s =>
+        results.some(r => r.status === 'fulfilled' && r.id === s.id) ? { ...s, promotion: null } : s
+      )
+    );
+
+    const failedCount = results.filter(r => r.status === 'rejected').length;
+    if (failedCount > 0) {
+      setError(`${failedCount} promociones no se pudieron eliminar.`);
+    }
+
+    setIsProcessing(false);
+    setSelectedServiceIds(new Set()); // Deseleccionar todo
   };
 
-  // --- Helper para calcular porcentaje ---
+  // --- Helpers y Derivados ---
+
   const calculateDiscountPercentage = (cost: string, discount: number | undefined) => {
     const originalCost = parseFloat(cost);
     if (!discount || originalCost === 0) return 0;
     return ((discount / originalCost) * 100).toFixed(0);
   };
 
-  // --- Componente de Formulario de Edición en Línea ---
-  const InlineEditForm = ({ service }: { service: IServiceWithPromotion }) => (
-    <div className="flex-1 bg-blue-50 p-3 rounded-md border border-blue-300 space-y-2">
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <label className="font-semibold block">Descuento (S/.)</label>
-          <input type="number" name="discountAmount" value={editFormData.discountAmount ?? ''} onChange={handleFormChange} className="w-full p-1 border rounded" />
-        </div>
-        <div>
-          <label className="font-semibold block">Precio Final (S/.)</label>
-          <p className="p-1 font-bold text-blue-700">{(parseFloat(service.cost) - (editFormData.discountAmount || 0)).toFixed(2)}</p>
-        </div>
-        <div>
-          <label className="font-semibold block">Expira</label>
-          <input type="date" name="discountExpiration" value={editFormData.discountExpiration ?? ''} onChange={handleFormChange} className="w-full p-1 border rounded" />
-        </div>
-        <div>
-          <label className="font-semibold block">Stock</label>
-          <input type="number" name="discountStock" value={editFormData.discountStock ?? ''} onChange={handleFormChange} placeholder="Ilimitado" className="w-full p-1 border rounded" />
-        </div>
-      </div>
-      <div className="flex gap-2 justify-end">
-        <Boton text="Cancelar" style="bg-gray-500" onPress={handleCancelEdit} />
-        <Boton text="Guardar" style="bg-blue-600" onPress={() => handleSave(service.id)} />
-      </div>
-    </div>
-  );
+  const filteredServices = useMemo(() => {
+    if (!searchTerm) return servicesWithPromotions;
+    return servicesWithPromotions.filter(s =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, servicesWithPromotions]);
 
   return (
     <div className="bg-white p-8 rounded-lg shadow-md">
@@ -163,28 +175,51 @@ export default function PromocionesView() {
       {loading && <p>Cargando promociones...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
+      {/* --- Panel de Acciones en Lote --- */}
+      {!loading && (
+        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg mb-8 space-y-4">
+          <h3 className="text-lg font-semibold text-gray-700">Acciones en Lote</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="font-medium block text-sm">Descuento (S/.)</label>
+              <input type="number" name="discountAmount" value={batchFormData.discountAmount ?? ''} onChange={handleFormChange} className="w-full p-2 border rounded-md mt-1" />
+            </div>
+            <div>
+              <label className="font-medium block text-sm">Fecha de Expiración</label>
+              <input type="date" name="discountExpiration" value={batchFormData.discountExpiration ?? ''} onChange={handleFormChange} className="w-full p-2 border rounded-md mt-1" />
+            </div>
+            <div>
+              <label className="font-medium block text-sm">Stock (opcional)</label>
+              <input type="number" name="discountStock" value={batchFormData.discountStock ?? ''} onChange={handleFormChange} placeholder="Ilimitado" className="w-full p-2 border rounded-md mt-1" />
+            </div>
+          </div>
+          <div className="flex gap-4 items-center">
+            <Boton text={`Aplicar a ${selectedServiceIds.size} seleccionados`} style="bg-blue-600" onPress={handleBatchApply} disabled={isProcessing} />
+            <Boton text="Quitar Promoción" style="bg-red-600" onPress={handleBatchRemove} disabled={isProcessing} />
+            {isProcessing && <p className="text-sm text-blue-600">Procesando...</p>}
+          </div>
+        </div>
+      )}
+
+      {/* --- Barra de Búsqueda y Lista de Servicios --- */}
       {!loading && !error && (
-        <ul className="space-y-4">
-          {servicesWithPromotions.map(item => (
-            <li key={item.id} className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              {/* Checkbox y Info Servicio */}
-              <div className="flex items-start gap-4 flex-1">
-                <input type="checkbox" className="mt-2 h-5 w-5" checked={selectedServiceIds.has(item.id)} onChange={() => handleToggleSelection(item.id)} />
-                <div>
-                  <p className="font-bold text-lg text-gray-900">{item.name}</p>
+        <div>
+          <input type="text" placeholder="Buscar servicio por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-2 border rounded-md mb-4" />
+          <ul className="space-y-3">
+            {filteredServices.map(item => (
+              <li key={item.id} className="p-4 border rounded-lg flex items-center gap-4 hover:bg-gray-50">
+                <input type="checkbox" className="h-5 w-5 flex-shrink-0" checked={selectedServiceIds.has(item.id)} onChange={() => handleToggleSelection(item.id)} />
+                
+                <div className="flex-1">
+                  <p className="font-bold text-gray-900">{item.name}</p>
                   <p className="text-sm text-gray-500">Precio Original: S/ {item.cost}</p>
                 </div>
-              </div>
 
-              {/* Detalles de la Promoción o Formulario de Edición */}
-              {editingServiceId === item.id ? (
-                <InlineEditForm service={item} />
-              ) : (
-                <div className="flex-1 bg-gray-50 p-3 rounded-md">
+                <div className="flex-1 bg-gray-50 p-3 rounded-md min-w-[300px]">
                   {item.promotion ? (
                     <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
                       <p><span className="font-semibold">Precio Final:</span> <span className="font-bold text-green-700">S/ {(parseFloat(item.cost) - parseFloat(item.promotion.discountAmount as any)).toFixed(2)}</span></p>
-                      <p><span className="font-semibold">Descuento:</span> S/ {item.promotion.discountAmount} (~{calculateDiscountPercentage(item.cost, parseFloat(item.promotion.discountAmount))}%)</p>
+                      <p><span className="font-semibold">Descuento:</span> S/ {item.promotion.discountAmount} (~{calculateDiscountPercentage(item.cost, parseFloat(item.promotion.discountAmount as any))}%)</p>
                       <p><span className="font-semibold">Expira:</span> {new Date(item.promotion.discountExpiration).toLocaleDateString()}</p>
                       <p><span className="font-semibold">Stock:</span> {item.promotion.discountStock ?? 'Ilimitado'}</p>
                     </div>
@@ -192,28 +227,10 @@ export default function PromocionesView() {
                     <p className="text-sm text-gray-400 italic">Sin promoción activa</p>
                   )}
                 </div>
-              )}
-
-              {/* Botones de Acción (si no se está editando) */}
-              {editingServiceId !== item.id && (
-                <div className="flex gap-2">
-                  <Boton
-                    text={item.promotion ? "Editar" : "Crear"}
-                    style={item.promotion ? "bg-yellow-600" : "bg-green-600"}
-                    onPress={() => handleStartEdit(item)}
-                  />
-                  {item.promotion && (
-                    <Boton
-                      text="Eliminar"
-                      style="bg-red-600"
-                      onPress={() => handleDelete(item.id)}
-                    />
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

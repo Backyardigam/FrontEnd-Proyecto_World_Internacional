@@ -16,7 +16,6 @@ import PromocionesView from './views/PromocionesView';
 import Mirabus  from './views/Mirabus';
 import type { JSX } from "astro/jsx-runtime";
 
-// Tipo para controlar la vista activa en el panel
 type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus';
 
 const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: string }) => (
@@ -28,7 +27,7 @@ const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: strin
 type MenuItem = {
   id: AdminView;
   label: string;
-  icon: string | JSX.Element; // Puede ser un 'path' de SVG o un componente de React
+  icon: string | JSX.Element;
 };
 
 export default function PanelAdmin() {
@@ -49,22 +48,19 @@ export default function PanelAdmin() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Si el sidebar está abierto, el ref existe y el clic fue fuera del sidebar...
       if (isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         setIsSidebarOpen(false);
       }
     };
 
-    // Añadir el listener solo cuando el sidebar está abierto
     if (isSidebarOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
-    // Limpiar el listener cuando el componente se desmonte o el sidebar se cierre
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSidebarOpen]); // El efecto se re-ejecuta cada vez que 'isSidebarOpen' cambia
+  }, [isSidebarOpen]);
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon:<Dashboard/>},
@@ -98,7 +94,7 @@ export default function PanelAdmin() {
               onClick={(e) => {
                 e.preventDefault();
                 setActiveView(item.id as AdminView);
-                if (window.innerWidth < 768) { // Cierra el sidebar en móvil al seleccionar una opción
+                if (window.innerWidth < 768) {
                   setIsSidebarOpen(false);
                 }
               }}
