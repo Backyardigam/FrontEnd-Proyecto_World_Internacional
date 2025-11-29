@@ -3,6 +3,7 @@ import { apiGet, apiPut } from "../../../utils/apiClient";
 import ServiceForm from "./ServiceForm";
 import ServicePreview from "./ServicePreview";
 import Boton from "../admin_utils/Boton";
+import SliderView from "./SliderView";
 
 interface Service {
   id: string;
@@ -119,8 +120,13 @@ export default function GestionPaginaView() {
     }
 
     try {
-      const updatedServices = await apiPut<Service[]>(`/manage/service/${id}`, { state: newState }, { handle403: 'notify' });
-      setServices(updatedServices); // Actualizamos la lista con la respuesta de la API
+      // La API devuelve el servicio actualizado, no la lista completa.
+      const updatedService = await apiPut<Service>(`/manage/service/${id}`, { state: newState }, { handle403: 'notify' });
+      
+      // Actualizamos el estado local reemplazando solo el servicio que cambió.
+      setServices(currentServices => 
+        currentServices.map(s => s.id === updatedService.id ? updatedService : s)
+      );
     } catch (err) {
       console.error(`Error al ${actionText} el servicio:`, err);
     }
@@ -148,15 +154,7 @@ export default function GestionPaginaView() {
       // --- VISTA DE LISTA (POR DEFECTO) ---
       <div className="space-y-8">
         {/* Sección Slider (Placeholder) */}
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Gestión de Slider Principal
-          </h2>
-          <p className="text-gray-500">
-            Esta sección para administrar el slider de la página de inicio estará
-            disponible próximamente.
-          </p>
-        </div>
+        <SliderView />
   
         {/* Sección Servicios */}
         <div className="bg-white p-8 rounded-lg shadow-md">
@@ -198,14 +196,14 @@ export default function GestionPaginaView() {
                     </p>
                   </div>
                   <div className="flex items-center flex-wrap gap-2 mt-4 md:mt-0">
-                    <Boton text="Vista Previa" style="bg-blue-600" onPress={() => handlePreview(service.id)} />
-                    <Boton text="Editar" style="bg-yellow-600" onPress={() => handleEdit(service.id)} />
+                    <Boton text="Vista Previa" styleClass="bg-blue-600" onPress={() => handlePreview(service.id)} />
+                    <Boton text="Editar" styleClass="bg-yellow-600" onPress={() => handleEdit(service.id)} />
                     <Boton
                       text={service.serviceState === 'visible' ? 'Desactivar' : 'Activar'}
-                      style={service.serviceState === 'visible' ? 'bg-gray-600' : 'bg-teal-600'}
+                      styleClass={service.serviceState === 'visible' ? 'bg-gray-600' : 'bg-teal-600'}
                       onPress={() => handleToggleState(service)}
                     />
-                    <Boton text="Eliminar" style="bg-red-600" onPress={() => ""} />
+                    <Boton text="Eliminar" styleClass="bg-red-600" onPress={() => ""} />
                   </div>
                 </li>
               ))}

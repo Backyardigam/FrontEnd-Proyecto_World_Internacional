@@ -1,4 +1,3 @@
 - El login de invitados y la redireccion a formulario mirabus(en algun punto no va a /reservar)
-- Probar el create y update server
 - mostrar correctamente mensajes de error de lado del usuario
 - Probar el nuevo put para alternar el estado del servicio
