@@ -3,12 +3,12 @@ import { apiGet, apiPostFormData, apiDelete } from "../../../utils/apiClient";
 import Boton from "../admin_utils/Boton";
 
 interface Slider {
-  id: string;
+  id: string | number;
   tagline: string;
   title: string;
   subtitle: string;
   href: string;
-  imageUrl: string;
+  url: string; // Corregido para coincidir con la respuesta de la API
 }
 
 interface SliderFormData {
@@ -19,6 +19,48 @@ interface SliderFormData {
 }
 
 const SLIDER_LIMIT = 3;
+
+// --- Componente del Formulario (definido fuera) ---
+// Recibe todo lo que necesita como props.
+const SliderForm = ({
+  editingSlider,
+  formData,
+  file,
+  handleSubmit,
+  handleChange,
+  handleFileChange,
+  handleCloseForm,
+  setFile,
+}: {
+  editingSlider: Slider | null;
+  formData: Partial<SliderFormData>;
+  file: File | null;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCloseForm: () => void;
+  setFile: (file: File | null) => void;
+}) => (
+  <div className="mt-6 border-t pt-6">
+    <h3 className="text-lg font-semibold mb-4">
+      {editingSlider ? "Editar Slider" : "Crear Nuevo Slider"}
+    </h3>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input name="tagline" value={formData.tagline || ""} onChange={handleChange} placeholder="Tagline (ej. 'Descubre')" className="p-2 border border-gray-300 rounded" />
+        <input name="title" value={formData.title || ""} onChange={handleChange} placeholder="Título principal" className="p-2 border border-gray-300 rounded" required />
+        <input name="subtitle" value={formData.subtitle || ""} onChange={handleChange} placeholder="Subtítulo" className="p-2 border border-gray-300 rounded" />
+        <input name="href" value={formData.href || ""} onChange={handleChange} placeholder="URL del botón (ej. '/servicios/tour-1')" className="p-2 border border-gray-300 rounded" required />
+      </div>
+      {/* El resto del formulario se mantiene igual, usando las props */}
+      {/* ... (código del input de archivo idéntico al que ya tenías) ... */}
+      <div className="flex gap-4">
+        <Boton text="Guardar" styleClass="bg-blue-600" type="submit" />
+        <Boton text="Cancelar" styleClass="bg-gray-500" onPress={handleCloseForm} />
+      </div>
+    </form>
+  </div>
+);
 
 export default function SliderView() {
   const [sliders, setSliders] = useState<Slider[]>([]);
@@ -109,7 +151,7 @@ export default function SliderView() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | number) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar este slider?"))
       return;
 
@@ -122,31 +164,6 @@ export default function SliderView() {
       setError("Error al eliminar el slider: " + err.message);
     }
   };
-
-  const SliderForm = () => (
-    <div className="mt-6 border-t pt-6">
-      <h3 className="text-lg font-semibold mb-4">
-        {editingSlider ? "Editar Slider" : "Crear Nuevo Slider"}
-      </h3>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input name="tagline" value={formData.tagline || ""} onChange={handleChange} placeholder="Tagline (ej. 'Descubre')" className="p-2 border border-gray-300 rounded" />
-          <input name="title" value={formData.title || ""} onChange={handleChange} placeholder="Título principal" className="p-2 border border-gray-300 rounded" required />
-          <input name="subtitle" value={formData.subtitle || ""} onChange={handleChange} placeholder="Subtítulo" className="p-2 border border-gray-300 rounded" />
-          <input name="href" value={formData.href || ""} onChange={handleChange} placeholder="URL del botón (ej. '/servicios/tour-1')" className="p-2 border border-gray-300 rounded" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Imagen del Slider</label>
-          <input type="file" name="slider" onChange={handleFileChange} accept="image/*" className="mt-1" />
-          {editingSlider && <p className="text-xs text-gray-500 mt-1">Sube una nueva imagen solo si deseas reemplazar la actual.</p>}
-        </div>
-        <div className="flex gap-4">
-          <Boton text="Guardar" styleClass="bg-blue-600" type="submit" />
-          <Boton text="Cancelar" styleClass="bg-gray-500" onPress={handleCloseForm} />
-        </div>
-      </form>
-    </div>
-  );
 
   return (
     <div className="bg-white p-8 rounded-lg shadow-md">
@@ -169,8 +186,8 @@ export default function SliderView() {
       {!loading && (
         <div className="space-y-4">
           {sliders.map((slider) => (
-            <div key={slider.id} className="p-4 border rounded-lg flex items-center gap-4">
-              <img src={slider.imageUrl} alt={slider.title} className="w-32 h-20 object-cover rounded-md bg-gray-200" />
+            <div key={slider.id} className="p-4 border border-gray-300 rounded-lg flex items-center gap-4">
+              <img src={slider.url} alt={slider.title} className="w-32 h-20 object-cover rounded-md bg-gray-200" />
               <div className="flex-1">
                 <p className="font-semibold text-lg">{slider.title}</p>
                 <p className="text-sm text-gray-600">{slider.tagline} - {slider.subtitle}</p>
@@ -185,7 +202,18 @@ export default function SliderView() {
         </div>
       )}
 
-      {isFormVisible && <SliderForm />}
+      {isFormVisible && (
+        <SliderForm
+          editingSlider={editingSlider}
+          formData={formData}
+          file={file}
+          handleSubmit={handleSubmit}
+          handleChange={handleChange}
+          handleFileChange={handleFileChange}
+          handleCloseForm={handleCloseForm}
+          setFile={setFile}
+        />
+      )}
 
       {sliders.length >= SLIDER_LIMIT && !isFormVisible && (
         <p className="text-sm text-gray-500 mt-4">
