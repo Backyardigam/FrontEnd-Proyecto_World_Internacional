@@ -47,16 +47,66 @@ const SliderForm = ({
     </h3>
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input name="tagline" value={formData.tagline || ""} onChange={handleChange} placeholder="Tagline (ej. 'Descubre')" className="p-2 border border-gray-300 rounded" />
-        <input name="title" value={formData.title || ""} onChange={handleChange} placeholder="Título principal" className="p-2 border border-gray-300 rounded" required />
-        <input name="subtitle" value={formData.subtitle || ""} onChange={handleChange} placeholder="Subtítulo" className="p-2 border border-gray-300 rounded" />
-        <input name="href" value={formData.href || ""} onChange={handleChange} placeholder="URL del botón (ej. '/servicios/tour-1')" className="p-2 border border-gray-300 rounded" required />
+        <input
+          name="tagline"
+          value={formData.tagline || ""}
+          onChange={handleChange}
+          placeholder="Tagline (ej. 'Descubre')"
+          className="p-2 border border-gray-300 rounded"
+        />
+        <input
+          name="title"
+          value={formData.title || ""}
+          onChange={handleChange}
+          placeholder="Título principal"
+          className="p-2 border border-gray-300 rounded"
+          required
+        />
+        <input
+          name="subtitle"
+          value={formData.subtitle || ""}
+          onChange={handleChange}
+          placeholder="Subtítulo"
+          className="p-2 border border-gray-300 rounded"
+        />
+        <input
+          name="href"
+          value={formData.href || ""}
+          onChange={handleChange}
+          placeholder="URL del botón (ej. '/servicios/tour-1')"
+          className="p-2 border border-gray-300 rounded"
+          required
+        />
       </div>
       {/* El resto del formulario se mantiene igual, usando las props */}
-      {/* ... (código del input de archivo idéntico al que ya tenías) ... */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Imagen del Slider</label>
+        <div className="mt-2 flex items-center gap-4">
+          <label htmlFor="file-upload" className="cursor-pointer bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <span>Seleccionar archivo</span>
+            <input id="file-upload" name="slider" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+          </label>
+          {file ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 font-medium">{file.name}</span>
+              <button type="button" onClick={() => setFile(null)} className="text-red-600 hover:text-red-800" title="Quitar archivo">
+                &#x2715;
+              </button>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">No se ha seleccionado ningún archivo.</span>
+          )}
+        </div>
+        {editingSlider && !file && <p className="text-xs text-gray-500 mt-1">Sube una nueva imagen solo si deseas reemplazar la actual.</p>}
+      </div>
+
       <div className="flex gap-4">
         <Boton text="Guardar" styleClass="bg-blue-600" type="submit" />
-        <Boton text="Cancelar" styleClass="bg-gray-500" onPress={handleCloseForm} />
+        <Boton
+          text="Cancelar"
+          styleClass="bg-gray-500"
+          onPress={handleCloseForm}
+        />
       </div>
     </form>
   </div>
@@ -138,12 +188,9 @@ export default function SliderView() {
     }
 
     try {
-      await apiPostFormData(
-        url,
-        formData,
-        file ? { slider: [file] } : {},
-        { method }
-      );
+      await apiPostFormData(url, formData, file ? { slider: [file] } : {}, {
+        method,
+      });
       await fetchSliders();
       handleCloseForm();
     } catch (err: any) {
@@ -174,7 +221,7 @@ export default function SliderView() {
         {sliders.length < SLIDER_LIMIT && !isFormVisible && (
           <Boton
             text="Crear Slider"
-            styleClass="bg-green-600"
+            className="px-4 py-2 bg-naranja-c text-white font-semibold rounded-lg max-w-fit hover:bg-naranja-f"
             onPress={() => handleOpenForm(null)}
           />
         )}
@@ -186,16 +233,40 @@ export default function SliderView() {
       {!loading && (
         <div className="space-y-4">
           {sliders.map((slider) => (
-            <div key={slider.id} className="p-4 border border-gray-300 rounded-lg flex items-center gap-4">
-              <img src={slider.url} alt={slider.title} className="w-32 h-20 object-cover rounded-md bg-gray-200" />
+            <div
+              key={slider.id}
+              className="p-4 border border-gray-300 rounded-lg flex items-center gap-4"
+            >
+              <img
+                src={slider.url}
+                alt={slider.title}
+                className="w-32 h-20 object-cover rounded-md bg-gray-200"
+              />
               <div className="flex-1">
                 <p className="font-semibold text-lg">{slider.title}</p>
-                <p className="text-sm text-gray-600">{slider.tagline} - {slider.subtitle}</p>
-                <a href={slider.href} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">{slider.href}</a>
+                <p className="text-sm text-gray-600">
+                  {slider.tagline} - {slider.subtitle}
+                </p>
+                <a
+                  href={slider.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-500 hover:underline"
+                >
+                  {slider.href}
+                </a>
               </div>
               <div className="flex gap-2">
-                <Boton text="Editar" styleClass="bg-yellow-600" onPress={() => handleOpenForm(slider)} />
-                <Boton text="Eliminar" styleClass="bg-red-600" onPress={() => handleDelete(slider.id)} />
+                <Boton
+                  text="Editar"
+                  styleClass="bg-yellow-600"
+                  onPress={() => handleOpenForm(slider)}
+                />
+                <Boton
+                  text="Eliminar"
+                  styleClass="bg-red-600"
+                  onPress={() => handleDelete(slider.id)}
+                />
               </div>
             </div>
           ))}
@@ -217,7 +288,8 @@ export default function SliderView() {
 
       {sliders.length >= SLIDER_LIMIT && !isFormVisible && (
         <p className="text-sm text-gray-500 mt-4">
-          Has alcanzado el límite de {SLIDER_LIMIT} sliders. Para crear uno nuevo, primero debes eliminar uno existente.
+          Has alcanzado el límite de {SLIDER_LIMIT} sliders. Para crear uno
+          nuevo, primero debes eliminar uno existente.
         </p>
       )}
     </div>

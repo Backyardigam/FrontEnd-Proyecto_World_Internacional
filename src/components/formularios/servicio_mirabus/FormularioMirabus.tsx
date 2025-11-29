@@ -293,7 +293,7 @@ export default function FormularioMirabus() {
     <>
       {renderWhenReady(
         <div className="w-full flex flex-col justify-center items-center font-redhat py-25 bg-gray-100 max-h-full">
-          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 self-start">
+          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
             Reserva de tours
           </div>
           <div className="align-center items-center inline-block bg-white

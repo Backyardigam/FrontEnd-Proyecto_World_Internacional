@@ -45,6 +45,6 @@ export function handleReserveMirabus(serviceIdName: string) {
     window.location.href = `/reservar/formirabus?servicio=${serviceIdName}`;
   } else {
     // Si no, guarda la intención de ir al formulario y redirige a login
-    window.location.href = "/login?redirect=/formirabus?servicio=${serviceIdName}";
+    window.location.href = "/login?redirect=/reservar/formirabus?servicio=${serviceIdName}";
   }
 }

@@ -164,7 +164,7 @@ export default function GestionPaginaView() {
             </h2>
             <button
               onClick={handleCreate}
-              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg max-w-fit hover:bg-green-700"
+              className="px-4 py-2 bg-naranja-c text-white font-semibold rounded-lg max-w-fit hover:bg-naranja-f"
             >
               Crear Servicio
             </button>

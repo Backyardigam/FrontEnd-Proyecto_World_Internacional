@@ -7,38 +7,27 @@ import "swiper/css/effect-fade";
 import "swiper/css/autoplay";
 import "swiper/css/parallax";
 // Esta informacion tiene que venir de una API
-const slides = [
-  {
-    image:
-      "https://es.digitaltrends.com/wp-content/uploads/2023/12/google-chrome.jpeg?resize=1200%2C720&p=1",
-    alt: "Paisaje de montaña con un lago cristalino",
-    tagline: "Aventura te espera",
-    title: "Descubre Destinos Inolvidables",
-    subtitle:
-      "Viaja con nosotros y vive experiencias que recordarás para siempre.",
-    buttonText: "Explorar Destinos",
-    buttonLink: "/destinos",
-  },
-  {
-    image: "/images/slider/slider2.jpg",
-    alt: "Playa tropical con palmeras y arena blanca",
-    tagline: "Relajo y Sol",
-    title: "Ofertas Exclusivas de Verano",
-    subtitle: "Aprovecha nuestros paquetes especiales y disfruta del paraíso.",
-    buttonText: "Ver Ofertas",
-    buttonLink: "/ofertas",
-  },
-  {
-    image: "/images/slider/slider3.jpg",
-    alt: "Ciudad europea histórica al atardecer",
-    tagline: "Cultura e Historia",
-    title: "Sumérgete en Nuevas Culturas",
-    subtitle:
-      "Explora las ciudades más fascinantes del mundo con nuestros tours guiados.",
-    buttonText: "Tours Culturales",
-    buttonLink: "/tours",
-  },
-];
+import { apiGet } from "../../utils/apiClient";
+
+interface ApiSlide {
+  title: string;
+  subtitle: string;
+  tagline: string;
+  href: string;
+  url: string;
+}
+
+const apiSlides = await apiGet<ApiSlide[]>("/services/slider");
+
+const slides = apiSlides.map((slide) => ({
+  image: slide.url,
+  alt: `Imagen del slider: ${slide.title}`, // Texto alternativo genérico pero descriptivo
+  tagline: slide.tagline,
+  title: slide.title,
+  subtitle: slide.subtitle,
+  buttonText: "Ver más", // Texto de botón genérico
+  buttonLink: slide.href,
+}));
 ---
 
 <section
