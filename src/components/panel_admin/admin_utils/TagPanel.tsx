@@ -23,6 +23,7 @@ interface TagPanelProps {
 
 export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps) {
   const [globalTags, setGlobalTags] = useState<Tag[]>([]);
+  const [initialOrphanTags, setInitialOrphanTags] = useState<string[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,13 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
     try {
       const tagsFromApi = await apiGet<Tag[]>('/manage/tag/');
       setGlobalTags(tagsFromApi);
+
+      // Una vez cargados los tags globales, identificamos los huérfanos iniciales.
+      const selectedTagNames = selectedTagsString ? selectedTagsString.split(';').filter(Boolean) : [];
+      const globalTagNames = new Set(tagsFromApi.map(t => t.name));
+      const orphans = selectedTagNames.filter(name => !globalTagNames.has(name));
+      setInitialOrphanTags(orphans);
+
     } catch (err) {
       setError('No se pudieron cargar los tags.');
     } finally {
@@ -52,20 +60,18 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       isOrphan: false,
     }));
 
-    const selectedTagNames = selectedTagsString ? selectedTagsString.split(';') : [];
-
-    selectedTagNames.forEach(name => {
-      // Si un tag seleccionado no está en la lista global, lo añadimos como huérfano
-      if (name && !allDisplayTags.some(dt => dt.name === name)) {
+    // Añadimos los tags huérfanos iniciales que recordamos en el estado.
+    initialOrphanTags.forEach(name => {
+      if (!allDisplayTags.some(dt => dt.name === name)) {
         allDisplayTags.push({
-          id: `orphan-${name}`, // ID único para React
+          id: `orphan-${name}`,
           name: name,
           isOrphan: true,
         });
       }
     });
     return allDisplayTags;
-  }, [globalTags, selectedTagsString]);
+  }, [globalTags, initialOrphanTags]);
 
   // Manejar la selección/deselección de un tag
   const handleToggleTag = (tag: string) => {

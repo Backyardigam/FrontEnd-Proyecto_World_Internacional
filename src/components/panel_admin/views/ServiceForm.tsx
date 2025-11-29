@@ -458,7 +458,7 @@ export default function ServiceForm({
 
       // Compara horarios
       if (JSON.stringify(schedule) !== JSON.stringify(initialState.schedule)) {
-        dataToSend.schedule = JSON.stringify(schedule);
+        dataToSend.schedule = schedule;
       }
 
       // Transforma campos de texto con saltos de línea si han cambiado
@@ -478,12 +478,10 @@ export default function ServiceForm({
       };
     }
 
-    // En ambos modos (crear/editar), si hay imágenes para borrar, las añadimos como un string JSON.
     if (imagesToDelete.length > 0) {
-      const mediaFilesArray = imagesToDelete.map((url) => ({ url }));
-      dataToSend.mediaFiles = JSON.stringify(mediaFilesArray);
+      dataToSend.mediaFiles = imagesToDelete.map((url) => ({ url }));
     }
-    
+
     console.log(" Data to send:", dataToSend);
     console.log(" Files to send:", files);
     console.log(" Files keys:", Object.keys(files));

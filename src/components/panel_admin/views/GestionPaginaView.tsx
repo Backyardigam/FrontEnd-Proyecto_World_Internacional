@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPatch } from "../../../utils/apiClient";
+import { apiGet, apiPut } from "../../../utils/apiClient";
 import ServiceForm from "./ServiceForm";
 import ServicePreview from "./ServicePreview";
 import Boton from "../admin_utils/Boton";
@@ -119,8 +119,8 @@ export default function GestionPaginaView() {
     }
 
     try {
-      await apiPatch(`/manage/service/${id}`, { state: newState }, { handle403: 'notify' });
-      fetchServices(); // Refrescamos la lista para ver el cambio
+      const updatedServices = await apiPut<Service[]>(`/manage/service/${id}`, { state: newState }, { handle403: 'notify' });
+      setServices(updatedServices); // Actualizamos la lista con la respuesta de la API
     } catch (err) {
       console.error(`Error al ${actionText} el servicio:`, err);
     }
@@ -206,7 +206,6 @@ export default function GestionPaginaView() {
                       onPress={() => handleToggleState(service)}
                     />
                     <Boton text="Eliminar" style="bg-red-600" onPress={() => ""} />
-                    <Boton text="Promocion" style="bg-naranja-c" onPress={() => ""} />
                   </div>
                 </li>
               ))}
