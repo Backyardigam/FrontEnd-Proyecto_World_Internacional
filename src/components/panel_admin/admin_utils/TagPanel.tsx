@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { apiGet, apiPost, apiDelete } from '../../../utils/apiClient';
+
+// Un tipo extendido para saber el estado de cada tag que se muestra
+type DisplayTag = {
+  id: number | string; // Usamos string para tags huérfanos
+  name: string;
+  isOrphan: boolean; // true si no existe en la BD de tags
+};
 
 interface Tag {
   id: number;
@@ -15,7 +22,7 @@ interface TagPanelProps {
 }
 
 export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps) {
-  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [globalTags, setGlobalTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,14 +36,36 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   const fetchTags = async () => {
     try {
-      const tags = await apiGet<Tag[]>('/manage/tag/');
-      setAllTags(tags);
+      const tagsFromApi = await apiGet<Tag[]>('/manage/tag/');
+      setGlobalTags(tagsFromApi);
     } catch (err) {
       setError('No se pudieron cargar los tags.');
     } finally {
       setLoading(false);
     }
   };
+
+  // Hook que combina los tags globales con los tags "huérfanos" que vienen del servicio
+  const displayTags = useMemo<DisplayTag[]>(() => {
+    const allDisplayTags: DisplayTag[] = globalTags.map(tag => ({
+      ...tag,
+      isOrphan: false,
+    }));
+
+    const selectedTagNames = selectedTagsString ? selectedTagsString.split(';') : [];
+
+    selectedTagNames.forEach(name => {
+      // Si un tag seleccionado no está en la lista global, lo añadimos como huérfano
+      if (name && !allDisplayTags.some(dt => dt.name === name)) {
+        allDisplayTags.push({
+          id: `orphan-${name}`, // ID único para React
+          name: name,
+          isOrphan: true,
+        });
+      }
+    });
+    return allDisplayTags;
+  }, [globalTags, selectedTagsString]);
 
   // Manejar la selección/deselección de un tag
   const handleToggleTag = (tag: string) => {
@@ -55,13 +84,13 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   // Crear un nuevo tag
   const handleCreateTag = async () => {
-    if (!newTagName || allTags.some(tag => tag.name === newTagName)) {
+    if (!newTagName || globalTags.some(tag => tag.name === newTagName)) {
       setError('El tag no puede estar vacío o ya existe.');
       return;
     }
     try {
       const updatedTags = await apiPost<Tag[]>('/manage/tag/', { name: newTagName });
-      setAllTags(updatedTags); // El backend devuelve la lista completa de tags
+      setGlobalTags(updatedTags); // El backend devuelve la lista completa de tags
       setNewTagName('');
       setError(null);
     } catch (err) {
@@ -71,15 +100,22 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
 
   // Eliminar un tag
   const handleDeleteTag = async (tagToDelete: string) => {
-    const tagObject = allTags.find(t => t.name === tagToDelete);
+    const tagObject = globalTags.find(t => t.name === tagToDelete);
     if (!tagObject) {
-      setError('No se pudo encontrar el tag para eliminar.');
+      // Si es un tag huérfano, simplemente lo quitamos de la selección
+      if (selectedTags.includes(tagToDelete)) {
+        handleToggleTag(tagToDelete);
+        setError(null);
+      } else {
+        setError('No se pudo encontrar el tag para eliminar.');
+      }
       return;
     }
 
+    // Si es un tag global, lo eliminamos de la BD
     try {
       const updatedTags = await apiDelete<Tag[]>(`/manage/tag/${tagObject.id}`);
-      setAllTags(updatedTags); // El backend devuelve la lista completa de tags
+      setGlobalTags(updatedTags); // El backend devuelve la lista completa de tags
       // También lo eliminamos de la selección actual si estaba seleccionado
       if (selectedTags.includes(tagToDelete)) {
         handleToggleTag(tagToDelete);
@@ -98,16 +134,25 @@ export default function TagPanel({ selectedTagsString, onChange }: TagPanelProps
       
       {/* Lista de tags seleccionables */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {allTags.map(tagObj => (
-          <div key={tagObj.id} className="flex items-center bg-gray-100 rounded-full">
-            <button type="button" onClick={() => handleToggleTag(tagObj.name)} className={`px-3 py-1 text-sm rounded-l-full transition-colors ${selectedTags.includes(tagObj.name) ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>
-              {tagObj.name}
-            </button>
-            <button type="button" onClick={() => handleDeleteTag(tagObj.name)} className="px-2 py-1 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-r-full transition-colors">
+        {displayTags.map(tag => {
+          const isSelected = selectedTags.includes(tag.name);
+          const buttonClass = isSelected
+            ? 'bg-blue-600 text-white'
+            : tag.isOrphan
+            ? 'bg-yellow-200 text-yellow-800 border border-dashed border-yellow-400 hover:bg-yellow-300'
+            : 'bg-gray-200 hover:bg-gray-300';
+
+          return (
+            <div key={tag.id} className="flex items-center bg-gray-100 rounded-full">
+              <button type="button" onClick={() => handleToggleTag(tag.name)} className={`px-3 py-1 text-sm rounded-l-full transition-colors ${buttonClass}`}>
+                {tag.name}
+              </button>
+              <button type="button" onClick={() => handleDeleteTag(tag.name)} className="px-2 py-1 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-r-full transition-colors" title={tag.isOrphan ? "Quitar este tag del servicio" : "Eliminar este tag de la base de datos"}>
               &#x2715;
-            </button>
-          </div>
-        ))}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Formulario para crear nuevo tag */}
