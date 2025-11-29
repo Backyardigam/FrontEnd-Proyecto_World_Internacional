@@ -25,9 +25,9 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
 
-  adapter: vercel({
-    isr:{
-      expiration: 60 * 60,
-    }
-  })
+  // adapter: vercel({
+  //   isr:{
+  //     expiration: 60 * 60,
+  //   }
+  // })
 });

@@ -221,8 +221,8 @@ export default function PromocionesView() {
             </div>
           </div>
           <div className="flex gap-4 items-center">
-            <Boton text={`Aplicar a ${selectedServiceIds.size} seleccionados`} style="bg-blue-600" onPress={handleBatchApply} disabled={isProcessing} />
-            <Boton text="Quitar Promoción" style="bg-red-600" onPress={handleBatchRemove} disabled={isProcessing} />
+            <Boton text={`Aplicar a ${selectedServiceIds.size} seleccionados`} style="bg-blue-600" onPress={handleBatchApply} />
+            <Boton text="Quitar Promoción" style="bg-red-600" onPress={handleBatchRemove} />
             {isProcessing && <p className="text-sm text-blue-600">Procesando...</p>}
           </div>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
