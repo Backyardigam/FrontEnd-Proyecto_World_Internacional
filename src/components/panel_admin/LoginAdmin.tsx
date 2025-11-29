@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { redirectIfAdmin } from "../../utils/authActions";
 import { loginAdminUser, verifyAndLoginUser } from "../../utils/authActions";
-import { $auth } from "../../utils/authStore";
 
 export default function LoginAdmin() {
   const [step, setStep] = useState<"credentials" | "verifyCode">("credentials");
