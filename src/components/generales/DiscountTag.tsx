@@ -36,7 +36,7 @@ export default function DiscountTag({
   // Esto evita re-declarar un componente en cada render.
   let urgencyMessageElement = null;
   if (variant === "full" && discount) {
-    if (discount.discountStock <= 5) {
+    if (discount.discountStock !== undefined && discount.discountStock !== null && discount.discountStock <= 5) {
       urgencyMessageElement = (
         <p className="text-xs text-red-600 font-medium mt-1">
           ¡Solo quedan {discount.discountStock} cupos en oferta!

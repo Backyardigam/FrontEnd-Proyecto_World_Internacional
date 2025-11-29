@@ -20,6 +20,7 @@ export default function PromocionesView() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [batchFormData, setBatchFormData] = useState<PromotionFormData>({ discountAmount: 0, discountExpiration: '', discountStock: null });
   const [searchTerm, setSearchTerm] = useState('');
+  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -86,13 +87,27 @@ export default function PromocionesView() {
     setIsProcessing(true);
     setError(null);
 
+    // La lógica de aplicación ahora depende del tipo de descuento
     const promises = Array.from(selectedServiceIds).map(id => {
       const service = servicesWithPromotions.find(s => s.id === id);
+      if (!service) return Promise.reject({ id, error: new Error("Servicio no encontrado") });
+
+      let payload: Partial<PromotionFormData> = { ...batchFormData };
+
+      // Si el descuento es por porcentaje, calculamos el monto fijo para este servicio específico
+      if (discountType === 'percentage') {
+        const originalCost = parseFloat(service.cost);
+        const calculatedDiscount = (originalCost * batchFormData.discountAmount) / 100;
+        payload.discountAmount = parseFloat(calculatedDiscount.toFixed(2)); // Redondear a 2 decimales
+      }
+
       const method = service?.promotion ? apiPatch : apiPost;
-      return method<IPromotion>(`/manage/promotion/${id}`, batchFormData)
+      return method<IPromotion>(`/manage/promotion/${id}`, payload)
         .then(updatedPromotion => ({ id, promotion: updatedPromotion, status: 'fulfilled' as const }))
         .catch(err => ({ id, error: err, status: 'rejected' as const }));
     });
+
+
 
     const results = await Promise.all(promises);
 
@@ -171,9 +186,8 @@ export default function PromocionesView() {
   return (
     <div className="bg-white p-8 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Gestión de Promociones</h2>
-      
+
       {loading && <p>Cargando promociones...</p>}
-      {error && <p className="text-red-500">{error}</p>}
 
       {/* --- Panel de Acciones en Lote --- */}
       {!loading && (
@@ -181,8 +195,21 @@ export default function PromocionesView() {
           <h3 className="text-lg font-semibold text-gray-700">Acciones en Lote</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="font-medium block text-sm">Descuento (S/.)</label>
-              <input type="number" name="discountAmount" value={batchFormData.discountAmount ?? ''} onChange={handleFormChange} className="w-full p-2 border rounded-md mt-1" />
+              <label className="font-medium block text-sm">Valor del Descuento</label>
+              <div className="flex items-center mt-1">
+                <input type="number" name="discountAmount" value={batchFormData.discountAmount ?? ''} onChange={handleFormChange} className="w-full p-2 border rounded-l-md" />
+                <div className="flex border border-l-0 rounded-r-md">
+                  <button type="button" onClick={() => setDiscountType('fixed')} className={`px-3 py-2 text-sm ${discountType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+                    S/.
+                  </button>
+                  <button type="button" onClick={() => setDiscountType('percentage')} className={`px-3 py-2 text-sm rounded-r-md ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+                    %
+                  </button>
+                </div>
+              </div>
+              {discountType === 'percentage' && (
+                <p className="text-xs text-gray-500 mt-1">El descuento se calculará sobre el precio original de cada servicio.</p>
+              )}
             </div>
             <div>
               <label className="font-medium block text-sm">Fecha de Expiración</label>
@@ -198,16 +225,17 @@ export default function PromocionesView() {
             <Boton text="Quitar Promoción" style="bg-red-600" onPress={handleBatchRemove} disabled={isProcessing} />
             {isProcessing && <p className="text-sm text-blue-600">Procesando...</p>}
           </div>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
       )}
 
       {/* --- Barra de Búsqueda y Lista de Servicios --- */}
-      {!loading && !error && (
+      {!loading && servicesWithPromotions.length > 0 && (
         <div>
-          <input type="text" placeholder="Buscar servicio por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-2 border rounded-md mb-4" />
+          <input type="text" placeholder="Buscar servicio por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md mb-4" />
           <ul className="space-y-3">
             {filteredServices.map(item => (
-              <li key={item.id} className="p-4 border rounded-lg flex items-center gap-4 hover:bg-gray-50">
+              <li key={item.id} className="p-4 border border-gray-300 rounded-lg flex items-center gap-4 hover:bg-gray-50">
                 <input type="checkbox" className="h-5 w-5 flex-shrink-0" checked={selectedServiceIds.has(item.id)} onChange={() => handleToggleSelection(item.id)} />
                 
                 <div className="flex-1">
