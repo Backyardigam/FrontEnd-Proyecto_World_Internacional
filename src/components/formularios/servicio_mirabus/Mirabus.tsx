@@ -106,12 +106,13 @@ export default function Mirabus({
 
       // Lógica para el modo Administrador
       if (mode === 'admin') {
-        // El admin solo puede hacer toggle en asientos disponibles.
-        // No puede tocar asientos ya ocupados, reservados o en proceso por un cliente.
-        if (seatToToggle.status === 'available') {
+        // El admin puede hacer toggle en asientos 'available' y 'reserved'.
+        // No puede tocar asientos 'occupied' o 'pending' (sesiones de clientes activas).
+        if (seatToToggle.status === 'available' || seatToToggle.status === 'reserved') {
           onAdminSeatToggle?.(seatId, busOrden);
         } else {
-          setWarningMessage(`Este asiento no está disponible para modificar.`);
+          const statusText = seatToToggle.status === 'occupied' ? 'ocupado por un cliente' : 'en proceso de selección';
+          setWarningMessage(`No se puede modificar un asiento ${statusText}.`);
         }
         return;
       }

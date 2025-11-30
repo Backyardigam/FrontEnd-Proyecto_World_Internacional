@@ -164,6 +164,7 @@ export default function SupervisarViajesView() {
                 setSelectedDate(e.target.value);
                 handleSelectionChange();
               }}
+              min={new Date().toISOString().split("T")[0]} // <-- AÑADIDO: No permitir fechas pasadas
               className="w-full p-2 border border-gray-300 rounded-md"
             />
           </div>

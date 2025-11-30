@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SupervisarViajesView from "../view_components/SupervisarViajesView";
+import VehicleDesigner from "../view_components/VehicleDesigner";
 
 type MirabusView = 'supervisar' | 'gestionar';
 
@@ -36,7 +37,12 @@ export default function MirabusDashboard() {
       )}
 
       {activeView === 'gestionar' && (
-        <div className="text-center text-gray-500 p-10">Sección para crear y configurar buses (en desarrollo).</div>
+        <div>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            Diseñador de Plantillas de Vehículos
+          </h3>
+          <VehicleDesigner />
+        </div>
       )}
     </div>
   );
