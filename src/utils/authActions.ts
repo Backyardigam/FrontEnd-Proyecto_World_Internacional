@@ -29,12 +29,12 @@ export const loginUser = async (email: string, password: string, options: Authen
  * @param email 
  * @param password 
  */
-export const loginAdminUser = async (email: string, password: string): Promise<{ nextStep: 'NEEDS_VERIFICATION' | 'LOGIN_SUCCESS' }> => {
+export const loginAdminUser = async (credentials: { email?: string, username?: string, password: string }): Promise<{ nextStep: 'NEEDS_VERIFICATION' | 'LOGIN_SUCCESS' }> => {
   // Usamos authenticatedFetch para poder inspeccionar el status code
   const response = await authenticatedFetch("/admin/login", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(credentials),
     handle401: false, // Manejamos el 401 manualmente
     redirectPath: "/core-tacana-wits-7b345", // Aseguramos la redirección correcta en caso de un 401 inesperado
   });
@@ -44,15 +44,15 @@ export const loginAdminUser = async (email: string, password: string): Promise<{
     return { nextStep: 'NEEDS_VERIFICATION' };
   }
 
-  if (response.status === 300 || response.ok) {
+  if (response.ok) {
     // El login fue directo y exitoso. La respuesta contiene los datos del funcionario.
     const adminData = await response.json();
     const adminUser: User = {
-      name: adminData.name || 'Funcionario',
-      email: email, // Usamos el email con el que se logueó
+      name: adminData.username || 'Funcionario', // El backend devuelve 'username' que usamos como 'name'
+      email: credentials.email || null, // Guardamos el email si se usó para el login
       phoneNumber: null,
-      avatar: null,
-      role: 'user', // Asignamos un rol genérico, ya que es un funcionario
+      avatar: adminData.avatar || null,
+      role: adminData.role || 'employee', // Usamos el rol del backend
     };
 
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(adminUser));
@@ -60,7 +60,7 @@ export const loginAdminUser = async (email: string, password: string): Promise<{
     return { nextStep: 'LOGIN_SUCCESS' };
   }
 
-  // Si la respuesta no fue ok, 300 o 302, lanzamos un error.
+  // Si la respuesta no fue ok, lanzamos un error.
   try {
     const errorData = await response.json();
     throw new ApiError(errorData.message || 'Credenciales incorrectas', response.status);

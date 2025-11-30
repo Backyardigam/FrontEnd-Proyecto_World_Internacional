@@ -42,7 +42,7 @@ export default function ScheduleManager({ schedules, onChange, error }: Schedule
         </label>
         <Boton
           text="Añadir Horario"
-          style="bg-blue-500 text-sm"
+          styleClass="bg-blue-500 text-sm"
           onPress={handleAddSchedule}
         />
       </div>
@@ -76,7 +76,7 @@ export default function ScheduleManager({ schedules, onChange, error }: Schedule
             <div className="self-end">
               <Boton
                 text="Eliminar"
-                style="bg-red-500"
+                styleClass="bg-red-500"
                 onPress={() => handleRemoveSchedule(index)}
               />
             </div>

@@ -4,7 +4,7 @@ import { loginAdminUser, verifyAndLoginUser } from "../../utils/authActions";
 
 export default function LoginAdmin() {
   const [step, setStep] = useState<"credentials" | "verifyCode">("credentials");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); // Puede ser email o username
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +21,21 @@ export default function LoginAdmin() {
     setError(null);
     setLoading(true);
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       setError("Por favor, completa todos los campos.");
       setLoading(false);
       return;
     }
 
     try {
-      const result = await loginAdminUser(email, password);
+      // Determinar si el identificador es un email o un username
+      const isEmail = identifier.includes('@');
+      const credentials = isEmail 
+        ? { email: identifier, password } 
+        : { username: identifier, password };
+
+      // @ts-ignore
+      const result = await loginAdminUser(credentials);
 
       if (result.nextStep === "NEEDS_VERIFICATION") {
         // Si se necesita verificación, cambiamos al paso de introducir el código.
@@ -59,7 +66,7 @@ export default function LoginAdmin() {
 
     try {
       // Usamos la función existente para verificar el código y completar el login.
-      await verifyAndLoginUser(email, code);
+      await verifyAndLoginUser(identifier, code); // El identifier aquí siempre será un email
       window.location.href = "/core-tacana-wits-7b345/panel";
     } catch (err: any) {
       setError(err.message || "Código incorrecto o expirado.");
@@ -79,13 +86,13 @@ export default function LoginAdmin() {
             htmlFor="email"
             className="block text-sm font-medium text-gray-700"
           >
-            Correo Electrónico
+            Correo o Nombre de Usuario
           </label>
           <input
             id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             required
           />
@@ -120,8 +127,8 @@ export default function LoginAdmin() {
   return (
     <form onSubmit={handleCodeSubmit} className="space-y-6">
       <p className="text-sm text-gray-600">
-        Se ha enviado un código de verificación a <strong>{email}</strong>. Por
-        favor, ingrésalo a continuación.
+        Se ha enviado un código de verificación a <strong>{identifier}</strong>
+        . Por favor, ingrésalo a continuación.
       </p>
       {error && (
         <div className="p-3 text-red-700 bg-red-100 rounded-lg">{error}</div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { User, UserFormData } from './usuarioAdmin';
-import Boton from './Boton';
+import type { User, UserFormData } from '../admin_utils/usuarioAdmin';
+import Boton from '../admin_utils/Boton';
 import { ApiError } from '../../../utils/apiClient';
 
 interface Props {

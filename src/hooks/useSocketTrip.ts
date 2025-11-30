@@ -9,6 +9,7 @@ import {
   type ServerToClientEvents,
   type ClientToServerEvents,
   type JoinTripRoomPayload,
+  type AdminToggleSeatPayload,
   SocketEvents,
 } from "../components/formularios/servicio_mirabus/seatUtils/socketEvents";
 /**
@@ -28,6 +29,7 @@ interface UseSocketTripReturn {
   disconnectFromTrip: () => void;
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
+  adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
 }
 
 // La URL del servidor de Socket.IO. En un proyecto real, esto debería
@@ -40,7 +42,8 @@ const SOCKET_URL = import.meta.env.PUBLIC_SOCKET_URL || "http://localhost:3001";
  */
 export function useSocketTrip(): UseSocketTripReturn {
   // --- ESTADO INTERNO DEL HOOK ---
-  const [buses, setBuses] = useState<Bus[]>([]); // Este es ahora el estado principal
+  const [buses, setBuses] = useState<Bus[]>([]);
+  
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState(0);
@@ -237,6 +240,20 @@ export function useSocketTrip(): UseSocketTripReturn {
     });
   }, []);
 
+  /**
+   * Envía una petición de administrador para forzar el cambio de estado de un asiento.
+   * @param seatId - El ID del asiento a modificar.
+   * @param busOrden - El identificador del bus donde está el asiento.
+   */
+  const adminToggleSeat = useCallback((seatId: string, busOrden: string) => {
+    console.log(
+      `[ADMIN] Solicitando toggle para asiento: ${seatId} en bus ${busOrden}`
+    );
+    socketRef.current?.emit(SocketEvents.ADMIN_TOGGLE_SEAT, {
+      seatId,
+      busOrden,
+    });
+  }, []);
   // El hook devuelve el estado actual y las funciones para que los componentes interactúen.
   return {
     buses, // Devuelve el array de buses
@@ -248,5 +265,6 @@ export function useSocketTrip(): UseSocketTripReturn {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    adminToggleSeat,
   };
 }

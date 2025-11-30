@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { apiGet, apiPut } from "../../../utils/apiClient";
-import ServiceForm from "./ServiceForm";
-import ServicePreview from "./ServicePreview";
+import ServiceForm from "../view_components/ServiceForm";
+import ServicePreview from "../view_components/ServicePreview";
 import Boton from "../admin_utils/Boton";
-import SliderView from "./SliderView";
+import SliderView from "../view_components/SliderView";
 
 interface Service {
   id: string;

@@ -13,7 +13,7 @@ import GestionPaginaView from './views/GestionPaginaView';
 import UsuariosView from './views/UsuariosView';
 import AuditoriaView  from './views/AuditoriaView';
 import PromocionesView from './views/PromocionesView';
-import Mirabus  from './views/Mirabus';
+import MirabusDashboard  from './views/MirabusDashboard';
 import type { JSX } from "astro/jsx-runtime";
 
 type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus';
@@ -139,7 +139,7 @@ export default function PanelAdmin() {
         <main className="flex-1 overflow-y-auto p-6">
           {/* Renderizado condicional de la vista activa */}
           {activeView === 'dashboard' && <DashboardView />}
-          {activeView === 'mirabus' && <Mirabus />}
+          {activeView === 'mirabus' && <MirabusDashboard />}
           {activeView === 'boletos' && <BoletosView />}
           {activeView === 'gestion' && <GestionPaginaView />}
           {activeView === 'promociones' && <PromocionesView />}

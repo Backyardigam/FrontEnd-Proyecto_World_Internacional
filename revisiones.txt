@@ -1,3 +1,5 @@
 - El login de invitados y la redireccion a formulario mirabus(en algun punto no va a /reservar)
 - mostrar correctamente mensajes de error de lado del usuario
-- Probar el nuevo put para alternar el estado del servicio
+- Al hacer click en reservar ya y no estas sesion iniciada, luego de iniciar 
+no te considera que estes tratando de reservar el servicio, y te muestra un carrito vacio
+- probar iniciar sesion con todos los niveles de administracion

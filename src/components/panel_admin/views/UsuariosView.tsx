@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete, ApiError } from '../../../utils/apiClient';
-import UserFormModal from '../admin_utils/UserFormModal';
+import UserFormModal from '../view_components/UserFormModal';
 import type { User, UserFormData } from '../admin_utils/usuarioAdmin';
 import Boton from '../admin_utils/Boton';
 
