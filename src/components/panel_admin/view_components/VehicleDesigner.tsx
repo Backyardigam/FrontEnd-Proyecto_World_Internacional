@@ -1,10 +1,35 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { ISeatDistributionItem } from '../admin_utils/mirabusAdmin';
 
-export default function VehicleDesigner() {
+interface VehicleDesignerProps {
+  initialDistribution?: ISeatDistributionItem[];
+  onDistributionChange: (distribution: ISeatDistributionItem[]) => void;
+}
+
+export default function VehicleDesigner({ initialDistribution = [], onDistributionChange }: VehicleDesignerProps) {
   const [gridWidth, setGridWidth] = useState(8);
   const [gridHeight, setGridHeight] = useState(5);
-  const [seats, setSeats] = useState<ISeatDistributionItem[]>([]);
+  const [seats, setSeats] = useState<ISeatDistributionItem[]>(initialDistribution);
+
+  // Sincroniza el estado interno si la prop inicial cambia (ej: al seleccionar otro bus para editar)
+  useEffect(() => {
+    setSeats(initialDistribution);
+
+    // --- LÓGICA AÑADIDA ---
+    // Si estamos cargando una distribución existente (modo edición)...
+    if (initialDistribution && initialDistribution.length > 0) {
+      // ...calculamos el ancho y alto máximo requerido para mostrar todos los asientos.
+      const maxX = Math.max(...initialDistribution.map(seat => seat.x));
+      const maxY = Math.max(...initialDistribution.map(seat => seat.y));
+      setGridWidth(maxX);
+      setGridHeight(maxY);
+    } else {
+      // Si estamos en modo creación (sin distribución inicial), reseteamos al tamaño por defecto.
+      setGridWidth(8);
+      setGridHeight(5);
+    }
+
+  }, [initialDistribution]);
 
   // El número del siguiente asiento a crear. Se calcula como el máximo número de asiento existente + 1.
   const nextSeatNumber = useMemo(() => {
@@ -16,18 +41,25 @@ export default function VehicleDesigner() {
     const numValue = parseInt(value, 10);
     if (isNaN(numValue) || numValue < 1 || numValue > 20) return; // Limites razonables
 
+    // Guardamos los nuevos valores de ancho y alto
+    const newWidth = dimension === 'width' ? numValue : gridWidth;
+    const newHeight = dimension === 'height' ? numValue : gridHeight;
+
     if (dimension === 'width') {
       setGridWidth(numValue);
     } else {
       setGridHeight(numValue);
     }
 
-    // Opcional: Eliminar asientos que queden fuera de la nueva cuadrícula
-    setSeats(currentSeats =>
-      currentSeats.filter(seat =>
-        dimension === 'width' ? seat.x <= numValue : seat.y <= numValue
-      )
+    // Lógica CORREGIDA: Eliminar asientos que queden fuera de la nueva cuadrícula completa
+    const filteredSeats = seats.filter(
+      seat => seat.x <= newWidth && seat.y <= newHeight
     );
+
+    if (filteredSeats.length !== seats.length) {
+      setSeats(filteredSeats);
+      onDistributionChange(filteredSeats);
+    }
   };
 
   const handleCellClick = (x: number, y: number) => {
@@ -46,6 +78,7 @@ export default function VehicleDesigner() {
           return seat;
         });
       setSeats(updatedSeats);
+      onDistributionChange(updatedSeats);
     } else {
       // Si no hay asiento, creamos uno nuevo con el siguiente número disponible.
       const newSeat: ISeatDistributionItem = {
@@ -53,8 +86,16 @@ export default function VehicleDesigner() {
         x,
         y,
       };
-      setSeats(currentSeats => [...currentSeats, newSeat].sort((a, b) => a.id - b.id));
+      const newSeats = [...seats, newSeat].sort((a, b) => a.id - b.id);
+      setSeats(newSeats);
+      onDistributionChange(newSeats);
     }
+  };
+
+  const handleClearAllSeats = () => {
+    // Simplemente vacía el array de asientos.
+    setSeats([]);
+    onDistributionChange([]);
   };
 
   // Genera la cuadrícula para renderizar
@@ -86,7 +127,7 @@ export default function VehicleDesigner() {
   return (
     <div className="space-y-6">
       {/* Controles de Dimensiones */}
-      <div className="flex items-center gap-6 p-4 border rounded-lg bg-gray-50">
+      <div className="flex flex-wrap items-center gap-6 p-4 border rounded-lg bg-gray-50">
         <div>
           <label htmlFor="gridWidth" className="block text-sm font-medium text-gray-700">Ancho</label>
           <input
@@ -110,6 +151,16 @@ export default function VehicleDesigner() {
             min="1"
             max="20"
           />
+        </div>
+        <div className="self-end">
+          <button
+            onClick={handleClearAllSeats}
+            disabled={seats.length === 0}
+            className="px-4 py-2 bg-red-500 text-white font-semibold rounded-md transition-colors
+                       hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Limpiar todo
+          </button>
         </div>
       </div>
 
@@ -143,15 +194,16 @@ export default function VehicleDesigner() {
       </div>
 
       {/* Salida JSON */}
-      <div className="space-y-2">
-        <h3 className="font-semibold text-lg">Salida JSON (seatDistribution)</h3>
-        <p className="text-sm text-gray-600">
-          Este es el JSON que se guardará en la base de datos para esta plantilla de vehículo.
-        </p>
-        <pre className="p-4 bg-gray-800 text-white rounded-md text-sm overflow-x-auto">
-          <code>{outputJson}</code>
-        </pre>
-      </div>
+      <details className="p-4 border rounded-lg bg-gray-50">
+        <summary className="font-semibold text-lg cursor-pointer hover:text-blue-600">
+          Ver Salida JSON (seatDistribution)
+        </summary>
+        <div className="mt-4">
+          <pre className="p-4 bg-gray-800 text-white rounded-md text-sm overflow-x-auto">
+            <code>{outputJson}</code>
+          </pre>
+        </div>
+      </details>
     </div>
   );
 }
