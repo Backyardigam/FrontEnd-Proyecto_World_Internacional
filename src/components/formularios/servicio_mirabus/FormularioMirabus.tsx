@@ -173,6 +173,9 @@ export default function FormularioMirabus() {
 
   // --- NUEVA FUNCIÓN: Manejar la reserva ---
   const handleReservation = useCallback(async () => {
+    // Guarda para prevenir dobles envíos por clics rápidos.
+    if (reservationLoading) return;
+
     setReservationLoading(true);
     setReservationError(null);
 

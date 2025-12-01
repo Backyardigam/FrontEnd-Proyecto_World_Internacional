@@ -76,10 +76,14 @@ export function useSocketTrip(): UseSocketTripReturn {
     setSessionExpired(false);
   }, []);
 
+  // Guardamos el valor inicial del temporizador para una comprobación más robusta.
+  const initialSessionTime = 300;
+
   // Efecto para manejar la expiración del temporizador
   useEffect(() => {
-    // Solo actúa si el tiempo llega a 0 MIENTRAS estamos conectados.
-    if (sessionTimeLeft <= 0 && isConnected) {
+    // Solo actúa si el tiempo llega a 0 MIENTRAS estamos conectados Y el temporizador ya había sido iniciado.
+    // Esto previene que se dispare al conectar, cuando sessionTimeLeft es 0 inicialmente.
+    if (sessionTimeLeft <= 0 && isConnected && timerRef.current) {
       console.warn("La sesión de selección ha expirado por tiempo.");
       setSessionExpired(true);
       cleanup(); // Limpia y desconecta
@@ -120,7 +124,19 @@ export function useSocketTrip(): UseSocketTripReturn {
       console.log("Socket conectado con ID:", newSocket.id);
       setIsConnected(true);
       setIsConnecting(false);
-      newSocket.emit(SocketEvents.JOIN_TRIP_ROOM, tripDetails);
+      // Emitimos el evento y esperamos una confirmación (acknowledgment) del servidor.
+      newSocket.emit(
+        SocketEvents.JOIN_TRIP_ROOM,
+        tripDetails,
+        (response) => {
+          console.log("Respuesta del servidor a JOIN_TRIP_ROOM:", response);
+          if (response.success) {
+            callback?.({ success: true }); // ¡Unión a la sala exitosa!
+          } else {
+            callback?.({ success: false, error: response.error || "No se pudo unir a la sala." });
+          }
+        }
+      );
     });
 
     newSocket.on("connect_error", (err) => {
@@ -137,11 +153,10 @@ export function useSocketTrip(): UseSocketTripReturn {
     newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
       console.log("Recibido estado inicial de buses:", initialBuses);
       setBuses(initialBuses);
-      callback?.({ success: true }); // ¡Conexión y unión a la sala exitosas!
 
       // Iniciar el temporizador de sesión de 5 minutos
       if (timerRef.current) clearInterval(timerRef.current);
-      setSessionTimeLeft(300); // 5 minutos = 300 segundos
+      setSessionTimeLeft(initialSessionTime); // 5 minutos = 300 segundos
       timerRef.current = setInterval(() => {
         setSessionTimeLeft((prevTime) => {
           // La lógica de expiración está en el useEffect para mayor limpieza
@@ -200,7 +215,7 @@ export function useSocketTrip(): UseSocketTripReturn {
 
     // Ahora que todo está configurado, conectamos manualmente.
     newSocket.connect();
-  }, [cleanup, isConnected]);
+  }, [cleanup, isConnecting]); // Cambiamos isConnected por isConnecting para la guarda del inicio
 
   /**
    * Cierra la conexión con el servidor de sockets y limpia el estado.

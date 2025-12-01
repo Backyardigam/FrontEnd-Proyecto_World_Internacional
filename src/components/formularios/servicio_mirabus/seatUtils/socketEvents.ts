@@ -73,7 +73,10 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  [SocketEvents.JOIN_TRIP_ROOM]: (payload: JoinTripRoomPayload) => void;
+  [SocketEvents.JOIN_TRIP_ROOM]: (
+    payload: JoinTripRoomPayload,
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void;
   [SocketEvents.LEAVE_TRIP_ROOM]: () => void;
   [SocketEvents.REQUEST_SEAT_SELECTION]: (
     payload: RequestSeatSelectionPayload
