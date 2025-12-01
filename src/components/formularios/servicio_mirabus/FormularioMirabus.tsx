@@ -133,7 +133,7 @@ export default function FormularioMirabus() {
       //   return;
       // }
 
-      const servicio = serviceInfo?.name || "";
+      const servicio = "cmi3dyy9w0003tpn8l6pg9aog";
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
       setReservationError(null); // Limpiar cualquier error de reserva anterior

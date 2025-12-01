@@ -9,6 +9,7 @@ export enum SocketEvents {
   LEAVE_TRIP_ROOM = "client:leave_trip_room",
   REQUEST_SEAT_SELECTION = "client:request_seat_selection",
   REQUEST_SEAT_DESELECTION = "client:request_seat_deselection",
+  ADMIN_TOGGLE_SEAT = "admin:toggle_seat", // <-- Evento para administradores
 
   // --- Eventos del Servidor al Cliente ---
   INITIAL_SEAT_STATE = "server:initial_seat_state",
@@ -32,6 +33,11 @@ export interface RequestSeatSelectionPayload {
 }
 
 export interface RequestSeatDeselectionPayload {
+  seatId: string;
+  busOrden: string;
+}
+
+export interface AdminToggleSeatPayload {
   seatId: string;
   busOrden: string;
 }
@@ -75,4 +81,5 @@ export interface ClientToServerEvents {
   [SocketEvents.REQUEST_SEAT_DESELECTION]: (
     payload: RequestSeatDeselectionPayload
   ) => void;
+  [SocketEvents.ADMIN_TOGGLE_SEAT]: (payload: AdminToggleSeatPayload) => void;
 }

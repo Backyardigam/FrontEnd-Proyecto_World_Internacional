@@ -9,6 +9,7 @@ import {
   type ServerToClientEvents,
   type ClientToServerEvents,
   type JoinTripRoomPayload,
+  type AdminToggleSeatPayload,
   SocketEvents,
 } from "../components/formularios/servicio_mirabus/seatUtils/socketEvents";
 /**
@@ -28,24 +29,12 @@ interface UseSocketTripReturn {
   disconnectFromTrip: () => void;
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
+  adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
 }
 
-/**
- * Construye dinámicamente la URL del servidor de Socket.IO.
- * - En producción, siempre usará 'wss://'.
- * - En desarrollo, usará 'ws://' para evitar problemas con certificados SSL locales.
- * @returns La URL completa del socket.
- */
-function getSocketUrl(): string {
-  const rawUrl = import.meta.env.PUBLIC_SOCKET_URL || "localhost:3001";
-
-  // Determina el protocolo. Usa 'ws' si la URL contiene 'localhost' o si no estamos en producción.
-  const isLocal = rawUrl.includes("localhost") || import.meta.env.DEV;
-  const protocol = isLocal ? 'ws' : 'wss';
-
-  // Limpia el prefijo http/https/ws/wss por si acaso y construye la URL final.
-  return `${protocol}://${rawUrl.replace(/^(https?|wss?):\/\//, '')}`;
-}
+// La URL del servidor de Socket.IO. En un proyecto real, esto debería
+// venir de una variable de entorno.
+const SOCKET_URL = import.meta.env.PUBLIC_SOCKET_URL || "http://localhost:3001";
 
 /**
  * Hook personalizado para gestionar la lógica de selección de asientos
@@ -53,7 +42,8 @@ function getSocketUrl(): string {
  */
 export function useSocketTrip(): UseSocketTripReturn {
   // --- ESTADO INTERNO DEL HOOK ---
-  const [buses, setBuses] = useState<Bus[]>([]); // Este es ahora el estado principal
+  const [buses, setBuses] = useState<Bus[]>([]);
+
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState(0);
@@ -86,10 +76,14 @@ export function useSocketTrip(): UseSocketTripReturn {
     setSessionExpired(false);
   }, []);
 
+  // Guardamos el valor inicial del temporizador para una comprobación más robusta.
+  const initialSessionTime = 300;
+
   // Efecto para manejar la expiración del temporizador
   useEffect(() => {
-    // Solo actúa si el tiempo llega a 0 MIENTRAS estamos conectados.
-    if (sessionTimeLeft <= 0 && isConnected) {
+    // Solo actúa si el tiempo llega a 0 MIENTRAS estamos conectados Y el temporizador ya había sido iniciado.
+    // Esto previene que se dispare al conectar, cuando sessionTimeLeft es 0 inicialmente.
+    if (sessionTimeLeft <= 0 && isConnected && timerRef.current) {
       console.warn("La sesión de selección ha expirado por tiempo.");
       setSessionExpired(true);
       cleanup(); // Limpia y desconecta
@@ -104,113 +98,127 @@ export function useSocketTrip(): UseSocketTripReturn {
    * @param callback - Función opcional que se ejecuta al conectar o al fallar.
    */
   const connectToTrip = useCallback(
-    (tripDetails: JoinTripRoomPayload, callback?: (result: { success: boolean; error?: string }) => void) => {
-    // Prevenir múltiples conexiones si ya existe una
-    if (socketRef.current) return;
+    (
+      tripDetails: JoinTripRoomPayload,
+      callback?: (result: { success: boolean; error?: string }) => void
+    ) => {
+      // Prevenir múltiples conexiones si ya existe una
+      if (socketRef.current) return;
 
-    console.log("Conectando al viaje:", tripDetails);
-    setIsConnecting(true);
-    setSessionExpired(false);
+      console.log("Conectando al viaje:", tripDetails);
+      setIsConnecting(true);
+      setSessionExpired(false);
 
-    const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> =
-      io(getSocketUrl(), {
-        // Opciones de conexión
-        withCredentials:true,
-        reconnection: true, // Habilitar la reconexión si se pierde la conexión
-        reconnectionAttempts: 3, // Intentar reconectar solo 3 veces
-        reconnectionDelay: 1000, // Esperar 1 segundo entre intentos
-        autoConnect: false, // ¡IMPORTANTE! No conectar automáticamente al crear la instancia.
-        transports: ["websocket"], // Forzar el uso de WebSockets
+      const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
+        SOCKET_URL,
+        {
+          // Opciones de conexión
+          withCredentials: true,
+          reconnection: true, // Habilitar la reconexión si se pierde la conexión
+          reconnectionAttempts: 3, // Intentar reconectar solo 3 veces
+          reconnectionDelay: 1000, // Esperar 1 segundo entre intentos
+          autoConnect: false, // ¡IMPORTANTE! No conectar automáticamente al crear la instancia.
+          transports: ["websocket"], // Forzar el uso de WebSockets
+        }
+      );
+      socketRef.current = newSocket;
+
+      // --- CONFIGURACIÓN DE LISTENERS (socket.on) ---
+
+      newSocket.on("connect", () => {
+        console.log("Socket conectado con ID:", newSocket.id);
+        setIsConnected(true);
+        setIsConnecting(false);
+        // Emitimos el evento y esperamos una confirmación (acknowledgment) del servidor.
+        newSocket.emit(SocketEvents.JOIN_TRIP_ROOM, tripDetails);
       });
-    socketRef.current = newSocket;
 
-    // --- CONFIGURACIÓN DE LISTENERS (socket.on) ---
-
-    newSocket.on("connect", () => {
-      console.log("Socket conectado con ID:", newSocket.id);
-      setIsConnected(true);
-      setIsConnecting(false);
-      newSocket.emit(SocketEvents.JOIN_TRIP_ROOM, tripDetails);
-    });
-
-    newSocket.on("connect_error", (err) => {
-      console.error("Error de conexión:", err.message);
-      callback?.({ success: false, error: `No se pudo conectar al servidor: ${err.message}` });
-      cleanup(); // Limpia para permitir un nuevo intento
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("Socket desconectado.");
-      cleanup();
-    });
-
-    newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
-      console.log("Recibido estado inicial de buses:", initialBuses);
-      setBuses(initialBuses);
-      callback?.({ success: true }); // ¡Conexión y unión a la sala exitosas!
-
-      // Iniciar el temporizador de sesión de 5 minutos
-      if (timerRef.current) clearInterval(timerRef.current);
-      setSessionTimeLeft(300); // 5 minutos = 300 segundos
-      timerRef.current = setInterval(() => {
-        setSessionTimeLeft((prevTime) => {
-          // La lógica de expiración está en el useEffect para mayor limpieza
-          if (prevTime <= 1) {
-            clearInterval(timerRef.current!);
-            return 0;
-          }
-          return prevTime - 1;
+      newSocket.on("connect_error", (err) => {
+        console.error("Error de conexión:", err.message);
+        callback?.({
+          success: false,
+          error: `No se pudo conectar al servidor: ${err.message}`,
         });
-      }, 1000);
-    });
+        cleanup(); // Limpia para permitir un nuevo intento
+      });
 
-    newSocket.on(SocketEvents.SEAT_STATUS_UPDATED, (payload) => {
-      console.log("Actualización de asiento recibida:", payload);
-      setBuses((currentBuses) =>
-        currentBuses.map((bus) =>
-          bus.ordenBus === payload.busOrden
-            ? {
-                ...bus,
-                seats: bus.seats.map((seat) =>
-                  seat.id === payload.seatId
-                    ? { ...seat, status: payload.newStatus, userId: payload.userId }
-                    : seat
-                ),
-              }
-            : bus
-        )
-      );
-    });
+      newSocket.on("disconnect", () => {
+        console.log("Socket desconectado.");
+        cleanup();
+      });
 
-    newSocket.on(SocketEvents.SELECTION_FAILED, (payload) => {
-      console.error("Falló la selección de asiento:", payload);
-      // El servidor nos dice que nuestra acción falló y nos envía el estado real del asiento.
-      // Usamos esta información para corregir nuestra UI.
-      setBuses((currentBuses) =>
-        currentBuses.map((bus) =>
-          bus.ordenBus === payload.busOrden
-            ? {
-                ...bus,
-                seats: bus.seats.map((seat) =>
-                  seat.id === payload.seatId
-                    ? { ...payload.currentState } // Revertimos al estado que dice el servidor
-                    : seat
-                ),
-              }
-            : bus
-        )
-      );
-    });
+      newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
+        console.log("Recibido estado inicial de buses:", initialBuses);
+        setBuses(initialBuses);
 
-    newSocket.on(SocketEvents.SESSION_EXPIRED, (payload) => {
-      console.warn("La sesión de selección ha expirado:", payload.reason);
-      setSessionExpired(true);
-      cleanup(); // Limpia y desconecta
-    });
+        // Iniciar el temporizador de sesión de 5 minutos
+        if (timerRef.current) clearInterval(timerRef.current);
+        setSessionTimeLeft(initialSessionTime); // 5 minutos = 300 segundos
+        timerRef.current = setInterval(() => {
+          setSessionTimeLeft((prevTime) => {
+            // La lógica de expiración está en el useEffect para mayor limpieza
+            if (prevTime <= 1) {
+              clearInterval(timerRef.current!);
+              return 0;
+            }
+            return prevTime - 1;
+          });
+        }, 1000);
+      });
 
-    // Ahora que todo está configurado, conectamos manualmente.
-    newSocket.connect();
-  }, [cleanup, isConnected]);
+      newSocket.on(SocketEvents.SEAT_STATUS_UPDATED, (payload) => {
+        console.log("Actualización de asiento recibida:", payload);
+        setBuses((currentBuses) =>
+          currentBuses.map((bus) =>
+            bus.ordenBus === payload.busOrden
+              ? {
+                  ...bus,
+                  seats: bus.seats.map((seat) =>
+                    seat.id === payload.seatId
+                      ? {
+                          ...seat,
+                          status: payload.newStatus,
+                          userId: payload.userId,
+                        }
+                      : seat
+                  ),
+                }
+              : bus
+          )
+        );
+      });
+
+      newSocket.on(SocketEvents.SELECTION_FAILED, (payload) => {
+        console.error("Falló la selección de asiento:", payload);
+        // El servidor nos dice que nuestra acción falló y nos envía el estado real del asiento.
+        // Usamos esta información para corregir nuestra UI.
+        setBuses((currentBuses) =>
+          currentBuses.map((bus) =>
+            bus.ordenBus === payload.busOrden
+              ? {
+                  ...bus,
+                  seats: bus.seats.map((seat) =>
+                    seat.id === payload.seatId
+                      ? { ...payload.currentState } // Revertimos al estado que dice el servidor
+                      : seat
+                  ),
+                }
+              : bus
+          )
+        );
+      });
+
+      newSocket.on(SocketEvents.SESSION_EXPIRED, (payload) => {
+        console.warn("La sesión de selección ha expirado:", payload.reason);
+        setSessionExpired(true);
+        cleanup(); // Limpia y desconecta
+      });
+
+      // Ahora que todo está configurado, conectamos manualmente.
+      newSocket.connect();
+    },
+    [cleanup, isConnecting]
+  ); // Cambiamos isConnected por isConnecting para la guarda del inicio
 
   /**
    * Cierra la conexión con el servidor de sockets y limpia el estado.
@@ -250,6 +258,20 @@ export function useSocketTrip(): UseSocketTripReturn {
     });
   }, []);
 
+  /**
+   * Envía una petición de administrador para forzar el cambio de estado de un asiento.
+   * @param seatId - El ID del asiento a modificar.
+   * @param busOrden - El identificador del bus donde está el asiento.
+   */
+  const adminToggleSeat = useCallback((seatId: string, busOrden: string) => {
+    console.log(
+      `[ADMIN] Solicitando toggle para asiento: ${seatId} en bus ${busOrden}`
+    );
+    socketRef.current?.emit(SocketEvents.ADMIN_TOGGLE_SEAT, {
+      seatId,
+      busOrden,
+    });
+  }, []);
   // El hook devuelve el estado actual y las funciones para que los componentes interactúen.
   return {
     buses, // Devuelve el array de buses
@@ -261,5 +283,6 @@ export function useSocketTrip(): UseSocketTripReturn {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    adminToggleSeat,
   };
 }

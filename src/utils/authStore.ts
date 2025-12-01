@@ -7,5 +7,5 @@ import type { AuthState } from '../utils/auth';
 export const $auth = atom<AuthState>({
   isAuthenticated: false,
   user: null,
-  loading: true, // Inicia en true, igual que el AuthProvider
+  loading: false, // Inicia en true, igual que el AuthProvider
 });
