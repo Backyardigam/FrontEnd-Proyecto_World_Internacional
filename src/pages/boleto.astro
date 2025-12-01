@@ -1,0 +1,58 @@
+---
+import BoletoComponent from '../components/boletos/Boleto.tsx';
+import "../styles/global.css";
+---
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Tu Boleto de Viaje - World Internacional</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+      integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+    <style>
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .ticket-container {
+          box-shadow: none !important;
+          border: 1px solid #ccc;
+          margin: 0;
+          width: 100%;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-100 font-redhat flex flex-col items-center justify-center min-h-screen p-4"
+  >
+    <main class="w-full max-w-2xl">
+      <BoletoComponent client:load />
+
+      <div class="no-print mt-8 flex flex-col sm:flex-row justify-center gap-4">
+        <button
+          onclick="window.print()"
+          class="w-full sm:w-auto px-8 py-3 bg-naranja-c text-white font-semibold rounded-lg shadow-md hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 transition-colors"
+        >
+          Imprimir
+        </button>
+        <a
+          href="/"
+          class="w-full sm:w-auto text-center px-8 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+        >
+          Volver al Inicio
+        </a>
+      </div>
+    </main>
+  </body>
+</html>

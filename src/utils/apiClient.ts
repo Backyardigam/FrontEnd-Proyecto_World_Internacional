@@ -92,7 +92,11 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
 
   if (!response.ok) {
     // El error 403 ya se maneja arriba. Para otros errores, lanzamos un ApiError.
+    // Si la respuesta no es JSON (ej. 500 con HTML), manejamos eso.
     try {
+      // Clonamos la respuesta para poder leer el cuerpo sin consumirlo,
+      // en caso de que necesitemos la respuesta original en otro lugar.
+      const errorResponse = response.clone();
       const errorData = await response.json();
       throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
     } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
