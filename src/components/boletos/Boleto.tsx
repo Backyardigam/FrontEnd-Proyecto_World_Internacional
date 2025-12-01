@@ -40,7 +40,7 @@ const POLLING_INTERVAL = 3000; // 3 segundos
 const MAX_POLLING_ATTEMPTS = 20; // Máximo 20 intentos (1 minuto)
 
 export default function Boleto({}: BoletoProps) {
-  const [ticketData, setTicketData] = useState<TicketData | null>(null);
+  const [ticketsData, setTicketsData] = useState<TicketData[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<
@@ -72,9 +72,13 @@ export default function Boleto({}: BoletoProps) {
         // --- LLAMADA A LA API #2: OBTENER DATOS DEL BOLETO ---
         // Aquí se hace la llamada para obtener los detalles del boleto una vez que el pago está confirmado.
         // DEBES REEMPLAZAR ESTA RUTA CON TU ENDPOINT REAL.
-        const data = await apiGet<TicketData>(`/api/tickets/by-payment/${id}`);
+        const data = await apiGet<TicketData | TicketData[]>(`/api/tickets/by-payment/${id}`);
         // ----------------------------------------------------
-        setTicketData(data);
+
+        // Normalizamos la respuesta para que siempre sea un array.
+        const ticketsArray = Array.isArray(data) ? data : [data];
+
+        setTicketsData(ticketsArray);
         setLoading(false); // Solo se establece a false después de obtener los datos del boleto
       } catch (err) {
         console.error("Error al obtener datos del boleto:", err);
@@ -110,6 +114,7 @@ export default function Boleto({}: BoletoProps) {
           message?: string;
         }>(`/api/payments/${id}/status`);
         // ----------------------------------------------------------------
+
         setPaymentStatus(statusResponse.status);
 
         if (statusResponse.status === "paid") {
@@ -197,7 +202,7 @@ export default function Boleto({}: BoletoProps) {
     );
   }
 
-  if (!ticketData) {
+  if (!ticketsData || ticketsData.length === 0) {
     return (
       <div className="text-center p-8 bg-gray-100 text-gray-700 rounded-lg">
         <p className="text-xl font-bold">Boleto no encontrado</p>
@@ -212,165 +217,142 @@ export default function Boleto({}: BoletoProps) {
   // Renderizar el boleto real cuando los datos estén disponibles
   return (
     <>
-      <div
-        id="ticket"
-        className="ticket-container bg-white rounded-xl shadow-lg overflow-hidden"
-      >
-        {/* Cabecera del Boleto */}
-        <header className="bg-naranja-f text-white p-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {ticketData.service}
-            </h1>
-            <p className="text-orange-100">Boleto Electrónico</p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-sm">CÓDIGO DE RESERVA</p>
-            <p className="font-bold text-xl tracking-wider">
-              {ticketData.ticketCode}
-            </p>
-          </div>
-        </header>
-
-        {/* Detalles del Pasajero y Viaje */}
-        <section className="p-6 md:p-8 grid md:grid-cols-3 gap-6 border-b">
-          <div className="md:col-span-2 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
-              Detalles del Pasajero
-            </h2>
-            <div>
-              <p className="text-sm text-gray-500">Nombre Completo</p>
-              <p className="font-medium text-gray-900">{ticketData.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="font-medium text-gray-900">{ticketData.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Teléfono</p>
-              <p className="font-medium text-gray-900">
-                {ticketData.phoneNumber}
-              </p>
-            </div>
-          </div>
-
-          {/* QR Code Placeholder */}
+      {/* Este div envuelve todos los boletos para la generación del PDF */}
+      <div id="tickets-container" className="space-y-8">
+        {ticketsData.map((ticketData, index) => (
           <div
-            className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg"
-            data-html2canvas-ignore="true"
+            key={ticketData.ticketCode}
+            className="ticket-container bg-white rounded-xl shadow-lg overflow-hidden"
           >
-            <svg
-              className="w-24 h-24 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="0.5"
-                d="M12 4v16m8-8H4"
-              ></path>
-              <path d="M3.5 3.5h17v17h-17z" strokeWidth="1"></path>
-              <path d="M5.5 5.5h5v5h-5zM13.5 5.5h5v5h-5zM5.5 13.5h5v5h-5z"></path>
-            </svg>
-            <p className="text-xs text-gray-600 mt-2 text-center">
-              Presenta este código al abordar
-            </p>
-          </div>
-        </section>
+            {/* Cabecera del Boleto */}
+            <header className="bg-naranja-f text-white p-6 flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {ticketData.service}
+                </h1>
+                <p className="text-orange-100">Boleto Electrónico</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-sm">CÓDIGO DE RESERVA</p>
+                <p className="font-bold text-xl tracking-wider">
+                  {ticketData.ticketCode}
+                </p>
+              </div>
+            </header>
 
-        {/* Detalles del Servicio */}
-        <section className="p-6 md:p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <p className="text-sm text-gray-500">Fecha del Tour</p>
-            <p className="font-semibold text-lg text-gray-900">
-              {formatDate(ticketData.date)}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Horario</p>
-            <p className="font-semibold text-lg text-gray-900">
-              {ticketData.schedule}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">N° de Personas</p>
-            <p className="font-semibold text-lg text-gray-900">
-              {ticketData.peopleCount}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Costo Total</p>
-            <p className="font-bold text-2xl text-naranja-f">
-              {formatCurrency(ticketData.totalCost)}
-            </p>
-          </div>
-        </section>
-
-        {/* Sección Opcional para Mirabus: Muestra el bus y los asientos si existen */}
-        {(ticketData.orderBus ||
-          (ticketData.seats && ticketData.seats.length > 0)) && (
-          <section className="p-6 md:p-8 border-t bg-gray-50">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              Detalles de Asignación (Mirabus)
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {ticketData.orderBus && (
+            {/* Detalles del Pasajero y Viaje */}
+            <section className="p-6 md:p-8 grid md:grid-cols-3 gap-6 border-b">
+              <div className="md:col-span-2 space-y-4">
+                <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">
+                  Detalles del Pasajero
+                </h2>
                 <div>
-                  <p className="text-sm text-gray-500">Bus Asignado</p>
-                  <p className="font-semibold text-lg text-gray-900">
-                    Bus {ticketData.orderBus}
+                  <p className="text-sm text-gray-500">Nombre Completo</p>
+                  <p className="font-medium text-gray-900">{ticketData.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium text-gray-900">{ticketData.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Teléfono</p>
+                  <p className="font-medium text-gray-900">
+                    {ticketData.phoneNumber}
                   </p>
                 </div>
-              )}
-              {ticketData.seats && ticketData.seats.length > 0 && (
-                <div>
-                  <p className="text-sm text-gray-500">Asientos Reservados</p>
-                  <p className="font-semibold text-lg text-gray-900">
-                    {ticketData.seats.join(", ")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+              </div>
 
-        {/* Pie de página del Boleto */}
-        <footer className="bg-gray-50 p-4 text-xs text-gray-500 text-center border-t">
-          Boleto generado el: {formatDateTime(ticketData.createdAt)}. Gracias
-          por elegir World Internacional.
-        </footer>
+              {/* QR Code Placeholder */}
+              <div
+                className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg"
+                data-html2canvas-ignore="true"
+              >
+                <svg
+                  className="w-24 h-24 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="0.5"
+                    d="M12 4v16m8-8H4"
+                  ></path>
+                  <path d="M3.5 3.5h17v17h-17z" strokeWidth="1"></path>
+                  <path d="M5.5 5.5h5v5h-5zM13.5 5.5h5v5h-5zM5.5 13.5h5v5h-5z"></path>
+                </svg>
+                <p className="text-xs text-gray-600 mt-2 text-center">
+                  Presenta este código al abordar
+                </p>
+              </div>
+            </section>
+
+            {/* Detalles del Servicio */}
+            <section className="p-6 md:p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
+                <p className="text-sm text-gray-500">Fecha del Tour</p>
+                <p className="font-semibold text-lg text-gray-900">
+                  {formatDate(ticketData.date)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Horario</p>
+                <p className="font-semibold text-lg text-gray-900">
+                  {ticketData.schedule}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">N° de Personas</p>
+                <p className="font-semibold text-lg text-gray-900">
+                  {ticketData.peopleCount}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Costo Total</p>
+                <p className="font-bold text-2xl text-naranja-f">
+                  {formatCurrency(ticketData.totalCost)}
+                </p>
+              </div>
+            </section>
+
+            {/* Sección Opcional para Mirabus: Muestra el bus y los asientos si existen */}
+            {(ticketData.orderBus ||
+              (ticketData.seats && ticketData.seats.length > 0)) && (
+              <section className="p-6 md:p-8 border-t bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Detalles de Asignación (Mirabus)
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {ticketData.orderBus && (
+                    <div>
+                      <p className="text-sm text-gray-500">Bus Asignado</p>
+                      <p className="font-semibold text-lg text-gray-900">
+                        Bus {ticketData.orderBus}
+                      </p>
+                    </div>
+                  )}
+                  {ticketData.seats && ticketData.seats.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500">Asientos Reservados</p>
+                      <p className="font-semibold text-lg text-gray-900">
+                        {ticketData.seats.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Pie de página del Boleto */}
+            <footer className="bg-gray-50 p-4 text-xs text-gray-500 text-center border-t">
+              Boleto generado el: {formatDateTime(ticketData.createdAt)}. Gracias
+              por elegir World Internacional.
+            </footer>
+          </div>
+        ))}
       </div>
-      {/* Botón de Guardar como PDF (dentro del componente React) */}
-      {ticketData && ( // Solo mostrar el botón si hay datos del boleto
-        <div className="no-print mt-8 flex justify-center">
-          <button
-            onClick={() => {
-              const ticketElement = document.getElementById("ticket");
-              if (ticketElement) {
-                const options = {
-                  margin: 0.5,
-                  filename: `boleto-${ticketData.ticketCode}.pdf`,
-                  image: { type: "jpeg", quality: 0.98 },
-                  html2canvas: { scale: 2, useCORS: true },
-                  jsPDF: {
-                    unit: "in",
-                    format: "letter",
-                    orientation: "portrait",
-                  },
-                };
-                // @ts-ignore html2pdf is loaded globally
-                html2pdf().from(ticketElement).set(options).save();
-              }
-            }}
-            className="w-full sm:w-auto px-8 py-3 bg-azul-c text-white font-semibold rounded-lg shadow-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-colors"
-          >
-            Guardar como PDF
-          </button>
-        </div>
-      )}
     </>
   );
 }

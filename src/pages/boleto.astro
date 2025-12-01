@@ -9,11 +9,6 @@ import "../styles/global.css";
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Tu Boleto de Viaje - World Internacional</title>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-      integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"></script>
     <style>
       @media print {
         body {
@@ -40,11 +35,11 @@ import "../styles/global.css";
       <BoletoComponent client:load />
 
       <div class="no-print mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <button
+        <button 
           onclick="window.print()"
           class="w-full sm:w-auto px-8 py-3 bg-naranja-c text-white font-semibold rounded-lg shadow-md hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 transition-colors"
         >
-          Imprimir
+          Imprimir / Guardar PDF
         </button>
         <a
           href="/"
