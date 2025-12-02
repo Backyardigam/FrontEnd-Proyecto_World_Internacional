@@ -3,3 +3,4 @@
 - Al hacer click en reservar ya y no estas sesion iniciada, luego de iniciar 
 no te considera que estes tratando de reservar el servicio, y te muestra un carrito vacio
 - que la agrupacion de boletos tenga una mejor interfaz grafica
+- agregar elementos visuales que indiquen la orientacion del bus 

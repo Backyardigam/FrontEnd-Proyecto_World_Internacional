@@ -11,7 +11,7 @@ export default function AuditoriaView() {
       setLoading(true);
       setError(null);
       try {
-        const data = await apiGet<any>('/manage/audit');
+        const data = await apiGet<any>('/audit');
         setAuditData(data);
       } catch (err) {
         if (err instanceof ApiError) {
