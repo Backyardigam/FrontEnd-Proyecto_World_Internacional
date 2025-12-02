@@ -9,6 +9,7 @@ export default function AuditoriaView() {
       <p className="text-gray-600">
         Visualiza, edita y gestiona los roles de los usuarios registrados en la
         plataforma.
+        /audit/
       </p>
     </div>
   );

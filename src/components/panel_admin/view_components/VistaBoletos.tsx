@@ -47,7 +47,7 @@ export default function VistaBoletos() {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const mockTickets: TicketData[] = [
-          { id: 'tkt001', ticketCode: 'WRLD-T7K9Z1', name: 'Ana García Pérez', email: 'ana.garcia@example.com', service: 'Mirabus City Tour', date: '2024-08-15', schedule: '10:00 AM', peopleCount: 2 },
+          { id: 'tkt001', ticketCode: 'WRLD-T7K9Z1', name: 'Ana García Pérez', email: 'ana.garcia@example.com', service: 'Mirabus City Tour', date: '2024-08-15', schedule: '10:00 AM', peopleCount: 2},
           { id: 'tkt002', ticketCode: 'WRLD-L5P2X8', name: 'Carlos Mendoza', email: 'carlos.mendoza@example.com', service: 'Tour Ica-Paracas', date: '2024-08-16', schedule: '09:00 AM', peopleCount: 1 },
           { id: 'tkt003', ticketCode: 'WRLD-QW8RTY', name: 'Lucía Fernández', email: 'lucia.f@example.com', service: 'Mirabus City Tour', date: '2024-08-15', schedule: '02:00 PM', peopleCount: 4 },
           { id: 'tkt004', ticketCode: 'WRLD-ZXCVBN', name: 'Jorge Torres', email: 'j.torres@example.com', service: 'Valle Viejo', date: '2024-08-17', schedule: '11:00 AM', peopleCount: 3 },
