@@ -207,8 +207,21 @@ export async function apiPatch<T = any>(url: string, body: any, options: Authent
  * @returns Una promesa que resuelve con los datos JSON de la respuesta (si los hay, ej. un mensaje de confirmación).
  * @throws Lanza un error si la respuesta no es 'ok'.
  */
-export async function apiDelete<T = any>(url: string, options: AuthenticatedFetchOptions = {}): Promise<T> {
-  const response = await authenticatedFetch(url, { ...options, method: 'DELETE' });
+export async function apiDelete<T = any>(url: string, body?: any, options: AuthenticatedFetchOptions = {}): Promise<T> {
+  const fetchOptions: AuthenticatedFetchOptions = {
+    ...options,
+    method: 'DELETE',
+  };
+
+  if (body) {
+    fetchOptions.body = JSON.stringify(body);
+    fetchOptions.headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+  }
+
+  const response = await authenticatedFetch(url, fetchOptions);
 
   if (!response.ok) {
     try {

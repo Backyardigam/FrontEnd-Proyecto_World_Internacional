@@ -198,14 +198,15 @@ export default function SliderView() {
     }
   };
 
-  const handleDelete = async (id: string | number) => {
+  const handleDelete = async (sliderToDelete: Slider) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar este slider?"))
       return;
 
     try {
-      // La ruta DELETE /manage/slider podría requerir el ID en el body
-      // si no lo acepta en la URL. Asumimos que lo acepta en el body.
-      await apiDelete(`/manage/slider/${id}`);
+      // Enviamos la URL de la imagen en el body para que el backend pueda eliminarla.
+      await apiDelete(`/manage/slider`, {
+        url: sliderToDelete.url,
+      });
       await fetchSliders();
     } catch (err: any) {
       setError("Error al eliminar el slider: " + err.message);
@@ -265,7 +266,7 @@ export default function SliderView() {
                 <Boton
                   text="Eliminar"
                   styleClass="bg-red-600"
-                  onPress={() => handleDelete(slider.id)}
+                  onPress={() => handleDelete(slider)}
                 />
               </div>
             </div>
