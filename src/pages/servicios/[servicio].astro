@@ -27,10 +27,18 @@ try {
   idService = currentService.id;
   serviceData = currentService.data;
 
+  Astro.response.headers.set(
+    "Cache-Control",
+    "public, max-age=20, stale-while-revalidate=86400"
+  );
+
+  // Para forzar el renderizado en el servidor (SSR) en cada solicitud en Vercel,
+  // debemos indicar explícitamente que la página no debe ser cacheada por el CDN.
   // Astro.response.headers.set(
   //   "Cache-Control",
-  //   "public, max-age=3600, stale-while-revalidate=86400"
+  //   "private, no-store, max-age=0, must-revalidate"
   // );
+
 } catch (error: any) {
   if (error instanceof ApiError) {
     console.error(

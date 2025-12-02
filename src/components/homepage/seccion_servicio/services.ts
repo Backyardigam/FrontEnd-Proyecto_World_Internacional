@@ -79,9 +79,9 @@ let cachedServices: ServiceDetails[];
 
 //para mejorar el proceso en build retornamos lo mismo si ya existe(caché)
 export async function getAllServices(): Promise<ServiceDetails[]> {
-  if (cachedServices) {
-    return cachedServices;
-  }
+  // if (cachedServices) {
+  //   return cachedServices;
+  // }
   const apiServices = await apiGet<ApiService[]>("/services/all");
   cachedServices = apiServices.map(transformApiService);
   return cachedServices;
