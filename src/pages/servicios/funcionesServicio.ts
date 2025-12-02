@@ -29,7 +29,7 @@ export function handleReserveNow(service: Service) {
     addServiceToCart(service);
     window.location.href = "/reservar";
   } else {
-    window.location.href = "/login?redirect=/reservar";
+    window.location.href = `/login?redirect=/servicios/${service.id}`;
   }
 }
 

@@ -91,15 +91,14 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
   const response = await authenticatedFetch(url, { ...options, method: 'GET' });
 
   if (!response.ok) {
-    // El error 403 ya se maneja arriba. Para otros errores, lanzamos un ApiError.
-    // Si la respuesta no es JSON (ej. 500 con HTML), manejamos eso.
     try {
-      // Clonamos la respuesta para poder leer el cuerpo sin consumirlo,
-      // en caso de que necesitemos la respuesta original en otro lugar.
-      const errorResponse = response.clone();
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      // Priorizamos el mensaje de error del backend.
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText que es más descriptivo.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
   
   // Verificamos si la respuesta tiene contenido antes de intentar parsearla como JSON.
@@ -134,8 +133,11 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
   
   return response.json() as Promise<T>;
@@ -163,8 +165,11 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
   
   return response.json() as Promise<T>;
@@ -226,8 +231,11 @@ export async function apiDelete<T = any>(url: string, body?: any, options: Authe
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
   
   const contentType = response.headers.get("content-type");
@@ -280,8 +288,11 @@ export async function apiPostFormData<T = any>(url: string, data: any, files: Re
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
 
   return response.json() as Promise<T>;

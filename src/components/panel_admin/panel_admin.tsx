@@ -32,7 +32,7 @@ type MenuItem = {
 
 export default function PanelAdmin() {
   const { user } = useStore($auth);
-  const [activeView, setActiveView] = useState<AdminView>('gestion');
+  const [activeView, setActiveView] = useState<AdminView>('dashboard');
   const sidebarRef = useRef<HTMLElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
