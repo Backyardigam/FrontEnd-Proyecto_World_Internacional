@@ -101,6 +101,7 @@ export default function FormularioMirabus() {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    initiatePayment, // <-- Importamos la nueva función
   } = useSocketTrip();
 
   // Estado local para guardar los asientos que el usuario ha seleccionado
@@ -231,6 +232,24 @@ export default function FormularioMirabus() {
     console.log("Enviando reserva:", reservationPayload);
 
     try {
+      // <-- 1. NOTIFICAMOS AL SOCKET QUE INICIAMOS EL PAGO -->
+      // Convertimos el callback del socket en una promesa para usar async/await
+      const paymentInitiationResponse = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+        initiatePayment((response) => resolve(response));
+      });
+
+      // Si el servidor no pudo bloquear los asientos (ej. alguien los tomó en el último segundo),
+      // detenemos el proceso aquí.
+      if (!paymentInitiationResponse.success) {
+        throw new Error(
+          paymentInitiationResponse.error ||
+            "No se pudieron asegurar los asientos para el pago. Por favor, inténtalo de nuevo."
+        );
+      }
+
+      // Si el paso anterior fue exitoso, los asientos ya están bloqueados en el backend.
+      // Ahora procedemos a crear la reserva formal y obtener la URL de pago.
+
       // 2. Usamos apiPost. Le pasamos la URL y el objeto payload directamente.
       // La función se encarga de stringify, headers, credentials, y parsear la respuesta.
       // También lanzará un error si la respuesta no es 'ok'.
@@ -249,7 +268,10 @@ export default function FormularioMirabus() {
         );
         // window.location.href = "https://www.izipay.pe/pago-simulado"; // Simulación
       }
-      disconnectFromTrip(); // Desconectar del socket después de una reserva exitosa
+      // NO desconectamos el socket aquí. La redirección desmontará el componente,
+      // lo que es suficiente. La lógica de mantener los asientos "reservados"
+      // durante el pago ahora es responsabilidad del backend después de esta llamada a la API.
+      // disconnectFromTrip(); 
     } catch (error: any) {
       console.error("Error en la reserva:", error);
       setReservationError(
@@ -264,7 +286,9 @@ export default function FormularioMirabus() {
     selectedSeats,
     busToDisplay,
     auth, // <-- Añadir auth a las dependencias
+    serviceInfo,
     disconnectFromTrip,
+    initiatePayment, // <-- Añadir a dependencias
   ]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---

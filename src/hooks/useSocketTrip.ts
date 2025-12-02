@@ -29,6 +29,9 @@ interface UseSocketTripReturn {
   disconnectFromTrip: () => void;
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
+  initiatePayment: (
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void;
   adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
 }
 
@@ -256,6 +259,21 @@ export function useSocketTrip(): UseSocketTripReturn {
   }, []);
 
   /**
+   * Notifica al servidor que el usuario está iniciando el proceso de pago.
+   * El servidor debería bloquear los asientos seleccionados por este usuario.
+   * @param callback - Función que se ejecuta con la respuesta del servidor.
+   */
+  const initiatePayment = useCallback(
+    (callback: (response: { success: boolean; error?: string }) => void) => {
+      console.log("[Socket] Notificando al servidor inicio de proceso de pago.");
+      socketRef.current?.emit(SocketEvents.INITIATE_PAYMENT, (response) => {
+        console.log("[Socket] Respuesta del servidor a INITIATE_PAYMENT:", response);
+        callback(response);
+      });
+    },
+    []
+  );
+  /**
    * Envía una petición de administrador para forzar el cambio de estado de un asiento.
    * @param seatId - El ID del asiento a modificar.
    * @param busOrden - El identificador del bus donde está el asiento.
@@ -280,6 +298,7 @@ export function useSocketTrip(): UseSocketTripReturn {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    initiatePayment,
     adminToggleSeat,
   };
 }
