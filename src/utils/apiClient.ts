@@ -198,8 +198,11 @@ export async function apiPatch<T = any>(url: string, body: any, options: Authent
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || `Error HTTP: ${response.status}`, response.status);
-    } catch (e) { throw new ApiError(`Error HTTP: ${response.status}`, response.status); }
+      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+    } catch (e) {
+      // Si la respuesta no es JSON, usamos el statusText.
+      throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
+    }
   }
   
   return response.json() as Promise<T>;

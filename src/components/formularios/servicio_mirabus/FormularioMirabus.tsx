@@ -112,7 +112,7 @@ export default function FormularioMirabus() {
 
   const handleTripSelection = useCallback(
     async (fecha: string, horario: string) => {
-      disconnectFromTrip(); // <-- ¡AQUÍ ESTÁ LA SOLUCIÓN!
+      disconnectFromTrip();
       setTripSelection({ fecha, horario });
       setIsSelecting(false); // Volver al estado inicial si se cambia la fecha/hora
       setUiStatus({ status: "idle" }); // Resetear el cuadro de estado
@@ -139,13 +139,8 @@ export default function FormularioMirabus() {
       setReservationError(null); // Limpiar cualquier error de reserva anterior
 
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
-      connectToTrip({ ...tripSelection, servicio }, (result) => {
-        if (result.success) {
-          // Solo cambiamos la UI si la conexión fue exitosa.
-          setIsSelecting(true);
-          setUiStatus({ status: "idle" }); // Ocultamos el cuadro al tener éxito
-        } else {
-          // Si falla, mostramos el error y el botón de reintento.
+      connectToTrip({ ...tripSelection, servicio }, (result) => { // El callback ahora solo maneja el error
+        if (!result.success) {
           setUiStatus({ status: "error", message: result.error });
         }
       });
@@ -161,6 +156,15 @@ export default function FormularioMirabus() {
       setSelectedBusOrden(buses[0].ordenBus);
     }
   }, [buses, selectedBusOrden]);
+
+  // Efecto para reaccionar al estado de la conexión del hook
+  useEffect(() => {
+    if (isConnected) {
+      // Si el hook nos dice que estamos conectados, actualizamos la UI.
+      setIsSelecting(true);
+      setUiStatus({ status: "idle" }); // Ocultamos el cuadro de "Conectando..."
+    }
+  }, [isConnected]);
 
   // Formatear el tiempo restante para mostrarlo como MM:SS
   const formatTime = (seconds: number) => {
@@ -348,21 +352,7 @@ export default function FormularioMirabus() {
               )}
 
               {isConnected && (
-                <div>
-                  {buses.length > 1 && (
-                    <select
-                      value={selectedBusOrden || ""}
-                      onChange={(e) => setSelectedBusOrden(e.target.value)}
-                      className="mt-4 p-2 border rounded"
-                    >
-                      {buses.map((bus) => (
-                        <option key={bus.ordenBus} value={bus.ordenBus}>
-                          {`Bus ${bus.ordenBus}`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
+                <div >
                   <div className="my-4 text-lg font-semibold">
                     Tiempo restante:{" "}
                     <span className="text-blue-600">
@@ -379,6 +369,20 @@ export default function FormularioMirabus() {
                       onRequestSeatSelection={selectSeat}
                       onRequestSeatDeselection={deselectSeat}
                     />
+                  )}
+
+                  {buses.length > 1 && (
+                    <select
+                      value={selectedBusOrden || ""}
+                      onChange={(e) => setSelectedBusOrden(e.target.value)}
+                      className="mt-4 p-2 border rounded"
+                    >
+                      {buses.map((bus) => (
+                        <option key={bus.ordenBus} value={bus.ordenBus}>
+                          {`Bus ${bus.ordenBus}`}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 </div>
               )}
