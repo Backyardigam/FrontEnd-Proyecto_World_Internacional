@@ -101,6 +101,7 @@ export default function FormularioMirabus() {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    initiatePayment, // <-- Importamos la nueva función
   } = useSocketTrip();
 
   // Estado local para guardar los asientos que el usuario ha seleccionado
@@ -112,7 +113,7 @@ export default function FormularioMirabus() {
 
   const handleTripSelection = useCallback(
     async (fecha: string, horario: string) => {
-      disconnectFromTrip(); // <-- ¡AQUÍ ESTÁ LA SOLUCIÓN!
+      disconnectFromTrip();
       setTripSelection({ fecha, horario });
       setIsSelecting(false); // Volver al estado inicial si se cambia la fecha/hora
       setUiStatus({ status: "idle" }); // Resetear el cuadro de estado
@@ -124,28 +125,23 @@ export default function FormularioMirabus() {
 
   const handleStartSelection = () => {
     if (tripSelection) {
-      // if (!auth.isAuthenticated) {
-      //   // Redirigir a la página de login, guardando la URL actual para poder volver.
-      //   const currentPath = window.location.pathname;
-      //   window.location.href = `/login?redirect=${encodeURIComponent(
-      //     currentPath
-      //   )}`;
-      //   return;
-      // }
+      if (!auth.isAuthenticated) {
+        // Redirigir a la página de login, guardando la URL actual para poder volver.
+        const currentPath = window.location.pathname;
+        window.location.href = `/login?redirect=${encodeURIComponent(
+          currentPath
+        )}`;
+        return;
+      }
 
-      const servicio = "cmi3dyy9w0003tpn8l6pg9aog";
+      const servicio = serviceInfo?.name || "";
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
       setReservationError(null); // Limpiar cualquier error de reserva anterior
 
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
-      connectToTrip({ ...tripSelection, servicio }, (result) => {
-        if (result.success) {
-          // Solo cambiamos la UI si la conexión fue exitosa.
-          setIsSelecting(true);
-          setUiStatus({ status: "idle" }); // Ocultamos el cuadro al tener éxito
-        } else {
-          // Si falla, mostramos el error y el botón de reintento.
+      connectToTrip({ ...tripSelection, servicio }, (result) => { // El callback ahora solo maneja el error
+        if (!result.success) {
           setUiStatus({ status: "error", message: result.error });
         }
       });
@@ -162,6 +158,15 @@ export default function FormularioMirabus() {
     }
   }, [buses, selectedBusOrden]);
 
+  // Efecto para reaccionar al estado de la conexión del hook
+  useEffect(() => {
+    if (isConnected) {
+      // Si el hook nos dice que estamos conectados, actualizamos la UI.
+      setIsSelecting(true);
+      setUiStatus({ status: "idle" }); // Ocultamos el cuadro de "Conectando..."
+    }
+  }, [isConnected]);
+
   // Formatear el tiempo restante para mostrarlo como MM:SS
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -173,6 +178,9 @@ export default function FormularioMirabus() {
 
   // --- NUEVA FUNCIÓN: Manejar la reserva ---
   const handleReservation = useCallback(async () => {
+    // Guarda para prevenir dobles envíos por clics rápidos.
+    if (reservationLoading) return;
+
     setReservationLoading(true);
     setReservationError(null);
 
@@ -224,6 +232,24 @@ export default function FormularioMirabus() {
     console.log("Enviando reserva:", reservationPayload);
 
     try {
+      // <-- 1. NOTIFICAMOS AL SOCKET QUE INICIAMOS EL PAGO -->
+      // Convertimos el callback del socket en una promesa para usar async/await
+      const paymentInitiationResponse = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+        initiatePayment((response) => resolve(response));
+      });
+
+      // Si el servidor no pudo bloquear los asientos (ej. alguien los tomó en el último segundo),
+      // detenemos el proceso aquí.
+      if (!paymentInitiationResponse.success) {
+        throw new Error(
+          paymentInitiationResponse.error ||
+            "No se pudieron asegurar los asientos para el pago. Por favor, inténtalo de nuevo."
+        );
+      }
+
+      // Si el paso anterior fue exitoso, los asientos ya están bloqueados en el backend.
+      // Ahora procedemos a crear la reserva formal y obtener la URL de pago.
+
       // 2. Usamos apiPost. Le pasamos la URL y el objeto payload directamente.
       // La función se encarga de stringify, headers, credentials, y parsear la respuesta.
       // También lanzará un error si la respuesta no es 'ok'.
@@ -242,7 +268,10 @@ export default function FormularioMirabus() {
         );
         // window.location.href = "https://www.izipay.pe/pago-simulado"; // Simulación
       }
-      disconnectFromTrip(); // Desconectar del socket después de una reserva exitosa
+      // NO desconectamos el socket aquí. La redirección desmontará el componente,
+      // lo que es suficiente. La lógica de mantener los asientos "reservados"
+      // durante el pago ahora es responsabilidad del backend después de esta llamada a la API.
+      // disconnectFromTrip(); 
     } catch (error: any) {
       console.error("Error en la reserva:", error);
       setReservationError(
@@ -257,7 +286,9 @@ export default function FormularioMirabus() {
     selectedSeats,
     busToDisplay,
     auth, // <-- Añadir auth a las dependencias
+    serviceInfo,
     disconnectFromTrip,
+    initiatePayment, // <-- Añadir a dependencias
   ]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
@@ -293,7 +324,7 @@ export default function FormularioMirabus() {
     <>
       {renderWhenReady(
         <div className="w-full flex flex-col justify-center items-center font-redhat py-25 bg-gray-100 max-h-full">
-          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 self-start">
+          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
             Reserva de tours
           </div>
           <div className="align-center items-center inline-block bg-white
@@ -345,21 +376,7 @@ export default function FormularioMirabus() {
               )}
 
               {isConnected && (
-                <div>
-                  {buses.length > 1 && (
-                    <select
-                      value={selectedBusOrden || ""}
-                      onChange={(e) => setSelectedBusOrden(e.target.value)}
-                      className="mt-4 p-2 border rounded"
-                    >
-                      {buses.map((bus) => (
-                        <option key={bus.ordenBus} value={bus.ordenBus}>
-                          {`Bus ${bus.ordenBus}`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
+                <div >
                   <div className="my-4 text-lg font-semibold">
                     Tiempo restante:{" "}
                     <span className="text-blue-600">
@@ -376,6 +393,20 @@ export default function FormularioMirabus() {
                       onRequestSeatSelection={selectSeat}
                       onRequestSeatDeselection={deselectSeat}
                     />
+                  )}
+
+                  {buses.length > 1 && (
+                    <select
+                      value={selectedBusOrden || ""}
+                      onChange={(e) => setSelectedBusOrden(e.target.value)}
+                      className="mt-4 p-2 border rounded"
+                    >
+                      {buses.map((bus) => (
+                        <option key={bus.ordenBus} value={bus.ordenBus}>
+                          {`Bus ${bus.ordenBus}`}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 </div>
               )}

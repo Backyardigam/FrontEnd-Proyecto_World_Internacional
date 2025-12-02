@@ -29,6 +29,9 @@ interface UseSocketTripReturn {
   disconnectFromTrip: () => void;
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
+  initiatePayment: (
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void;
   adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
 }
 
@@ -43,7 +46,7 @@ const SOCKET_URL = import.meta.env.PUBLIC_SOCKET_URL || "http://localhost:3001";
 export function useSocketTrip(): UseSocketTripReturn {
   // --- ESTADO INTERNO DEL HOOK ---
   const [buses, setBuses] = useState<Bus[]>([]);
-
+  
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [sessionTimeLeft, setSessionTimeLeft] = useState(0);
@@ -98,127 +101,124 @@ export function useSocketTrip(): UseSocketTripReturn {
    * @param callback - Función opcional que se ejecuta al conectar o al fallar.
    */
   const connectToTrip = useCallback(
-    (
-      tripDetails: JoinTripRoomPayload,
-      callback?: (result: { success: boolean; error?: string }) => void
-    ) => {
-      // Prevenir múltiples conexiones si ya existe una
-      if (socketRef.current) return;
+    (tripDetails: JoinTripRoomPayload, callback?: (result: { success: boolean; error?: string }) => void) => {
+    // Prevenir múltiples conexiones si ya existe una
+    if (socketRef.current) return;
 
-      console.log("Conectando al viaje:", tripDetails);
-      setIsConnecting(true);
-      setSessionExpired(false);
+    console.log("Conectando al viaje:", tripDetails);
+    setIsConnecting(true);
+    setSessionExpired(false);
 
-      const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-        SOCKET_URL,
-        {
-          // Opciones de conexión
-          withCredentials: true,
-          reconnection: true, // Habilitar la reconexión si se pierde la conexión
-          reconnectionAttempts: 3, // Intentar reconectar solo 3 veces
-          reconnectionDelay: 1000, // Esperar 1 segundo entre intentos
-          autoConnect: false, // ¡IMPORTANTE! No conectar automáticamente al crear la instancia.
-          transports: ["websocket"], // Forzar el uso de WebSockets
+    const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> =
+      io(SOCKET_URL, {
+        // Opciones de conexión
+        withCredentials:true,
+        reconnection: true, // Habilitar la reconexión si se pierde la conexión
+        reconnectionAttempts: 3, // Intentar reconectar solo 3 veces
+        reconnectionDelay: 1000, // Esperar 1 segundo entre intentos
+        autoConnect: false, // ¡IMPORTANTE! No conectar automáticamente al crear la instancia.
+        transports: ["websocket"], // Forzar el uso de WebSockets
+      });
+    socketRef.current = newSocket;
+
+    // --- CONFIGURACIÓN DE LISTENERS (socket.on) ---
+
+    newSocket.on("connect", () => {
+      console.log("Socket conectado con ID:", newSocket.id);
+      setIsConnected(true);
+      setIsConnecting(false);
+      // Emitimos el evento y esperamos una confirmación (acknowledgment) del servidor.
+      newSocket.emit(
+        SocketEvents.JOIN_TRIP_ROOM,
+        tripDetails,
+        (response) => {
+          console.log("Respuesta del servidor a JOIN_TRIP_ROOM:", response);
+          if (response.success) {
+            callback?.({ success: true }); // ¡Unión a la sala exitosa!
+          } else {
+            callback?.({ success: false, error: response.error || "No se pudo unir a la sala." });
+          }
         }
       );
-      socketRef.current = newSocket;
+    });
 
-      // --- CONFIGURACIÓN DE LISTENERS (socket.on) ---
+    newSocket.on("connect_error", (err) => {
+      console.error("Error de conexión:", err.message);
+      callback?.({ success: false, error: `No se pudo conectar al servidor: ${err.message}` });
+      cleanup(); // Limpia para permitir un nuevo intento
+    });
 
-      newSocket.on("connect", () => {
-        console.log("Socket conectado con ID:", newSocket.id);
-        setIsConnected(true);
-        setIsConnecting(false);
-        // Emitimos el evento y esperamos una confirmación (acknowledgment) del servidor.
-        newSocket.emit(SocketEvents.JOIN_TRIP_ROOM, tripDetails);
-      });
+    newSocket.on("disconnect", () => {
+      console.log("Socket desconectado.");
+      cleanup();
+    });
 
-      newSocket.on("connect_error", (err) => {
-        console.error("Error de conexión:", err.message);
-        callback?.({
-          success: false,
-          error: `No se pudo conectar al servidor: ${err.message}`,
+    newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
+      console.log("Recibido estado inicial de buses:", initialBuses);
+      setBuses(initialBuses);
+
+      // Iniciar el temporizador de sesión de 5 minutos
+      if (timerRef.current) clearInterval(timerRef.current);
+      setSessionTimeLeft(initialSessionTime); // 5 minutos = 300 segundos
+      timerRef.current = setInterval(() => {
+        setSessionTimeLeft((prevTime) => {
+          // La lógica de expiración está en el useEffect para mayor limpieza
+          if (prevTime <= 1) {
+            clearInterval(timerRef.current!);
+            return 0;
+          }
+          return prevTime - 1;
         });
-        cleanup(); // Limpia para permitir un nuevo intento
-      });
+      }, 1000);
+    });
 
-      newSocket.on("disconnect", () => {
-        console.log("Socket desconectado.");
-        cleanup();
-      });
+    newSocket.on(SocketEvents.SEAT_STATUS_UPDATED, (payload) => {
+      console.log("Actualización de asiento recibida:", payload);
+      setBuses((currentBuses) =>
+        currentBuses.map((bus) =>
+          bus.ordenBus === payload.busOrden
+            ? {
+                ...bus,
+                seats: bus.seats.map((seat) =>
+                  seat.id === payload.seatId
+                    ? { ...seat, status: payload.newStatus, userId: payload.userId }
+                    : seat
+                ),
+              }
+            : bus
+        )
+      );
+    });
 
-      newSocket.on(SocketEvents.INITIAL_SEAT_STATE, (initialBuses) => {
-        console.log("Recibido estado inicial de buses:", initialBuses);
-        setBuses(initialBuses);
+    newSocket.on(SocketEvents.SELECTION_FAILED, (payload) => {
+      console.error("Falló la selección de asiento:", payload);
+      // El servidor nos dice que nuestra acción falló y nos envía el estado real del asiento.
+      // Usamos esta información para corregir nuestra UI.
+      setBuses((currentBuses) =>
+        currentBuses.map((bus) =>
+          bus.ordenBus === payload.busOrden
+            ? {
+                ...bus,
+                seats: bus.seats.map((seat) =>
+                  seat.id === payload.seatId
+                    ? { ...payload.currentState } // Revertimos al estado que dice el servidor
+                    : seat
+                ),
+              }
+            : bus
+        )
+      );
+    });
 
-        // Iniciar el temporizador de sesión de 5 minutos
-        if (timerRef.current) clearInterval(timerRef.current);
-        setSessionTimeLeft(initialSessionTime); // 5 minutos = 300 segundos
-        timerRef.current = setInterval(() => {
-          setSessionTimeLeft((prevTime) => {
-            // La lógica de expiración está en el useEffect para mayor limpieza
-            if (prevTime <= 1) {
-              clearInterval(timerRef.current!);
-              return 0;
-            }
-            return prevTime - 1;
-          });
-        }, 1000);
-      });
+    newSocket.on(SocketEvents.SESSION_EXPIRED, (payload) => {
+      console.warn("La sesión de selección ha expirado:", payload.reason);
+      setSessionExpired(true);
+      cleanup(); // Limpia y desconecta
+    });
 
-      newSocket.on(SocketEvents.SEAT_STATUS_UPDATED, (payload) => {
-        console.log("Actualización de asiento recibida:", payload);
-        setBuses((currentBuses) =>
-          currentBuses.map((bus) =>
-            bus.ordenBus === payload.busOrden
-              ? {
-                  ...bus,
-                  seats: bus.seats.map((seat) =>
-                    seat.id === payload.seatId
-                      ? {
-                          ...seat,
-                          status: payload.newStatus,
-                          userId: payload.userId,
-                        }
-                      : seat
-                  ),
-                }
-              : bus
-          )
-        );
-      });
-
-      newSocket.on(SocketEvents.SELECTION_FAILED, (payload) => {
-        console.error("Falló la selección de asiento:", payload);
-        // El servidor nos dice que nuestra acción falló y nos envía el estado real del asiento.
-        // Usamos esta información para corregir nuestra UI.
-        setBuses((currentBuses) =>
-          currentBuses.map((bus) =>
-            bus.ordenBus === payload.busOrden
-              ? {
-                  ...bus,
-                  seats: bus.seats.map((seat) =>
-                    seat.id === payload.seatId
-                      ? { ...payload.currentState } // Revertimos al estado que dice el servidor
-                      : seat
-                  ),
-                }
-              : bus
-          )
-        );
-      });
-
-      newSocket.on(SocketEvents.SESSION_EXPIRED, (payload) => {
-        console.warn("La sesión de selección ha expirado:", payload.reason);
-        setSessionExpired(true);
-        cleanup(); // Limpia y desconecta
-      });
-
-      // Ahora que todo está configurado, conectamos manualmente.
-      newSocket.connect();
-    },
-    [cleanup, isConnecting]
-  ); // Cambiamos isConnected por isConnecting para la guarda del inicio
+    // Ahora que todo está configurado, conectamos manualmente.
+    newSocket.connect();
+  }, [cleanup, isConnecting]); // Cambiamos isConnected por isConnecting para la guarda del inicio
 
   /**
    * Cierra la conexión con el servidor de sockets y limpia el estado.
@@ -259,6 +259,21 @@ export function useSocketTrip(): UseSocketTripReturn {
   }, []);
 
   /**
+   * Notifica al servidor que el usuario está iniciando el proceso de pago.
+   * El servidor debería bloquear los asientos seleccionados por este usuario.
+   * @param callback - Función que se ejecuta con la respuesta del servidor.
+   */
+  const initiatePayment = useCallback(
+    (callback: (response: { success: boolean; error?: string }) => void) => {
+      console.log("[Socket] Notificando al servidor inicio de proceso de pago.");
+      socketRef.current?.emit(SocketEvents.INITIATE_PAYMENT, (response) => {
+        console.log("[Socket] Respuesta del servidor a INITIATE_PAYMENT:", response);
+        callback(response);
+      });
+    },
+    []
+  );
+  /**
    * Envía una petición de administrador para forzar el cambio de estado de un asiento.
    * @param seatId - El ID del asiento a modificar.
    * @param busOrden - El identificador del bus donde está el asiento.
@@ -283,6 +298,7 @@ export function useSocketTrip(): UseSocketTripReturn {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
+    initiatePayment,
     adminToggleSeat,
   };
 }

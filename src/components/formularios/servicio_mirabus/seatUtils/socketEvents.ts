@@ -9,7 +9,8 @@ export enum SocketEvents {
   LEAVE_TRIP_ROOM = "client:leave_trip_room",
   REQUEST_SEAT_SELECTION = "client:request_seat_selection",
   REQUEST_SEAT_DESELECTION = "client:request_seat_deselection",
-  ADMIN_TOGGLE_SEAT = "admin:toggle_seat", // <-- Evento para administradores
+  INITIATE_PAYMENT = "client:initiate_payment",
+  ADMIN_TOGGLE_SEAT = "admin:toggle_seat",
 
   // --- Eventos del Servidor al Cliente ---
   INITIAL_SEAT_STATE = "server:initial_seat_state",
@@ -73,7 +74,10 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  [SocketEvents.JOIN_TRIP_ROOM]: (payload: JoinTripRoomPayload) => void;
+  [SocketEvents.JOIN_TRIP_ROOM]: (
+    payload: JoinTripRoomPayload,
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void;
   [SocketEvents.LEAVE_TRIP_ROOM]: () => void;
   [SocketEvents.REQUEST_SEAT_SELECTION]: (
     payload: RequestSeatSelectionPayload
@@ -81,5 +85,8 @@ export interface ClientToServerEvents {
   [SocketEvents.REQUEST_SEAT_DESELECTION]: (
     payload: RequestSeatDeselectionPayload
   ) => void;
+  [SocketEvents.INITIATE_PAYMENT]: (
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void; // <-- NUEVO EVENTO
   [SocketEvents.ADMIN_TOGGLE_SEAT]: (payload: AdminToggleSeatPayload) => void;
 }
