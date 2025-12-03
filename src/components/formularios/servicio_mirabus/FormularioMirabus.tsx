@@ -4,40 +4,25 @@ import Mirabus from "./Mirabus";
 import type { Bus, Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
 import { useAuth } from "../../../utils/authContext";
-import { apiPost } from "../../../utils/apiClient";
+import { apiGet, apiPost } from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
 //Manejar la llamada de datos desde una ruta API
-
-const fetchHorariosDisponibles = async (fecha: string): Promise<string[]> => {
-  console.log(`Buscando horarios para ${fecha}`);
-  // Simula una llamada a la API para obtener horarios
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return ["10:00 AM", "02:00 PM", "06:00 PM"];
-};
-
-// simular la obtención de detalles del servicio desde una API ---
-const fetchServiceDetails = async (
-  serviceId: string
-): Promise<{ name: string; price: number }> => {
-  console.log(`Fetching details for service: ${serviceId}`);
-  await new Promise((resolve) => setTimeout(resolve, 700)); // Simular latencia de red
-
-  if (serviceId === "mirabus-tour-lima") {
-    return { name: "Mirabus City Tour Lima", price: 50.0 };
-  } else if (serviceId === "tour-fallido") {
-    throw new Error("El servicio solicitado no se encuentra disponible.");
-  } else {
-    throw new Error("Servicio no encontrado.");
-  }
-};
+interface APIScheduleResponse{
+  id:string,
+  name:string,
+  precio:number, // El backend devuelve 'precio'
+  schedules:string[]
+}
 
 //componente encargado de cargar con todo el formulario normal y la seleccion de asientos
 export default function FormularioMirabus() {
   // --- ESTADOS PARA LA CARGA INICIAL DEL SERVICIO ---
   const [serviceInfo, setServiceInfo] = useState<{
+    id: string;
     name: string;
-    price: number;
+    price: number; // Usaremos 'price' internamente
+    schedules: string[];
   } | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState<string | null>(null);
@@ -47,15 +32,22 @@ export default function FormularioMirabus() {
 
   // --- EFECTO PARA CARGAR LOS DATOS DEL SERVICIO AL MONTAR EL COMPONENTE ---
   const loadServiceData = useCallback(async () => {
-    // TODO: En una app real, obtendrías el serviceId desde el router (ej: useParams de React Router)
-    const serviceId = "mirabus-tour-lima"; // Simulacion
+    const params = new URLSearchParams(window.location.search);
+    const serviceIdName = params.get('servicio');
+
+    if (!serviceIdName) {
+      setServiceError("No se ha especificado un servicio en la URL.");
+      setServiceLoading(false);
+      return;
+    }
 
     setServiceLoading(true);
     setServiceError(null);
 
     try {
-      const data = await fetchServiceDetails(serviceId);
-      setServiceInfo(data);
+      const data = await apiGet<APIScheduleResponse>(`/service/schedule/${serviceIdName}`);
+      // Mapeamos la respuesta de la API a nuestro estado interno
+      setServiceInfo({ id: data.id, name: data.name, price: data.precio, schedules: data.schedules });
     } catch (error: any) {
       setServiceError(
         error.message || "No se pudo cargar la información del servicio."
@@ -134,13 +126,13 @@ export default function FormularioMirabus() {
         return;
       }
 
-      const servicio = serviceInfo?.name || "";
+      const serviceId = serviceInfo?.id || ""; // Usamos el ID del servicio para el backend
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
       setReservationError(null); // Limpiar cualquier error de reserva anterior
 
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
-      connectToTrip({ ...tripSelection, servicio }, (result) => { // El callback ahora solo maneja el error
+      connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => { // El callback ahora solo maneja el error
         if (!result.success) {
           setUiStatus({ status: "error", message: result.error });
         }
@@ -226,7 +218,7 @@ export default function FormularioMirabus() {
         id: seat.id,
         busOrden: busToDisplay?.ordenBus || "",
       })),
-      servicio: serviceInfo?.name || "MIRABUS", // Usar el nombre del servicio cargado
+      servicio: serviceInfo?.id || "", // Usar el ID del servicio para el backend
     };
 
     console.log("Enviando reserva:", reservationPayload);
@@ -323,20 +315,22 @@ export default function FormularioMirabus() {
   return (
     <>
       {renderWhenReady(
-        <div className="w-full flex flex-col justify-center items-center font-redhat py-25 bg-gray-100 max-h-full">
-          <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
-            Reserva de tours
+        <div className="w-full flex flex-col justify-center items-center font-redhat py-16 md:py-24 bg-gray-100 min-h-screen">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              Reserva para: <span className="text-naranja-c">{serviceInfo?.name}</span>
+            </h1>
+            <p className="text-lg text-gray-600 mt-2">Completa los siguientes pasos para asegurar tu lugar.</p>
           </div>
-          <div className="align-center items-center inline-block bg-white
-          w-full max-w-4/5 md:max-w-3/5 p-4 rounded-lg shadow-md border border-gray-200">
+          <div className="bg-white w-full max-w-4xl p-6 md:p-8 rounded-lg shadow-lg border border-gray-200">
             <Formulario onFormDataChange={setPassengerData} />
             <div className="flex items-center align-center flex-col my-5">
               <div className="font-bold text-lg mt-5 mb-5 self-start">
                 Seleccione sus asientos
               </div>
               <FechaHorarioSelector
+                schedules={serviceInfo?.schedules || []}
                 onSelectionChange={handleTripSelection}
-                fetchHorarios={fetchHorariosDisponibles}
               />
               {/* --- INICIO: Nuevo Cuadro de Estado Dinámico --- */}
               {tripSelection && !isSelecting && uiStatus.status === "idle" && (

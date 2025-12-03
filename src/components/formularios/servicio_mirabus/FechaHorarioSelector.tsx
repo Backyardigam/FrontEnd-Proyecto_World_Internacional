@@ -2,23 +2,16 @@ import React from "react";
 import { useState, useEffect } from "react";
 
 interface FechaHorarioSelectorProps {
+  schedules: string[]; // Ahora recibe los horarios como prop
   onSelectionChange: (fecha: string, horario: string) => void;
-  fetchHorarios: (fecha: string) => Promise<string[]>; // función opcional para obtener horarios disponibles
 }
 
 export function FechaHorarioSelector({
+  schedules,
   onSelectionChange,
-  fetchHorarios,
 }: FechaHorarioSelectorProps) {
   const [fecha, setFecha] = useState("");
-  const [horarios, setHorarios] = useState<string[]>([]);
   const [horario, setHorario] = useState("");
-
-  useEffect(() => {
-    if (fecha) {
-      fetchHorarios(fecha).then(setHorarios);
-    }
-  }, [fecha]);
 
   useEffect(() => {
     if (fecha && horario) {
@@ -42,7 +35,7 @@ export function FechaHorarioSelector({
         className="border rounded p-2 w-full bg-white"
       >
         <option value="">Selecciona un horario</option>
-        {horarios.map((h) => (
+        {schedules.map((h) => (
           <option key={h} value={h}>
             {h}
           </option>

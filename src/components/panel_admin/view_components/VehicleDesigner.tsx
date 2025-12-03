@@ -19,8 +19,8 @@ export default function VehicleDesigner({ initialDistribution = [], onDistributi
     // Si estamos cargando una distribución existente (modo edición)...
     if (initialDistribution && initialDistribution.length > 0) {
       // ...calculamos el ancho y alto máximo requerido para mostrar todos los asientos.
-      const maxX = Math.max(...initialDistribution.map(seat => seat.x));
-      const maxY = Math.max(...initialDistribution.map(seat => seat.y));
+      const maxX = Math.max(...initialDistribution.map(seat => seat.x),8);
+      const maxY = Math.max(...initialDistribution.map(seat => seat.y),5);
       setGridWidth(maxX);
       setGridHeight(maxY);
     } else {
