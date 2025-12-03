@@ -181,7 +181,7 @@ export function useSocketTrip(): UseSocketTripReturn {
                 ...bus,
                 seats: bus.seats.map((seat) =>
                   seat.id === payload.seatId
-                    ? { ...seat, status: payload.newStatus, userId: payload.userId }
+                    ? { ...seat, status: payload.newStatus}
                     : seat
                 ),
               }

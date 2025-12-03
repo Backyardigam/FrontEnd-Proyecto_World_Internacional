@@ -33,28 +33,28 @@ export default function Mirabus({
     // FUSIÓN INTELIGENTE: No reemplazamos el estado, lo fusionamos.
     setSeats(currentLocalSeats => {
       // Identificamos qué asientos *nosotros* hemos puesto en 'pending'
-      // para distinguirlos de los 'pending' que vienen del servidor (de otros usuarios).
+      // para mantener ese estado visualmente mientras el servidor procesa la petición.
       const ourPendingRequests = new Set<string>();
       currentLocalSeats.forEach(seat => {
         if (seat.status === 'pending') {
           ourPendingRequests.add(seat.id);
         }
       });
-
+      
       // Creamos el nuevo estado fusionado.
       const newMergedSeats = initialSeatsData.map(serverSeat => {
-        // Si el servidor ya ha confirmado nuestra selección (serverSeat.status === 'selected')
-        // o si el asiento está ocupado/reservado/bloqueado (por nosotros o por otros),
-        // o si otro usuario lo tiene en 'pending', el estado del servidor es la verdad.
+        // Si el servidor ya ha confirmado nuestra selección (status: 'selected')
+        // o si el asiento está ocupado/reservado (por nosotros o por otros),
+        // el estado del servidor es la verdad y tiene prioridad.
         // En estos casos, el estado del servidor tiene prioridad absoluta.
+        // 'blocked' es un estado de UI, no debería venir del servidor, por lo que se elimina de esta condición.
         if (
           serverSeat.status === 'selected' ||
           serverSeat.status === 'occupied' ||
           serverSeat.status === 'reserved' ||
-          serverSeat.status === 'blocked' ||
-          // Si el servidor dice 'pending', es porque otro usuario lo tiene en pending.
-          // Nuestro 'pending' local solo es válido si el servidor aún lo ve como 'available'.
-          (serverSeat.status === 'pending' && !ourPendingRequests.has(serverSeat.id))
+          // Si el servidor dice 'pending', es porque otro usuario lo tiene en ese estado.
+          // Según la lógica, el servidor NUNCA debería enviar 'pending'.
+          serverSeat.status === 'pending'
         ) {
           return serverSeat;
         }
@@ -106,19 +106,28 @@ export default function Mirabus({
 
       // Lógica para el modo Administrador
       if (mode === 'admin') {
-        // El admin puede hacer toggle en asientos 'available' y 'reserved'.
-        // No puede tocar asientos 'occupied' o 'pending' (sesiones de clientes activas).
-        if (seatToToggle.status === 'available' || seatToToggle.status === 'reserved') {
+        // El admin puede hacer toggle en 'available' y en los que él mismo ha reservado ('adminReserved').
+        if (seatToToggle.status === 'available' || seatToToggle.status === 'adminReserved') {
           onAdminSeatToggle?.(seatId, busOrden);
         } else {
-          const statusText = seatToToggle.status === 'occupied' ? 'ocupado por un cliente' : 'en proceso de selección';
+          // Mensaje de error más específico para el admin.
+          let statusText = '';
+          if (seatToToggle.status === 'occupied') {
+            statusText = 'en el carrito de un cliente (ocupado)';
+          } else if (seatToToggle.status === 'reserved') {
+            statusText = 'comprado por un cliente (reservado)';
+          } else if (seatToToggle.status === 'pending') {
+            statusText = 'siendo procesado por otro usuario';
+          } else {
+            statusText = `en estado '${seatToToggle.status}'`;
+          }
           setWarningMessage(`No se puede modificar un asiento ${statusText}.`);
         }
         return;
       }
 
-      // Lógica para el modo Cliente (la original)
-      if (['occupied', 'reserved', 'blocked', 'pending'].includes(seatToToggle.status)) {
+      // Lógica para el modo Cliente: 'blocked' es un estado de UI, no debe impedir el click inicial. La lógica de 'displaySeats' lo maneja.
+      if (['occupied', 'reserved', 'adminReserved', 'blocked', 'pending'].includes(seatToToggle.status)) {
         setWarningMessage(`El asiento ${seatId} no está disponible en este momento.`);
         return;
       }
@@ -215,9 +224,10 @@ export default function Mirabus({
 
     return seats.map((s): Seat => {
       if (
-        s.status === "occupied" ||
-        s.status === "reserved" ||
-        s.status === "selected" ||
+        s.status === "occupied" ||      // En el carrito de alguien, no se toca.
+        s.status === "reserved" ||      // Ya pagado, no se toca.
+        s.status === "adminReserved" || // Bloqueado por admin, no se toca.
+        s.status === "selected" ||      // Seleccionado por nosotros, no se toca.
         s.status === "pending" // Los asientos 'pending' (de otros usuarios) también deben mantener su estado
       ) {
         return s;
@@ -238,7 +248,7 @@ export default function Mirabus({
           {warningMessage}
         </div>
       )}
-      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} />
+      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} mode={mode} />
     </div>
   );
 }

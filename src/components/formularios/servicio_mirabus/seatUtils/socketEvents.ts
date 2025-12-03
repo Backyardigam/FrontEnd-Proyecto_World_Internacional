@@ -50,7 +50,6 @@ export interface SeatStatusUpdatedPayload {
   busOrden: string;
   seatId: string;
   newStatus: SeatStatus;
-  userId: string;
 }
 
 export interface SelectionFailedPayload {

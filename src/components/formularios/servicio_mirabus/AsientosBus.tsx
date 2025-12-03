@@ -5,9 +5,10 @@ import type { Seat } from "./seatUtils/interfaceBus";
 interface AsientoBusProps {
   seats: Seat[];
   onSeatSelect: (seatId: string) => void;
+  mode: 'customer' | 'admin'; // Añadimos el modo para diferenciar estilos/comportamiento
 }
 
-export default function AsientoBus({ seats, onSeatSelect }: AsientoBusProps) {
+export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProps) {
   const [grid, setGrid] = useState<(Seat | null)[][]>([]);
   useEffect(() => {
     if (seats.length === 0) {
@@ -80,6 +81,18 @@ export default function AsientoBus({ seats, onSeatSelect }: AsientoBusProps) {
                       iconClassName += " text-red-500";
                       ariaLabel += " reservado";
                       isDisabled = true;
+                      break;
+                    case "adminReserved":
+                      if (mode === 'admin') {
+                        seatClassName += " bg-purple-200 hover:bg-purple-300"; // Color distintivo para admin
+                        iconClassName += " text-purple-700";
+                        ariaLabel += " reservado por administrador";
+                      } else {
+                        seatClassName += " bg-red-100 cursor-not-allowed"; // Mismo estilo que 'reserved' para el cliente
+                        iconClassName += " text-red-500";
+                        ariaLabel += " reservado";
+                        isDisabled = true;
+                      }
                       break;
                     case "blocked":
                       seatClassName += " bg-gray-100 cursor-not-allowed";

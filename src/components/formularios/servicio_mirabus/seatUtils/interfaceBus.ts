@@ -4,6 +4,7 @@ export type SeatStatus =
   | "selected"
   | "occupied"
   | "reserved"
+  | "adminReserved"
   | "blocked";
 
 export interface Seat {
