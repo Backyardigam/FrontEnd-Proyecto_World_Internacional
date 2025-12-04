@@ -49,7 +49,7 @@ export default function SupervisarViajesView() {
     const fetchServices = async () => {
       try {
         // Asumimos que la API existe y devuelve los datos en el formato esperado
-        const data = await apiGet<MirabusService[]>("/api/manage/mirabus-services");
+        const data = await apiGet<MirabusService[]>("/manage/mirabus-services");
         setServices(data);
         if (data.length > 0) {
           // Pre-seleccionar el primer servicio

@@ -47,7 +47,7 @@ export default function FormularioMirabus() {
     setServiceError(null);
 
     try {
-      const data = await apiGet<APIScheduleResponse>(`/service/schedule/${serviceIdName}`);
+      const data = await apiGet<APIScheduleResponse>(`/services/schedule/${serviceIdName}`);
       // Mapeamos la respuesta de la API a nuestro estado interno
       setServiceInfo({ id: data.id, name: data.name, price: data.precio, schedules: data.schedules });
     } catch (error: any) {

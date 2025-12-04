@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import VehicleDesigner from './VehicleDesigner';
 import type { IVehicleCreatePayload, IVehicleDetail, ISeatDistributionItem } from '../admin_utils/mirabusAdmin';
-// import { apiGet, apiPost, apiPut, ApiError } from '../../../utils/apiClient';
-import { ApiError } from '../../../utils/apiClient';
+import { apiGet, apiPost, apiPut, ApiError } from '../../../utils/apiClient';
 
-// --- ¡CAMBIO CLAVE! ---
-// Importamos nuestras funciones mock en lugar de las reales.
-import { mockGetVehicleById, mockCreateVehicle, mockUpdateVehicle } from '../view_components/apiMock';
-const apiGet = mockGetVehicleById;
-const apiPost = mockCreateVehicle;
-const apiPut = mockUpdateVehicle;
 
 interface VehicleFormProps {
   vehicleId: number | null; // null para crear, ID para editar
@@ -30,8 +23,8 @@ export default function VehicleForm({ vehicleId, onClose, onSave }: VehicleFormP
   useEffect(() => {
     if (isEditMode) {
       setLoading(true);
-      // Asumimos que esta ruta existe para obtener los detalles de un vehículo
-      apiGet(vehicleId)
+      // Usamos la ruta real para obtener los detalles de un vehículo
+      apiGet<IVehicleDetail>(`/manage/mirabus/vehicle/${vehicleId}`)
         .then(data => {
           setName(data.name);
           setIsDefaultGhost(data.isDefaultGhost || false);
@@ -66,11 +59,11 @@ export default function VehicleForm({ vehicleId, onClose, onSave }: VehicleFormP
 
     try {
       if (isEditMode) {
-        // Asumimos que la ruta PUT existe
-        await apiPut(vehicleId, payload);
+        // Ruta PUT para actualizar
+        await apiPut(`/manage/mirabus/vehicle/${vehicleId}`, payload);
       } else {
-        // Asumimos que la ruta POST existe
-        await apiPost(payload);
+        // Ruta POST para crear
+        await apiPost('/manage/mirabus', payload);
       }
       onSave(); // Notifica al padre para que refresque la lista
     } catch (err) {

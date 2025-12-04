@@ -2,14 +2,7 @@ import React, { useState, useEffect } from "react";
 import SupervisarViajesView from "../view_components/SupervisarViajesView";
 import VehicleForm from "../view_components/VehicleForm";
 import type { IVehicleListItem } from "../admin_utils/mirabusAdmin";
-// import { apiGet, apiDelete } from "../../../utils/apiClient";
-
-// --- ¡CAMBIO CLAVE! ---
-// Importamos nuestras funciones mock en lugar de las reales.
-// Cuando el backend esté listo, solo tendremos que cambiar estas importaciones.
-import { mockGetVehicles, mockDeleteVehicle } from "../view_components/apiMock";
-const apiGet = mockGetVehicles; // Renombramos para mínima refactorización
-const apiDelete = mockDeleteVehicle; // Renombramos para mínima refactorización
+import { apiGet, apiDelete } from "../../../utils/apiClient";
 
 type MirabusView = 'supervisar' | 'gestionar';
 type GestionarSubView = 'list' | 'form';
@@ -63,8 +56,8 @@ function GestionarBusesView() {
   const fetchVehicles = async () => {
     setLoading(true);
     try {
-      // Asumimos que esta ruta existe para obtener la lista de vehículos
-      const data = await apiGet(); // Ya no necesita la ruta
+      // Ruta para obtener la lista de vehículos (plantillas)
+      const data = await apiGet<IVehicleListItem[]>('/manage/mirabus');
       setVehicles(data);
       setError(null);
     } catch (err) {
@@ -99,8 +92,8 @@ function GestionarBusesView() {
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta plantilla? Esta acción no se puede deshacer.")) return;
 
     try {
-      // Asumimos que la ruta DELETE existe
-      await apiDelete(id); // La función mock solo necesita el ID
+      // Ruta DELETE para eliminar una plantilla de vehículo
+      await apiDelete(`/manage/mirabus/vehicle/${id}`);
       fetchVehicles(); // Refrescar la lista
     } catch (err) {
       alert("Error al eliminar la plantilla.");
