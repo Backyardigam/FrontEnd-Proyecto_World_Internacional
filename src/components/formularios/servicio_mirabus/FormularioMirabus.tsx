@@ -4,6 +4,8 @@ import Mirabus from "./Mirabus";
 import type { Bus, Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
 import { useAuth } from "../../../utils/authContext";
+import { IzipayButton } from "../IziPayButton";
+import type { CreatePaymentRequest, CreatePaymentResponse, TicketInput } from "../utils/payment.contract";
 import { apiGet, apiPost } from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
@@ -102,6 +104,7 @@ export default function FormularioMirabus() {
   // Estado para la carga de la reserva y errores
   const [reservationLoading, setReservationLoading] = useState(false);
   const [reservationError, setReservationError] = useState<string | null>(null);
+  const [formToken, setFormToken] = useState<string | null>(null);
 
   const handleTripSelection = useCallback(
     async (fecha: string, horario: string) => {
@@ -111,6 +114,7 @@ export default function FormularioMirabus() {
       setUiStatus({ status: "idle" }); // Resetear el cuadro de estado
       setSelectedBusOrden(null);
       setReservationError(null); // Limpiar cualquier error de reserva anterior
+      setFormToken(null); // Limpiar token si se cambia la selección
     },
     [disconnectFromTrip]
   );
@@ -175,6 +179,7 @@ export default function FormularioMirabus() {
 
     setReservationLoading(true);
     setReservationError(null);
+    setFormToken(null);
 
     // <-- 4. VALIDACIÓN DE SESIÓN ANTES DE RESERVAR -->
     if (!auth.isAuthenticated) {
@@ -209,65 +214,64 @@ export default function FormularioMirabus() {
       return;
     }
 
-    // Construir el payload para la reserva
-    const reservationPayload = {
-      tripDetails: tripSelection,
-      passengerDetails: passengerData,
-      // Mapeamos los asientos seleccionados para enviar solo la información relevante
-      selectedSeats: selectedSeats.map((seat) => ({
-        id: seat.id,
-        busOrden: busToDisplay?.ordenBus || "",
-      })),
-      servicio: serviceInfo?.id || "", // Usar el ID del servicio para el backend
+    // 1. Construir el payload según el contrato `CreatePaymentRequest`
+    const ticket: TicketInput = {
+      serviceId: serviceInfo?.id || "",
+      name: passengerData.nombreCompleto,
+      email: passengerData.correo,
+      phoneNumber: passengerData.celular,
+      peopleCount: selectedSeats.length,
+      date: tripSelection.fecha,
+      schedule: tripSelection.horario + ":00", // El contrato espera HH:mm:ss
+      seatID: selectedSeats.map(seat => seat.id),
+      orderBus: busToDisplay?.ordenBus || "",
     };
 
-    console.log("Enviando reserva:", reservationPayload);
+    const payload: CreatePaymentRequest = {
+      buyerInfo: {
+        email: passengerData.correo,
+        firstName: passengerData.nombreCompleto.split(' ')[0] || '',
+        lastName: passengerData.nombreCompleto.split(' ').slice(1).join(' ') || '',
+      },
+      tickets: [ticket],
+    };
+
+    console.log("Payload para /boletos/payment:", JSON.stringify(payload, null, 2));
 
     try {
-      // <-- 1. NOTIFICAMOS AL SOCKET QUE INICIAMOS EL PAGO -->
-      // Convertimos el callback del socket en una promesa para usar async/await
+      // 2. Primero, obtenemos el formToken del backend.
+      // Esto crea la orden de pago en nuestra base de datos y en Izipay.
+      const responseData = await apiPost<CreatePaymentResponse>(
+        "/boletos/payment",
+        payload
+      );
+      console.log("Respuesta del backend:", responseData);
+
+      if (!responseData.formToken) {
+        throw new Error("La respuesta del servidor no incluyó un token de pago.");
+      }
+
+      // 3. AHORA, y solo ahora, notificamos al socket que el pago ha comenzado.
+      // El backend usará esto para marcar los asientos como 'en pago' y no liberarlos
+      // si el usuario se desconecta (cierra la pestaña para ir a Izipay).
       const paymentInitiationResponse = await new Promise<{ success: boolean; error?: string }>((resolve) => {
         initiatePayment((response) => resolve(response));
       });
 
-      // Si el servidor no pudo bloquear los asientos (ej. alguien los tomó en el último segundo),
-      // detenemos el proceso aquí.
       if (!paymentInitiationResponse.success) {
+        // Esto es raro, pero podría pasar si los asientos fueron tomados en el último segundo.
         throw new Error(
-          paymentInitiationResponse.error ||
-            "No se pudieron asegurar los asientos para el pago. Por favor, inténtalo de nuevo."
+          paymentInitiationResponse.error || "No se pudieron asegurar los asientos para el pago final."
         );
       }
 
-      // Si el paso anterior fue exitoso, los asientos ya están bloqueados en el backend.
-      // Ahora procedemos a crear la reserva formal y obtener la URL de pago.
+      // 4. Si todo fue exitoso, guardamos el token para renderizar el botón de Izipay.
+      setFormToken(responseData.formToken);
 
-      // 2. Usamos apiPost. Le pasamos la URL y el objeto payload directamente.
-      // La función se encarga de stringify, headers, credentials, y parsear la respuesta.
-      // También lanzará un error si la respuesta no es 'ok'.
-      const responseData = await apiPost<{ redirectUrl?: string }>(
-        "/api/reserve-trip",
-        reservationPayload
-      );
-      console.log("Reserva exitosa:", responseData);
-
-      // Asumiendo que el backend envía una URL de redirección a Izipay
-      if (responseData.redirectUrl) {
-        window.location.href = responseData.redirectUrl; // Redirigir a la pasarela de pago
-      } else {
-        alert(
-          "Reserva completada con éxito. Redirigiendo a la pasarela de pago..."
-        );
-        // window.location.href = "https://www.izipay.pe/pago-simulado"; // Simulación
-      }
-      // NO desconectamos el socket aquí. La redirección desmontará el componente,
-      // lo que es suficiente. La lógica de mantener los asientos "reservados"
-      // durante el pago ahora es responsabilidad del backend después de esta llamada a la API.
-      // disconnectFromTrip(); 
     } catch (error: any) {
       console.error("Error en la reserva:", error);
       setReservationError(
-        error.message || "Ocurrió un error inesperado al intentar reservar."
+        error.message || "Ocurrió un error inesperado al procesar la reserva."
       );
     } finally {
       setReservationLoading(false);
@@ -280,7 +284,7 @@ export default function FormularioMirabus() {
     auth, // <-- Añadir auth a las dependencias
     serviceInfo,
     disconnectFromTrip,
-    initiatePayment, // <-- Añadir a dependencias
+    initiatePayment,
   ]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
@@ -439,19 +443,30 @@ export default function FormularioMirabus() {
                       {reservationError}
                     </div>
                   )}
-                  <button
-                    onClick={handleReservation}
-                    disabled={reservationLoading}
-                    className={`w-full p-3 bg-green-600 text-white rounded-lg text-lg font-semibold transition-colors ${
-                      reservationLoading
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-green-700"
-                    }`}
-                  >
-                    {reservationLoading
-                      ? "Procesando Reserva..."
-                      : "Confirmar y Pagar"}
-                  </button>
+                  
+                  {formToken ? (
+                    <>
+                      <IzipayButton formToken={formToken} />
+                      <p className="mt-4 text-sm text-gray-600">
+                        Tus asientos han sido guardados por 10 minutos. Completa el pago en la pasarela segura para confirmarlos definitivamente.
+                      </p>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleReservation}
+                      disabled={reservationLoading}
+                      className={`w-full p-3 bg-green-600 text-white rounded-lg text-lg font-semibold transition-colors ${
+                        reservationLoading
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-green-700"
+                      }`}
+                    >
+                      {reservationLoading
+                        ? "Procesando Reserva..."
+                        : "Confirmar y Pagar"}
+                    </button>
+                  )}
+
                 </div>
               </div>
             )}

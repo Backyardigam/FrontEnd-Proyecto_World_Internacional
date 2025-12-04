@@ -2,9 +2,15 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
+import { IzipayButton } from "../IziPayButton";
+import type { CreatePaymentRequest, TicketInput, CreatePaymentResponse } from "../utils/payment.contract";
 
 export default function CheckoutPage() {
   const cart = useStore($cart);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [formToken, setFormToken] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -20,14 +26,70 @@ export default function CheckoutPage() {
     return cart.items.every(item => item.status === 'filled');
   }, [cart.items]);
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = async () => {
+    setPaymentError(null); // Limpiar errores previos
+
     if (!allFormsFilled) {
       alert("Por favor, completa todos los datos de cada servicio antes de continuar.");
       return;
     }
-    // Aquí iría la lógica para enviar los datos al backend y redirigir a la pasarela de pago
-    console.log("Procediendo al pago con los siguientes datos:", cart.items);
-    alert("¡Todo listo! Redirigiendo a la pasarela de pago...");
+
+    setIsLoading(true);
+
+    // 1. Construir el payload según el contrato `CreatePaymentRequest`
+    const firstItemBuyerData = cart.items[0]?.buyerData; // Datos del comprador del primer item
+
+    const payload: CreatePaymentRequest = {
+      buyerInfo: {
+        // Asumimos que el comprador es la persona del primer formulario.
+        // TODO: Si el usuario está logueado, usar sus datos.
+        email: firstItemBuyerData?.correo || '',
+        firstName: firstItemBuyerData?.nombreCompleto.split(' ')[0] || '',
+        lastName: firstItemBuyerData?.nombreCompleto.split(' ').slice(1).join(' ') || ''
+        // userId se podría obtener de la sesión del usuario
+      },
+      tickets: cart.items.map((item): TicketInput => {
+        // El horario en el carrito es "HH:mm - HH:mm", el backend espera "HH:mm:ss"
+        const scheduleStartTime = (item.horario || '').split(' - ')[0] + ':00';
+
+        return {
+          serviceId: item.id,
+          name: item.buyerData?.nombreCompleto || '',
+          email: item.buyerData?.correo || '',
+          phoneNumber: item.buyerData?.celular || '',
+          peopleCount: item.quantity,
+          date: item.fecha || '',
+          schedule: scheduleStartTime,
+          // seatID y orderBus se enviarían si fuera un servicio Mirabus
+        };
+      }),
+    };
+
+    // Imprimimos en consola para revisión, como solicitaste.
+    console.log("Payload para /boletos/payment:", JSON.stringify(payload, null, 2));
+    
+    try {
+      // 2. Enviar los datos al backend
+      const response = await fetch('/boletos/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      const data: CreatePaymentResponse | { error: string } = await response.json();
+      
+      if (response.ok && 'formToken' in data) {
+        console.log('Respuesta del backend:', data);
+        setFormToken(data.formToken); // Guardamos el token para renderizar el botón de Izipay
+      } else {
+        throw new Error('error' in data ? data.error : 'Respuesta inesperada del servidor.');
+      }
+    } catch (error: any) {
+      console.error('Error al crear el pago:', error);
+      setPaymentError(error.message || 'Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Durante el renderizado del servidor y el primer renderizado del cliente,
@@ -75,18 +137,34 @@ export default function CheckoutPage() {
                 <span>S/ {(subtotal * 1.18).toFixed(2)}</span>
               </div>
             </div>
-            <button
-              onClick={handleProceedToPayment}
-              disabled={!allFormsFilled}
-              className={`w-full mt-6 text-white font-bold py-3 rounded-lg transition-colors ${
-                allFormsFilled
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Proceder al Pago
-            </button>
-            {!allFormsFilled && <p className="text-xs text-center text-gray-500 mt-2">Completa todos los campos para continuar.</p>}
+            
+            <div className="mt-6">
+              {formToken ? (
+                // Si ya tenemos el token, mostramos el botón de Izipay
+                <IzipayButton formToken={formToken} />
+              ) : (
+                // Si no, mostramos nuestro botón para confirmar la reserva
+                <>
+                  <button
+                    onClick={handleProceedToPayment}
+                    disabled={!allFormsFilled || isLoading}
+                    className={`w-full text-white font-bold py-3 rounded-lg transition-colors ${
+                      allFormsFilled && !isLoading
+                        ? 'bg-green-600 hover:bg-green-700'
+                        : 'bg-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isLoading ? 'Procesando...' : 'Confirmar Reserva'}
+                  </button>
+                  {!allFormsFilled && <p className="text-xs text-center text-gray-500 mt-2">Completa todos los campos para continuar.</p>}
+                </>
+              )}
+              {paymentError && (
+                <p className="text-sm text-center text-red-600 mt-2">
+                  <strong>Error:</strong> {paymentError}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

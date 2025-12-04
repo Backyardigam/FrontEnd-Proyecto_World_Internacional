@@ -11,6 +11,10 @@
 // 6. FRONTEND (Página de Confirmación): Realiza polling al backend para verificar el estado del pago usando `PaymentStatusResponse`.
 // ==========================================================================================
 
+// Tipos comunes para mejorar la consistencia y seguridad
+export type Currency = "PEN" | "USD";
+export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+
 // Datos requeridos para crear UN ticket individual
 export interface TicketInput {
   serviceId: string;       // ID del servicio turístico
@@ -19,7 +23,7 @@ export interface TicketInput {
   phoneNumber: string;     // Numero
   peopleCount: number;     // Cantidad de personas en este ticket
   date: string;            // ISO String (YYYY-MM-DD)
-  schedule: string;        // Hora (HH:mm:ss) o string representativo
+  schedule: string;        // Hora en formato "HH:mm:ss"
   seatID?:string[];        // Si es un servicio Mirabus, se manda tambien la relacion de asientos que selecciono
   orderBus?:string;        // El bus que le corresponde
 }
@@ -34,7 +38,6 @@ export interface TicketInput {
 export interface CreatePaymentRequest {
   // Información del Comprador (quien paga)
   buyerInfo: {
-    userId: string;       // Opcional: Si está logueado
     email: string;         // Obligatorio: Para enviar el recibo y para Izipay
     firstName?: string;    // Útil para pre-llenar datos en Izipay
     lastName?: string;     // Útil para pre-llenar datos en Izipay
@@ -57,7 +60,7 @@ export interface CreatePaymentResponse {
   
   // Datos de contexto (opcional, por si quieres mostrar resumen antes de redirigir)
   totalAmount: number;     // El monto total calculado por el backend
-  currency: string;        // "PEN"
+  currency: Currency;      // "PEN"
 }
 
 // ==========================================================================================
@@ -67,7 +70,7 @@ export interface CreatePaymentResponse {
 // Estructura oficial del Body para POST /Charge/CreatePayment
 export interface IzipayCreatePaymentPayload {
   amount: number;         // Obligatorio: Monto en CÉNTIMOS (Entero)
-  currency: string;       // "PEN" o "USD"
+  currency: Currency;     // "PEN" o "USD"
   orderId: string;        // Tu UUID generado
   
   // Datos del Cliente (Ayuda a Izipay a detectar fraudes y pre-llenar campos)
@@ -111,7 +114,7 @@ export interface PaidPaymentResponse {
 // 3. Respuesta cuando el pago FALLÓ o fue CANCELADO
 export interface FailedPaymentResponse {
   orderId: string;
-  status: 'FAILED' | 'CANCELLED' | 'EXPIRED';
+  status: Extract<PaymentStatus, 'FAILED' | 'CANCELLED' | 'EXPIRED'>;
 }
 
 // El tipo de unión que el frontend recibirá. TypeScript sabrá qué campos esperar según el `status`.

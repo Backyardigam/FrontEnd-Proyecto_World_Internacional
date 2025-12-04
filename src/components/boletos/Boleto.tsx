@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 import { apiGet, ApiError } from "../../utils/apiClient";
+import type { PaymentStatus, PaymentStatusResponse } from "../formularios/utils/payment.contract";
 export interface TicketData {
   ticketCode: string;
   peopleCount: number;
@@ -43,9 +44,7 @@ export default function Boleto({}: BoletoProps) {
   const [ticketsData, setTicketsData] = useState<TicketData[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<
-    "pending" | "paid" | "failed" | "expired" | null
-  >(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const pollingAttemptsRef = useRef<number>(0); // Usamos useRef para el contador de intentos
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export default function Boleto({}: BoletoProps) {
         // --- LLAMADA A LA API #2: OBTENER DATOS DEL BOLETO ---
         // Aquí se hace la llamada para obtener los detalles del boleto una vez que el pago está confirmado.
         // DEBES REEMPLAZAR ESTA RUTA CON TU ENDPOINT REAL.
-        const data = await apiGet<TicketData | TicketData[]>(`/api/tickets/by-payment/${id}`);
+        const data = await apiGet<TicketData | TicketData[]>(`/boletos/payment/${id}`);
         // ----------------------------------------------------
 
         // Normalizamos la respuesta para que siempre sea un array.
@@ -100,27 +99,24 @@ export default function Boleto({}: BoletoProps) {
         setError(
           "El pago tardó demasiado en procesarse. Por favor, contacta a soporte si el problema persiste."
         );
-        setPaymentStatus("failed");
+        setPaymentStatus("FAILED");
         setLoading(false);
         return;
       }
 
       try {
-        // --- LLAMADA A LA API #1: VERIFICAR ESTADO DEL PAGO (POLLING) ---
+        // --- LLAMADA A LA API #1: VERIFICAR ESTADO DEL PAGO (POLLING) --- 
         // Aquí se consulta repetidamente el estado del pago.
         // DEBES REEMPLAZAR ESTA RUTA CON TU ENDPOINT REAL.
-        const statusResponse = await apiGet<{
-          status: "pending" | "paid" | "failed" | "expired";
-          message?: string;
-        }>(`/api/payments/${id}/status`);
+        const statusResponse = await apiGet<PaymentStatusResponse>(`/boletos/payment/status/${id}`);
         // ----------------------------------------------------------------
 
         setPaymentStatus(statusResponse.status);
 
-        if (statusResponse.status === "paid") {
+        if (statusResponse.status === "PAID") {
           clearTimeout(pollingTimer); // Detener el polling
           await fetchTicketData(id);
-        } else if (statusResponse.status === "pending") {
+        } else if (statusResponse.status === "PENDING") {
           pollingAttemptsRef.current += 1; // Incrementar el contador de intentos
           pollingTimer = setTimeout(
             () => pollPaymentStatus(id),
@@ -128,9 +124,9 @@ export default function Boleto({}: BoletoProps) {
           );
         } else {
           // 'failed' o 'expired'
+          // El contrato no especifica un `message`, así que usamos un mensaje genérico.
           setError(
-            statusResponse.message ||
-              "El pago no se procesó correctamente. Por favor, verifica tu información o intenta de nuevo."
+            "El pago no se procesó correctamente. Por favor, verifica tu información o intenta de nuevo."
           );
           setLoading(false);
         }
@@ -164,7 +160,7 @@ export default function Boleto({}: BoletoProps) {
       <div className="text-center p-8">
         <p className="text-xl text-gray-700">Cargando tu boleto...</p>
         <div className="mt-4 animate-spin rounded-full h-12 w-12 border-b-2 border-naranja-f mx-auto"></div>
-        {paymentStatus === "pending" && (
+        {paymentStatus === "PENDING" && (
           <p className="mt-2 text-gray-600">
             Verificando estado del pago (intento {pollingAttemptsRef.current}/
             {MAX_POLLING_ATTEMPTS})...
@@ -187,7 +183,7 @@ export default function Boleto({}: BoletoProps) {
     );
   }
 
-  if (paymentStatus === "failed" || paymentStatus === "expired") {
+  if (paymentStatus === "FAILED" || paymentStatus === "EXPIRED" || paymentStatus === "CANCELLED") {
     return (
       <div className="text-center p-8 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
         <p className="text-xl font-bold">Pago no procesado</p>

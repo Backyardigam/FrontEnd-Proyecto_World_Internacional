@@ -3,7 +3,7 @@ import { apiGet, ApiError } from "../../../utils/apiClient";
 import BoletoDetalleView from "./BoletoDetalleView";
 
 // Interfaz para los datos del boleto que esperamos de la API
-interface TicketData {
+interface TicketSummary {
   id: string;
   ticketCode: string;
   name: string;
@@ -22,7 +22,7 @@ interface ServiceInfo {
 }
 
 export default function VistaBoletos() {
-  const [tickets, setTickets] = useState<TicketData[]>([]);
+  const [tickets, setTickets] = useState<TicketSummary[]>([]);
   const [services, setServices] = useState<ServiceInfo[]>([]);
 
   // Estados para los filtros
@@ -46,7 +46,7 @@ export default function VistaBoletos() {
         // Simula una espera de red
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const mockTickets: TicketData[] = [
+        const mockTickets: TicketSummary[] = [
           { id: 'tkt001', ticketCode: 'WRLD-T7K9Z1', name: 'Ana García Pérez', email: 'ana.garcia@example.com', service: 'Mirabus City Tour', date: '2024-08-15', schedule: '10:00 AM', peopleCount: 2},
           { id: 'tkt002', ticketCode: 'WRLD-L5P2X8', name: 'Carlos Mendoza', email: 'carlos.mendoza@example.com', service: 'Tour Ica-Paracas', date: '2024-08-16', schedule: '09:00 AM', peopleCount: 1 },
           { id: 'tkt003', ticketCode: 'WRLD-QW8RTY', name: 'Lucía Fernández', email: 'lucia.f@example.com', service: 'Mirabus City Tour', date: '2024-08-15', schedule: '02:00 PM', peopleCount: 4 },
@@ -77,7 +77,7 @@ export default function VistaBoletos() {
 
         // // Hacemos ambas llamadas en paralelo para más eficiencia
         // const [ticketsData, servicesData] = await Promise.all([
-        //   apiGet<TicketData[]>('/boletos/admin/'),
+        //   apiGet<TicketSummary[]>('/boletos/admin'),
         //   apiGet<ServiceInfo[]>('/api/services-with-schedules') // Endpoint hipotético
         // ]);
         setTickets(ticketsData);
@@ -116,7 +116,7 @@ export default function VistaBoletos() {
     const url = `/boletos/admin/?${queryString}`;
 
     try {
-      const filteredTickets = await apiGet<TicketData[]>(url);
+      const filteredTickets = await apiGet<TicketSummary[]>(url);
       setTickets(filteredTickets);
     } catch (err) {
       if (err instanceof ApiError) {
