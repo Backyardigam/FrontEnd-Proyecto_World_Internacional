@@ -1,4 +1,5 @@
 ---
+import Image from "astro/components/Image.astro";
 import TagMirabus from "../TagMirabus.astro";
 import ServicePrice from "./ServicePrice.tsx";
 
@@ -28,7 +29,14 @@ const { servicio, style } = Astro.props;
 >
   {servicio.type === 'mirabus' && <TagMirabus />}
   <div class="overflow-hidden">
-    <img src={servicio.mediaFiles[0]} alt={`Imagen del tour ${servicio.name}`} class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
+    <Image
+      src={servicio.mediaFiles[0]}
+      alt={`Imagen del tour ${servicio.name}`}
+      class="aspect-video w-full object-cover"
+      width={320}
+      height={180}
+      format="webp"
+    />
   </div>
   <div class="p-5 gap-4 flex flex-col flex-grow">
     <div class="">
