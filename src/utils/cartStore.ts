@@ -14,7 +14,6 @@ export interface Service{
 export interface PassengerFormData {
   nombreCompleto: string;
   celular: string;
-  dni: string;
   correo: string;
 }
 

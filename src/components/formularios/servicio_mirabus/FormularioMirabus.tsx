@@ -200,7 +200,6 @@ export default function FormularioMirabus() {
     if (
       !passengerData ||
       !passengerData.nombreCompleto ||
-      !passengerData.dni ||
       !passengerData.celular ||
       !passengerData.correo
     ) {
