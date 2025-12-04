@@ -71,19 +71,17 @@ export default function CheckoutPage() {
       }
 
       // Crear nueva fecha en UTC manteniendo la fecha base
-      const dateUTC = new Date(
-        Date.UTC(
-          baseDate.getUTCFullYear(),
-          baseDate.getUTCMonth(),
-          baseDate.getUTCDate(),
+      const dateUTC = new Date(   
+          baseDate.getFullYear(),
+          baseDate.getMonth(),
+          baseDate.getDate(),
           hours,
           minutes,
           0,
           0
-        )
       );
 
-      return dateUTC.toString();
+      return dateUTC.toISOString();
     }
 
     // 1. Construir el payload según el contrato `CreatePaymentRequest`

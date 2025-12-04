@@ -269,7 +269,7 @@ export default function FormularioMirabus() {
         )
       );
 
-      return dateUTC.toString();
+      return dateUTC.toISOString();
     }
 
     // 1. Construir el payload según el contrato `CreatePaymentRequest`
