@@ -13,7 +13,7 @@ import { useSocketTrip } from "../../../hooks/useSocketTrip";
 interface APIScheduleResponse{
   id:string,
   name:string,
-  precio:number, // El backend devuelve 'precio'
+  precio:string, // El backend devuelve 'precio' como string
   schedules:string[]
 }
 
@@ -57,7 +57,7 @@ export default function FormularioMirabus() {
           .join(" ");
       };
       // Mapeamos la respuesta de la API a nuestro estado interno
-      setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: data.precio, schedules: data.schedules });
+      setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: parseFloat(data.precio), schedules: data.schedules });
     } catch (error: any) {
       setServiceError(
         error.message || "No se pudo cargar la información del servicio."
