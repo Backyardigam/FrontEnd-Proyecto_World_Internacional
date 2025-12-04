@@ -3,7 +3,11 @@ import { useStore } from "@nanostores/react";
 import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
 import { IzipayButton } from "../IziPayButton";
-import type { CreatePaymentRequest, TicketInput, CreatePaymentResponse } from "../utils/payment.contract";
+import type {
+  CreatePaymentRequest,
+  TicketInput,
+  CreatePaymentResponse,
+} from "../utils/payment.contract";
 import { apiPost, ApiError } from "../../../utils/apiClient";
 
 export default function CheckoutPage() {
@@ -20,22 +24,67 @@ export default function CheckoutPage() {
   }, []);
 
   const subtotal = useMemo(() => {
-    return cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    return cart.items.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
   }, [cart.items]);
 
   const allFormsFilled = useMemo(() => {
-    return cart.items.every(item => item.status === 'filled');
+    return cart.items.every((item) => item.status === "filled");
   }, [cart.items]);
 
   const handleProceedToPayment = async () => {
     setPaymentError(null); // Limpiar errores previos
 
     if (!allFormsFilled) {
-      alert("Por favor, completa todos los datos de cada servicio antes de continuar.");
+      alert(
+        "Por favor, completa todos los datos de cada servicio antes de continuar."
+      );
       return;
     }
 
     setIsLoading(true);
+
+    function fromTimeString(
+      timeString: string,
+      baseDate: Date = new Date()
+    ): string {
+      // timeStr viene en formato "h:mm am" o "h:mm pm"
+      const [timePart, ampm] = timeString.toLowerCase().split(" ");
+      if (!timePart || !ampm)
+        return("Invalid time or ampm string");
+
+      const [hStr, mStr] = timePart.split(":");
+      if (!hStr || !mStr)
+        return("Invalid hour or minute string");
+
+      let hours = parseInt(hStr, 10);
+      const minutes = parseInt(mStr, 10);
+
+      // Convertir a formato 24h (UTC)
+      if (ampm === "pm" && hours !== 12) {
+        hours += 12;
+      }
+      if (ampm === "am" && hours === 12) {
+        hours = 0;
+      }
+
+      // Crear nueva fecha en UTC manteniendo la fecha base
+      const dateUTC = new Date(
+        Date.UTC(
+          baseDate.getUTCFullYear(),
+          baseDate.getUTCMonth(),
+          baseDate.getUTCDate(),
+          hours,
+          minutes,
+          0,
+          0
+        )
+      );
+
+      return dateUTC.toString();
+    }
 
     // 1. Construir el payload según el contrato `CreatePaymentRequest`
     const firstItemBuyerData = cart.items[0]?.buyerData; // Datos del comprador del primer item
@@ -44,22 +93,27 @@ export default function CheckoutPage() {
       buyerInfo: {
         // Asumimos que el comprador es la persona del primer formulario.
         // TODO: Si el usuario está logueado, usar sus datos.
-        email: firstItemBuyerData?.correo || '',
-        firstName: firstItemBuyerData?.nombreCompleto.split(' ')[0] || '',
-        lastName: firstItemBuyerData?.nombreCompleto.split(' ').slice(1).join(' ') || ''
+        email: firstItemBuyerData?.correo || "",
+        firstName: firstItemBuyerData?.nombreCompleto.split(" ")[0] || "",
+        lastName:
+          firstItemBuyerData?.nombreCompleto.split(" ").slice(1).join(" ") ||
+          "",
         // userId se podría obtener de la sesión del usuario
       },
       tickets: cart.items.map((item): TicketInput => {
-        // El horario en el carrito es "HH:mm - HH:mm", el backend espera "HH:mm:ss"
-        const scheduleStartTime = (item.horario || '').split(' - ')[0] + ':00';
+        // --- ¡CAMBIO CLAVE! ---
+        // El horario en el carrito es "HH:mm AM/PM - HH:mm AM/PM". Extraemos solo la parte inicial.
+        // Añadimos un blindaje para evitar errores si item.horario es nulo o vacío.
+        const startTimeString = item.horario ? item.horario.split(' - ')[0] : '';
+        const scheduleStartTime = fromTimeString(startTimeString || '00:00 am'); // Usamos un valor por defecto si está vacío
 
         return {
           serviceId: item.uuid,
-          name: item.buyerData?.nombreCompleto || '',
-          email: item.buyerData?.correo || '',
-          phoneNumber: item.buyerData?.celular || '',
+          name: item.buyerData?.nombreCompleto || "",
+          email: item.buyerData?.correo || "",
+          phoneNumber: item.buyerData?.celular || "",
           peopleCount: item.quantity,
-          date: item.fecha || '',
+          date: item.fecha || "",
           schedule: scheduleStartTime,
           // seatID y orderBus se enviarían si fuera un servicio Mirabus
         };
@@ -67,20 +121,28 @@ export default function CheckoutPage() {
     };
 
     // Imprimimos en consola para revisión, como solicitaste.
-    console.log("Payload para /boletos/payment:", JSON.stringify(payload, null, 2));
-    
+    console.log(
+      "Payload para /boletos/payment:",
+      JSON.stringify(payload, null, 2)
+    );
+
     try {
       // 2. Enviar los datos al backend usando el apiClient
-      const data = await apiPost<CreatePaymentResponse>('/boletos/payment', payload);
+      const data = await apiPost<CreatePaymentResponse>(
+        "/boletos/payment",
+        payload
+      );
 
       if (data.formToken) {
-        console.log('Respuesta del backend:', data);
+        console.log("Respuesta del backend:", data);
         setFormToken(data.formToken);
       }
     } catch (error: any) {
-      console.error('Error al crear el pago:', error);
+      console.error("Error al crear el pago:", error);
       // El ApiError ya tiene un mensaje claro del backend
-      setPaymentError(error.message || 'Hubo un error al procesar tu solicitud.');
+      setPaymentError(
+        error.message || "Hubo un error al procesar tu solicitud."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -92,9 +154,16 @@ export default function CheckoutPage() {
   if (!hasMounted || cart.items.length === 0) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-bold text-gray-700">Tu carrito está vacío</h2>
-        <p className="text-gray-500 mt-2">Parece que aún no has añadido ningún servicio.</p>
-        <a href="/servicios" className="mt-6 inline-block bg-naranja-c text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-naranja-f">
+        <h2 className="text-2xl font-bold text-gray-700">
+          Tu carrito está vacío
+        </h2>
+        <p className="text-gray-500 mt-2">
+          Parece que aún no has añadido ningún servicio.
+        </p>
+        <a
+          href="/servicios"
+          className="mt-6 inline-block bg-naranja-c text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-naranja-f"
+        >
           Ver Servicios
         </a>
       </div>
@@ -103,9 +172,10 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto p-4 pt-24 md:p-10 md:pt-25 font-redhat">
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">Mi Carrito de Compras</h1>
+      <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
+        Mi Carrito de Compras
+      </h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Columna de Items */}
         <div className="lg:col-span-2 space-y-6 ">
           {cart.items.map((item) => (
@@ -116,7 +186,9 @@ export default function CheckoutPage() {
         {/* Columna de Resumen */}
         <div className="lg:col-span-1 lg:pt-12">
           <div className="bg-white p-6 rounded-lg shadow-md sticky top-20">
-            <h2 className="text-2xl font-bold border-b pb-4 mb-4">Resumen del Pedido</h2>
+            <h2 className="text-2xl font-bold border-b pb-4 mb-4">
+              Resumen del Pedido
+            </h2>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -131,7 +203,7 @@ export default function CheckoutPage() {
                 <span>S/ {(subtotal * 1.18).toFixed(2)}</span>
               </div>
             </div>
-            
+
             <div className="mt-6">
               {formToken ? (
                 // Si ya tenemos el token, mostramos el botón de Izipay
@@ -144,13 +216,17 @@ export default function CheckoutPage() {
                     disabled={!allFormsFilled || isLoading}
                     className={`w-full text-white font-bold py-3 rounded-lg transition-colors ${
                       allFormsFilled && !isLoading
-                        ? 'bg-green-600 hover:bg-green-700'
-                        : 'bg-gray-400 cursor-not-allowed'
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    {isLoading ? 'Procesando...' : 'Confirmar Reserva'}
+                    {isLoading ? "Procesando..." : "Confirmar Reserva"}
                   </button>
-                  {!allFormsFilled && <p className="text-xs text-center text-gray-500 mt-2">Completa todos los campos para continuar.</p>}
+                  {!allFormsFilled && (
+                    <p className="text-xs text-center text-gray-500 mt-2">
+                      Completa todos los campos para continuar.
+                    </p>
+                  )}
                 </>
               )}
               {paymentError && (

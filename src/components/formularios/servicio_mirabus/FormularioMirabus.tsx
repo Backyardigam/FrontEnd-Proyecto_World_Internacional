@@ -232,20 +232,45 @@ export default function FormularioMirabus() {
       return;
     }
     // Funcion para convertir el formato de hora de 12h (ej: "8:00 AM") a 24h (ej: "08:00:00")
-    const convertTo24HourFormat = (time12h: string): string => {
-      const [time, modifier] = time12h.split(' ');
-      let [hours, minutes] = time.split(':');
+    function fromTimeString(
+      timeString: string,
+      baseDate: Date = new Date()
+    ): string {
+      // timeStr viene en formato "h:mm am" o "h:mm pm"
+      const [timePart, ampm] = timeString.toLowerCase().split(" ");
+      if (!timePart || !ampm)
+        return("Invalid time or ampm string");
 
-      if (hours === '12') {
-        hours = '00';
+      const [hStr, mStr] = timePart.split(":");
+      if (!hStr || !mStr)
+        return("Invalid hour or minute string");
+
+      let hours = parseInt(hStr, 10);
+      const minutes = parseInt(mStr, 10);
+
+      // Convertir a formato 24h (UTC)
+      if (ampm === "pm" && hours !== 12) {
+        hours += 12;
+      }
+      if (ampm === "am" && hours === 12) {
+        hours = 0;
       }
 
-      if (modifier.toLowerCase() === 'pm') {
-        hours = String(parseInt(hours, 10) + 12);
-      }
+      // Crear nueva fecha en UTC manteniendo la fecha base
+      const dateUTC = new Date(
+        Date.UTC(
+          baseDate.getUTCFullYear(),
+          baseDate.getUTCMonth(),
+          baseDate.getUTCDate(),
+          hours,
+          minutes,
+          0,
+          0
+        )
+      );
 
-      return `${hours.padStart(2, '0')}:${minutes}:00`;
-    };
+      return dateUTC.toString();
+    }
 
     // 1. Construir el payload según el contrato `CreatePaymentRequest`
     const ticket: TicketInput = {
@@ -255,7 +280,7 @@ export default function FormularioMirabus() {
       phoneNumber: passengerData.celular,
       peopleCount: selectedSeats.length,
       date: tripSelection.fecha,
-      schedule: convertTo24HourFormat(tripSelection.horario), // Convertimos al formato HH:mm:ss
+      schedule: fromTimeString(tripSelection.horario), // Convertimos al formato HH:mm:ss
       seatID: selectedSeats.map(seat => seat.id),
       orderBus: busToDisplay?.ordenBus || "",
     };
