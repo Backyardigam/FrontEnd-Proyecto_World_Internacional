@@ -15,19 +15,21 @@ export const IzipayButton = ({ formToken }: PaymentButtonProps) => {
       // 1. Configuramos el Token
       // @ts-ignore
       window.KR.setFormToken(formToken)
-        .then(({ KR }: { KR: any }) => {
-          // 2. Opcional: Agregar Listeners para saber qué pasa
-          return KR.onSubmit((event: any) => {
-             // El usuario hizo click en pagar.
-             // Si el formulario es válido, Izipay redirigirá automáticamente.
-             return true; 
+        // --- ¡CAMBIO CLAVE! ---
+        // Reestructuramos la cadena de promesas para que cada paso devuelva el objeto KR.
+        .then(({ KR: krInstance }: { KR: any }) => {
+          // 2. Agregamos el listener y devolvemos la instancia para el siguiente .then()
+          krInstance.onSubmit((event: any) => {
+            // El usuario hizo click en pagar.
+            // Si el formulario es válido, Izipay redirigirá automáticamente.
+            return true;
           });
+          return krInstance; // <-- Devolvemos la instancia
         })
-        .then(({ KR }: { KR: any }) => {
-          // 3. Renderizamos el botón (o preparamos la redirección)
-          // Esto busca el div con clase 'kr-embedded' y pone el botón ahí.
-          return KR.render(); 
-        })
+        .then((krInstance: any) => {
+          // 3. Ahora sí, llamamos a .render() sobre la instancia recibida.
+          return krInstance.render();
+        }) 
         .then(() => {
            setIsReady(true);
            console.log("Formulario Izipay listo");
@@ -44,7 +46,7 @@ export const IzipayButton = ({ formToken }: PaymentButtonProps) => {
         Izipay buscará esta clase exacta y dibujará aquí el botón de "Pagar".
         Al hacer clic, redirigirá al usuario a secure.micuentaweb.pe 
       */}
-      <div className="kr-embedded" kr-form-token={formToken}>
+      <div className="kr-smart-form" kr-form-token={formToken}>
         
         {/* Puedes personalizar lo que se ve mientras carga */}
         {!isReady && <p>Cargando pasarela segura...</p>}
