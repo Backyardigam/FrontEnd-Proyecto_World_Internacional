@@ -231,6 +231,21 @@ export default function FormularioMirabus() {
       setReservationLoading(false);
       return;
     }
+    // Funcion para convertir el formato de hora de 12h (ej: "8:00 AM") a 24h (ej: "08:00:00")
+    const convertTo24HourFormat = (time12h: string): string => {
+      const [time, modifier] = time12h.split(' ');
+      let [hours, minutes] = time.split(':');
+
+      if (hours === '12') {
+        hours = '00';
+      }
+
+      if (modifier.toLowerCase() === 'pm') {
+        hours = String(parseInt(hours, 10) + 12);
+      }
+
+      return `${hours.padStart(2, '0')}:${minutes}:00`;
+    };
 
     // 1. Construir el payload según el contrato `CreatePaymentRequest`
     const ticket: TicketInput = {
@@ -240,7 +255,7 @@ export default function FormularioMirabus() {
       phoneNumber: passengerData.celular,
       peopleCount: selectedSeats.length,
       date: tripSelection.fecha,
-      schedule: tripSelection.horario + ":00", // El contrato espera HH:mm:ss
+      schedule: convertTo24HourFormat(tripSelection.horario), // Convertimos al formato HH:mm:ss
       seatID: selectedSeats.map(seat => seat.id),
       orderBus: busToDisplay?.ordenBus || "",
     };
