@@ -48,8 +48,16 @@ export default function FormularioMirabus() {
 
     try {
       const data = await apiGet<APIScheduleResponse>(`/services/schedule/${serviceIdName}`);
+      // --- ¡CAMBIO CLAVE! ---
+      // Creamos una función para transformar el nombre del servicio.
+      const formatServiceName = (name: string) => {
+        return name
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+      };
       // Mapeamos la respuesta de la API a nuestro estado interno
-      setServiceInfo({ id: data.id, name: data.name, price: data.precio, schedules: data.schedules });
+      setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: data.precio, schedules: data.schedules });
     } catch (error: any) {
       setServiceError(
         error.message || "No se pudo cargar la información del servicio."
@@ -139,6 +147,8 @@ export default function FormularioMirabus() {
       connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => { // El callback ahora solo maneja el error
         if (!result.success) {
           setUiStatus({ status: "error", message: result.error });
+        } else {
+          setIsSelecting(true);
         }
       });
     }
@@ -154,14 +164,18 @@ export default function FormularioMirabus() {
     }
   }, [buses, selectedBusOrden]);
 
-  // Efecto para reaccionar al estado de la conexión del hook
+  // --- ¡CAMBIO CLAVE! ---
+  // Efecto para reaccionar a la expiración de la sesión del socket.
   useEffect(() => {
-    if (isConnected) {
-      // Si el hook nos dice que estamos conectados, actualizamos la UI.
-      setIsSelecting(true);
-      setUiStatus({ status: "idle" }); // Ocultamos el cuadro de "Conectando..."
+    if (sessionExpired) {
+      // 1. Reseteamos la UI para que el botón "Seleccionar Asientos" vuelva a aparecer.
+      setIsSelecting(false);
+      setUiStatus({ status: "idle" });
+
+      // 2. Mostramos un mensaje de error específico sobre la expiración.
+      setReservationError("Tu sesión ha expirado. Por favor, selecciona los asientos de nuevo.");
     }
-  }, [isConnected]);
+  }, [sessionExpired]);
 
   // Formatear el tiempo restante para mostrarlo como MM:SS
   const formatTime = (seconds: number) => {
@@ -365,12 +379,6 @@ export default function FormularioMirabus() {
                 </div>
               )}
               {/* --- FIN: Nuevo Cuadro de Estado Dinámico --- */}
-              {sessionExpired && (
-                <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
-                  Tu sesión ha expirado. Por favor, selecciona los asientos de
-                  nuevo.
-                </div>
-              )}
 
               {isConnected && (
                 <div >

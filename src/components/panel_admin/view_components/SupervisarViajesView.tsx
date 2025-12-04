@@ -25,13 +25,6 @@ export default function SupervisarViajesView() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSchedule, setSelectedSchedule] = useState<string>("");
 
-  // Este estado combinado representa el viaje completo que se intentará conectar
-  const [tripSelection, setTripSelection] = useState<{
-    servicio: string;
-    fecha: string;
-    horario: string;
-  } | null>(null);
-
   const [selectedBusOrden, setSelectedBusOrden] = useState<string | null>(null);
 
   // --- HOOK DE SOCKET ---
@@ -74,22 +67,23 @@ export default function SupervisarViajesView() {
     if (isConnected) {
       disconnectFromTrip();
     }
+    // --- ¡CAMBIO CLAVE! ---
+    // Reseteamos el estado de la UI y la selección del viaje al cambiar cualquier filtro.
+    // Esto asegura que el botón "Conectar" siempre esté en un estado limpio.
+    setUiStatus({ status: "idle" });
     setSelectedBusOrden(null); // Reseteamos la selección del bus
   };
 
   // Se ejecuta cuando el admin presiona el botón para conectarse
   const handleConnect = () => {
-    const selectedService = services.find(s => s.id === selectedServiceId);
-    if (selectedService && selectedDate && selectedSchedule) {
-      const newTripSelection = {
-        servicio: selectedService.name,
+    if (selectedServiceId && selectedDate && selectedSchedule) {
+      const tripToConnect = {
+        servicio: selectedServiceId,
         fecha: selectedDate,
         horario: selectedSchedule,
       };
-      setTripSelection(newTripSelection);
-
       setUiStatus({ status: "connecting", message: "Conectando al viaje..." });
-      connectToTrip(newTripSelection, (result) => {
+      connectToTrip(tripToConnect, (result) => {
         if (!result.success) {
           setUiStatus({ status: "error", message: result.error });
         } else {

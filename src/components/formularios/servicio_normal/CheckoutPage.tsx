@@ -4,6 +4,7 @@ import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
 import { IzipayButton } from "../IziPayButton";
 import type { CreatePaymentRequest, TicketInput, CreatePaymentResponse } from "../utils/payment.contract";
+import { apiPost, ApiError } from "../../../utils/apiClient";
 
 export default function CheckoutPage() {
   const cart = useStore($cart);
@@ -69,24 +70,17 @@ export default function CheckoutPage() {
     console.log("Payload para /boletos/payment:", JSON.stringify(payload, null, 2));
     
     try {
-      // 2. Enviar los datos al backend
-      const response = await fetch('/boletos/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      const data: CreatePaymentResponse | { error: string } = await response.json();
-      
-      if (response.ok && 'formToken' in data) {
+      // 2. Enviar los datos al backend usando el apiClient
+      const data = await apiPost<CreatePaymentResponse>('/boletos/payment', payload);
+
+      if (data.formToken) {
         console.log('Respuesta del backend:', data);
-        setFormToken(data.formToken); // Guardamos el token para renderizar el botón de Izipay
-      } else {
-        throw new Error('error' in data ? data.error : 'Respuesta inesperada del servidor.');
+        setFormToken(data.formToken);
       }
     } catch (error: any) {
       console.error('Error al crear el pago:', error);
-      setPaymentError(error.message || 'Hubo un error al procesar tu solicitud. Por favor, inténtalo de nuevo.');
+      // El ApiError ya tiene un mensaje claro del backend
+      setPaymentError(error.message || 'Hubo un error al procesar tu solicitud.');
     } finally {
       setIsLoading(false);
     }
