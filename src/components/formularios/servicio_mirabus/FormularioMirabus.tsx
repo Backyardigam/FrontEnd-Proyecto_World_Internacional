@@ -146,9 +146,9 @@ export default function FormularioMirabus() {
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
       connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => { // El callback ahora solo maneja el error
         if (!result.success) {
+          // Si la conexión falla, el hook se limpiará y `isConnected` será false.
+          // El useEffect se encargará de actualizar la UI a 'error'.
           setUiStatus({ status: "error", message: result.error });
-        } else {
-          setIsSelecting(true);
         }
       });
     }
@@ -164,18 +164,23 @@ export default function FormularioMirabus() {
     }
   }, [buses, selectedBusOrden]);
 
-  // --- ¡CAMBIO CLAVE! ---
-  // Efecto para reaccionar a la expiración de la sesión del socket.
+  // --- ¡CAMBIO CLAVE! --- 
+  // Efecto centralizado para reaccionar a los cambios de estado del socket.
   useEffect(() => {
-    if (sessionExpired) {
-      // 1. Reseteamos la UI para que el botón "Seleccionar Asientos" vuelva a aparecer.
+    if (isConnected) {
+      // Si estamos conectados, entramos en modo selección y limpiamos el estado de la UI.
+      setIsSelecting(true);
+      setUiStatus({ status: "idle" });
+    } else if (sessionExpired) {
+      // Si la sesión expiró, reseteamos la UI y mostramos un mensaje.
       setIsSelecting(false);
       setUiStatus({ status: "idle" });
-
-      // 2. Mostramos un mensaje de error específico sobre la expiración.
       setReservationError("Tu sesión ha expirado. Por favor, selecciona los asientos de nuevo.");
+    } else {
+      // Cualquier otro caso de desconexión (manual, error, etc.) resetea el modo selección.
+      setIsSelecting(false);
     }
-  }, [sessionExpired]);
+  }, [isConnected, sessionExpired]);
 
   // Formatear el tiempo restante para mostrarlo como MM:SS
   const formatTime = (seconds: number) => {

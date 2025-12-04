@@ -54,7 +54,7 @@ export default function CheckoutPage() {
         const scheduleStartTime = (item.horario || '').split(' - ')[0] + ':00';
 
         return {
-          serviceId: item.id,
+          serviceId: item.uuid,
           name: item.buyerData?.nombreCompleto || '',
           email: item.buyerData?.correo || '',
           phoneNumber: item.buyerData?.celular || '',
