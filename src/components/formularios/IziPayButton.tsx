@@ -49,9 +49,9 @@ export const IzipayButton = ({ formToken }: PaymentButtonProps) => {
       <div className="kr-smart-form" kr-form-token={formToken}>
         
         {/* Puedes personalizar lo que se ve mientras carga */}
-        {!isReady && <p>Cargando pasarela segura...</p>}
 
       </div>
+        {!isReady && <p>Cargando pasarela segura...</p>}
     </div>
   );
 };
