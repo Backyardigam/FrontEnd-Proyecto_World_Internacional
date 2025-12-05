@@ -7,7 +7,7 @@ interface AsientoProps {
 
 const Asiento = React.memo(({ className, num_asiento }: AsientoProps) => {
   return (
-    <div>
+    <div className="relative">
       <svg
         width="36"
         height="33"
