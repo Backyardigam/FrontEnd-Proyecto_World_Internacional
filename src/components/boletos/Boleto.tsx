@@ -64,7 +64,38 @@ export default function Boleto({}: BoletoProps) {
       return;
     }
 
-    let pollingTimer: NodeJS.Timeout;
+    // --- INICIO DE MOCK DATA ---
+    // Simularemos el proceso de polling y la obtención de boletos.
+    const simulateFetching = () => {
+      setLoading(true);
+      setPaymentStatus("PENDING");
+      pollingAttemptsRef.current = 1;
+
+      // 1. Simular estado PENDING por 2 segundos
+      setTimeout(() => {
+        setPaymentStatus("PAID");
+
+        // 2. Simular la obtención de los datos del boleto
+        const mockTickets: TicketData[] = [
+          {
+            ticketCode: "WRLD-MOCK1", peopleCount: 2, name: "Juan Perez ", phoneNumber: "987654321", email: "juan.perez@gmail.com", schedule: "10:00 AM", date: "2024-09-20", orderBus: "B-01", seats: ["5", "6"], totalCost: 100.0, createdAt: new Date().toISOString(), service: "Mirabus City Tour",
+          },
+          {
+            ticketCode: "WRLD-MOCK2", peopleCount: 3, name: "Ana Maria", phoneNumber: "987754231", email: "anaMaria092@example.com", schedule: "09:00 AM", date: "2024-09-22", totalCost: 450.0, createdAt: new Date().toISOString(), service: "Tour Ica-Paracas",
+          },
+        ];
+
+        setTimeout(() => {
+          setTicketsData(mockTickets);
+          setLoading(false);
+        }, 800); // Pequeña espera para simular la llamada a la API del boleto
+
+      }, 2000);
+    };
+
+    simulateFetching();
+    // --- FIN DE MOCK DATA ---
+    /*
 
     const fetchTicketData = async (id: string) => {
       try {
@@ -152,6 +183,7 @@ export default function Boleto({}: BoletoProps) {
     return () => {
       clearTimeout(pollingTimer); // Limpiar el temporizador al desmontar el componente
     };
+    */
   }, []); // Array de dependencias vacío: se ejecuta solo una vez al montar
 
   // Lógica de renderizado basada en los estados
