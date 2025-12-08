@@ -3,19 +3,14 @@ import { useStore } from "@nanostores/react";
 import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
 import { IzipayButton } from "../IziPayButton";
-import type {
-  CreatePaymentRequest,
-  TicketInput,
-  CreatePaymentResponse,
-} from "../utils/payment.contract";
-import { apiPost, ApiError } from "../../../utils/apiClient";
+import type { BuyerInfo, TicketItemInput } from "../utils/payment.contract";
 
 export default function CheckoutPage() {
   const cart = useStore($cart);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [formToken, setFormToken] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  
+  // Estados para almacenar los datos que se pasarán al botón de pago
+  const [buyerInfo, setBuyerInfo] = useState<BuyerInfo | null>(null);
+  const [tickets, setTickets] = useState<TicketItemInput[]>([]);
 
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -34,117 +29,42 @@ export default function CheckoutPage() {
     return cart.items.every((item) => item.status === "filled");
   }, [cart.items]);
 
-  const handleProceedToPayment = async () => {
-    setPaymentError(null); // Limpiar errores previos
+  // Efecto para preparar los datos para el botón de pago cada vez que el carrito cambie
+  useEffect(() => {
+    if (cart.items.length > 0 && allFormsFilled) {
+      const firstItem = cart.items[0];
+      const buyerData = firstItem.buyerData!;
+      const fullName = buyerData.nombreCompleto || "";
+      const firstName = fullName.split(" ")[0] || "";
+      const lastName = fullName.split(" ").slice(1).join(" ") || "";
 
-    if (!allFormsFilled) {
-      alert(
-        "Por favor, completa todos los datos de cada servicio antes de continuar."
-      );
-      return;
-    }
+      setBuyerInfo({
+        email: buyerData.correo || "",
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: buyerData.celular,
+        // documentType: buyerData.tipoDocumento,
+        // documentNumber: buyerData.numeroDocumento,
+      });
 
-    setIsLoading(true);
-
-    function fromTimeString(
-      timeString: string,
-      baseDate: Date = new Date()
-    ): string {
-      // timeStr viene en formato "h:mm am" o "h:mm pm"
-      const [timePart, ampm] = timeString.toLowerCase().split(" ");
-      if (!timePart || !ampm)
-        return("Invalid time or ampm string");
-
-      const [hStr, mStr] = timePart.split(":");
-      if (!hStr || !mStr)
-        return("Invalid hour or minute string");
-
-      let hours = parseInt(hStr, 10);
-      const minutes = parseInt(mStr, 10);
-
-      // Convertir a formato 24h (UTC)
-      if (ampm === "pm" && hours !== 12) {
-        hours += 12;
-      }
-      if (ampm === "am" && hours === 12) {
-        hours = 0;
-      }
-
-      // Crear nueva fecha en UTC manteniendo la fecha base
-      const dateUTC = new Date(   
-          baseDate.getFullYear(),
-          baseDate.getMonth(),
-          baseDate.getDate(),
-          hours,
-          minutes,
-          0,
-          0
-      );
-
-      return dateUTC.toISOString();
-    }
-
-    // 1. Construir el payload según el contrato `CreatePaymentRequest`
-    const firstItemBuyerData = cart.items[0]?.buyerData; // Datos del comprador del primer item
-
-    const payload: CreatePaymentRequest = {
-      buyerInfo: {
-        // Asumimos que el comprador es la persona del primer formulario.
-        // TODO: Si el usuario está logueado, usar sus datos.
-        email: firstItemBuyerData?.correo || "",
-        firstName: firstItemBuyerData?.nombreCompleto.split(" ")[0] || "",
-        lastName:
-          firstItemBuyerData?.nombreCompleto.split(" ").slice(1).join(" ") ||
-          "",
-        // userId se podría obtener de la sesión del usuario
-      },
-      tickets: cart.items.map((item): TicketInput => {
-        // --- ¡CAMBIO CLAVE! ---
-        // El horario en el carrito es "HH:mm AM/PM - HH:mm AM/PM". Extraemos solo la parte inicial.
-        // Añadimos un blindaje para evitar errores si item.horario es nulo o vacío.
-        const startTimeString = item.horario ? item.horario.split(' - ')[0] : '';
-        const scheduleStartTime = fromTimeString(startTimeString || '00:00 am'); // Usamos un valor por defecto si está vacío
-
+      setTickets(cart.items.map((item) => {
+        const scheduleTime = item.horario ? item.horario.split(" - ")[0] : "00:00";
         return {
           serviceId: item.uuid,
+          peopleCount: item.quantity,
+          price: item.price,
+          date: item.fecha || new Date().toISOString().split("T")[0],
+          schedule: `${scheduleTime}:00`,
           name: item.buyerData?.nombreCompleto || "",
           email: item.buyerData?.correo || "",
           phoneNumber: item.buyerData?.celular || "",
-          peopleCount: item.quantity,
-          date: item.fecha || "",
-          schedule: scheduleStartTime,
-          // seatID y orderBus se enviarían si fuera un servicio Mirabus
         };
-      }),
-    };
-
-    // Imprimimos en consola para revisión, como solicitaste.
-    console.log(
-      "Payload para /boletos/payment:",
-      JSON.stringify(payload, null, 2)
-    );
-
-    try {
-      // 2. Enviar los datos al backend usando el apiClient
-      const data = await apiPost<CreatePaymentResponse>(
-        "/boletos/payment",
-        payload
-      );
-
-      if (data.formToken) {
-        console.log("Respuesta del backend:", data);
-        setFormToken(data.formToken);
-      }
-    } catch (error: any) {
-      console.error("Error al crear el pago:", error);
-      // El ApiError ya tiene un mensaje claro del backend
-      setPaymentError(
-        error.message || "Hubo un error al procesar tu solicitud."
-      );
-    } finally {
-      setIsLoading(false);
+      }));
+    } else {
+      setBuyerInfo(null);
+      setTickets([]);
     }
-  };
+  }, [cart.items, allFormsFilled]);
 
   // Durante el renderizado del servidor y el primer renderizado del cliente,
   // hasMounted es false, por lo que siempre se mostrará la vista de "carrito vacío",
@@ -203,33 +123,16 @@ export default function CheckoutPage() {
             </div>
 
             <div className="mt-6">
-              {formToken ? (
-                // Si ya tenemos el token, mostramos el botón de Izipay
-                <IzipayButton formToken={formToken} />
-              ) : (
-                // Si no, mostramos nuestro botón para confirmar la reserva
-                <>
-                  <button
-                    onClick={handleProceedToPayment}
-                    disabled={!allFormsFilled || isLoading}
-                    className={`w-full text-white font-bold py-3 rounded-lg transition-colors ${
-                      allFormsFilled && !isLoading
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {isLoading ? "Procesando..." : "Confirmar Reserva"}
-                  </button>
-                  {!allFormsFilled && (
-                    <p className="text-xs text-center text-gray-500 mt-2">
-                      Completa todos los campos para continuar.
-                    </p>
-                  )}
-                </>
+              {buyerInfo && tickets.length > 0 && (
+                <IzipayButton
+                  buyerInfo={buyerInfo}
+                  tickets={tickets}
+                  disabled={!allFormsFilled}
+                />
               )}
-              {paymentError && (
-                <p className="text-sm text-center text-red-600 mt-2">
-                  <strong>Error:</strong> {paymentError}
+              {!allFormsFilled && (
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Completa todos los campos para poder pagar.
                 </p>
               )}
             </div>

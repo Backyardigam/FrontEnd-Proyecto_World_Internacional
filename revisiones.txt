@@ -5,3 +5,5 @@ no te considera que estes tratando de reservar el servicio, y te muestra un carr
 - que la agrupacion de boletos tenga una mejor interfaz grafica
 - agregar elementos visuales que indiquen la orientacion del bus 
 - la validacion de asientos en la base de datos, 
+- hacer el manejo de stock al momento de las reservas en los formularios
+- retirar el IPN del backoffice
