@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { CartItem, PassengerFormData } from "../../../utils/cartStore";
 import {
@@ -8,6 +8,7 @@ import {
 } from "../../../utils/cartStore";
 import { $discounts } from "../../../utils/discountStore";
 import DiscountTag from "../../generales/DiscountTag";
+import { getDiscountInfo } from "../../../utils/discountUtils";
 import Formulario from "../servicio_mirabus/Formulario";
 
 interface CartItemCardProps {
@@ -17,6 +18,23 @@ interface CartItemCardProps {
 export default function CartItemCard({ item }: CartItemCardProps) {
   const allDiscounts = useStore($discounts);
   const itemDiscount = allDiscounts[item.uuid];
+
+  const priceDetails = useMemo(() => {
+    const originalPrice = item.price;
+    const discountInfo = getDiscountInfo(originalPrice, itemDiscount);
+    const stockLimit = itemDiscount?.discountStock;
+
+    // Lógica clave: si se supera el stock, el descuento no aplica.
+    // Se aplica si: 1) el descuento está activo Y 2) el stock es ilimitado (null) O la cantidad es menor o igual al stock (que debe ser un número).
+    const applyDiscount = discountInfo.isActive && (
+      stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
+    );
+
+    const finalPricePerUnit = applyDiscount ? discountInfo.finalPrice : originalPrice;
+    const total = finalPricePerUnit * item.quantity;
+
+    return { ...discountInfo, finalPricePerUnit, total, applyDiscount, stockLimit };
+  }, [item.price, item.quantity, itemDiscount]);
 
   const [fecha, setFecha] = useState(item.fecha || "");
   const [horario, setHorario] = useState(item.horario || "");
@@ -47,10 +65,12 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value, 10);
-    if (newQuantity > 0) {
-      updateServiceQuantity(item.id, newQuantity);
+    let newQuantity = parseInt(e.target.value, 10);
+    if (isNaN(newQuantity) || newQuantity < 1) {
+      newQuantity = 1;
     }
+
+    updateServiceQuantity(item.id, newQuantity);
   };
 
   return (
@@ -65,7 +85,12 @@ export default function CartItemCard({ item }: CartItemCardProps) {
             </button>
           </div>
           <div className="mt-1">
-            <DiscountTag original={item.price} discount={itemDiscount} variant="compact" />
+            {/* Usamos el DiscountTag solo si el descuento se está aplicando */}
+            {priceDetails.applyDiscount ? (
+              <DiscountTag original={item.price} discount={itemDiscount} variant="compact" />
+            ) : (
+              <span className="text-lg font-bold text-gray-800">S/ {item.price.toFixed(2)}</span>
+            )}
           </div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -103,14 +128,19 @@ export default function CartItemCard({ item }: CartItemCardProps) {
               <label htmlFor={`quantity-${item.id}`} className="block text-sm font-medium text-gray-700">Pasajeros</label>
               <input
                 type="number"
+                min="1"
                 id={`quantity-${item.id}`}
                 value={item.quantity}
                 onChange={handleQuantityChange}
-                min="1"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
               />
             </div>
           </div>
+          {priceDetails.isActive && !priceDetails.applyDiscount && priceDetails.stockLimit && (
+            <div className="mt-3 text-xs text-orange-700 bg-orange-100 p-2 rounded-md">
+              <strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> pasajeros. Al seleccionar más, se aplica el precio original a todos.
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-4 border-t pt-4">

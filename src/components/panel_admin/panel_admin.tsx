@@ -42,9 +42,9 @@ export default function PanelAdmin() {
   };
 
   // Al cargar el panel, protegemos la ruta. Si no hay sesión de admin, redirige al login.
-  // useEffect(() => {
-  //   protectAdminRoute();
-  // }, []);
+  useEffect(() => {
+    protectAdminRoute();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

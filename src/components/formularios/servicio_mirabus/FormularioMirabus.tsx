@@ -1,13 +1,16 @@
-import React, { useState, useCallback, StrictMode, useEffect } from "react";
+import React, { useState, useCallback, StrictMode, useEffect, useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import { FechaHorarioSelector } from "./FechaHorarioSelector";
 import Mirabus from "./Mirabus";
-import type { Bus, Seat } from "./seatUtils/interfaceBus";
+import type { Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
 import { useAuth } from "../../../utils/authContext";
 import { IzipayButton } from "../IziPayButton";
-import type { CreatePaymentRequest, CreatePaymentResponse, TicketInput } from "../utils/payment.contract";
-import { apiGet, apiPost } from "../../../utils/apiClient";
+import type { BuyerInfo, TicketItemInput } from "../utils/payment.contract";
+import { apiGet} from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
+import { $discounts } from "../../../utils/discountStore";
+import { getDiscountInfo } from "../../../utils/discountUtils";
 
 //Manejar la llamada de datos desde una ruta API
 interface APIScheduleResponse{
@@ -109,11 +112,35 @@ export default function FormularioMirabus() {
   // Estado local para guardar los asientos que el usuario ha seleccionado
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
 
-  // Estado para la carga de la reserva y errores
-  const [reservationLoading, setReservationLoading] = useState(false);
-  const [reservationError, setReservationError] = useState<string | null>(null);
-  const [formToken, setFormToken] = useState<string | null>(null);
+  // --- ESTADOS PARA PREPARAR DATOS PARA EL BOTÓN DE PAGO ---
+  const [buyerInfo, setBuyerInfo] = useState<BuyerInfo | null>(null);
+  const [tickets, setTickets] = useState<TicketItemInput[]>([]);
 
+  // --- LÓGICA DE DESCUENTOS Y PRECIOS ---
+  const allDiscounts = useStore($discounts);
+  const serviceDiscount = serviceInfo ? allDiscounts[serviceInfo.id] : undefined;
+
+  const priceDetails = useMemo(() => {
+    const originalPrice = serviceInfo?.price || 0;
+    const discountInfo = getDiscountInfo(originalPrice, serviceDiscount);
+    const stockLimit = serviceDiscount?.discountStock;
+
+    // Lógica clave: si se supera el stock, el descuento no aplica.
+    const applyDiscount = discountInfo.isActive && (
+      stockLimit === null || (typeof stockLimit === 'number' && selectSeat.length <= stockLimit)
+    );
+
+    const finalPricePerSeat = applyDiscount ? discountInfo.finalPrice : originalPrice;
+    const total = finalPricePerSeat * selectedSeats.length;
+
+    return { ...discountInfo, finalPricePerSeat, total, applyDiscount, stockLimit };
+  }, [serviceInfo, serviceDiscount, selectedSeats.length]);
+
+  const allFormsFilled = useMemo(() => {
+    return !!(passengerData?.nombreCompleto && passengerData.celular && passengerData.correo);
+  }, [passengerData]);
+
+  // --- MANEJADORES DE EVENTOS Y LÓGICA DE UI ---
   const handleTripSelection = useCallback(
     async (fecha: string, horario: string) => {
       disconnectFromTrip();
@@ -121,8 +148,6 @@ export default function FormularioMirabus() {
       setIsSelecting(false); // Volver al estado inicial si se cambia la fecha/hora
       setUiStatus({ status: "idle" }); // Resetear el cuadro de estado
       setSelectedBusOrden(null);
-      setReservationError(null); // Limpiar cualquier error de reserva anterior
-      setFormToken(null); // Limpiar token si se cambia la selección
     },
     [disconnectFromTrip]
   );
@@ -141,7 +166,6 @@ export default function FormularioMirabus() {
       const serviceId = serviceInfo?.id || ""; // Usamos el ID del servicio para el backend
 
       setUiStatus({ status: "connecting", message: "Conectando..." });
-      setReservationError(null); // Limpiar cualquier error de reserva anterior
 
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
       connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => { // El callback ahora solo maneja el error
@@ -174,10 +198,8 @@ export default function FormularioMirabus() {
     } else if (sessionExpired) {
       // Si la sesión expiró, reseteamos la UI y mostramos un mensaje.
       setIsSelecting(false);
-      setUiStatus({ status: "idle" });
-      setReservationError("Tu sesión ha expirado. Por favor, selecciona los asientos de nuevo.");
+      setUiStatus({ status: "error", message: "Tu sesión ha expirado. Por favor, selecciona los asientos de nuevo." });
     } else {
-      // Cualquier otro caso de desconexión (manual, error, etc.) resetea el modo selección.
       setIsSelecting(false);
     }
   }, [isConnected, sessionExpired]);
@@ -191,159 +213,47 @@ export default function FormularioMirabus() {
     ).padStart(2, "0")}`;
   };
 
-  // --- NUEVA FUNCIÓN: Manejar la reserva ---
-  const handleReservation = useCallback(async () => {
-    // Guarda para prevenir dobles envíos por clics rápidos.
-    if (reservationLoading) return;
+  // --- EFECTO PARA PREPARAR LOS DATOS PARA EL BOTÓN DE PAGO ---
+  useEffect(() => {
+    if (isSelecting && allFormsFilled && selectedSeats.length > 0 && tripSelection && serviceInfo && passengerData) {
+      const fullName = passengerData.nombreCompleto || "";
+      const firstName = fullName.split(" ")[0] || "";
+      const lastName = fullName.split(" ").slice(1).join(" ") || "";
 
-    setReservationLoading(true);
-    setReservationError(null);
-    setFormToken(null);
-
-    // <-- 4. VALIDACIÓN DE SESIÓN ANTES DE RESERVAR -->
-    if (!auth.isAuthenticated) {
-      setReservationError(
-        "Tu sesión ha expirado o no has iniciado sesión. Por favor, inicia sesión para continuar."
-      );
-      setReservationLoading(false);
-      return;
-    }
-    // Validaciones básicas
-    if (!tripSelection) {
-      setReservationError(
-        "Por favor, selecciona una fecha y horario para el viaje."
-      );
-      setReservationLoading(false);
-      return;
-    }
-    if (
-      !passengerData ||
-      !passengerData.nombreCompleto ||
-      !passengerData.celular ||
-      !passengerData.correo
-    ) {
-      setReservationError("Por favor, completa todos tus datos personales.");
-      setReservationLoading(false);
-      return;
-    }
-    if (selectedSeats.length === 0) {
-      setReservationError("Por favor, selecciona al menos un asiento.");
-      setReservationLoading(false);
-      return;
-    }
-    // Funcion para convertir el formato de hora de 12h (ej: "8:00 AM") a 24h (ej: "08:00:00")
-    function fromTimeString(
-      timeString: string,
-      baseDate: Date = new Date()
-    ): string {
-      // timeStr viene en formato "h:mm am" o "h:mm pm"
-      const [timePart, ampm] = timeString.toLowerCase().split(" ");
-      if (!timePart || !ampm)
-        return("Invalid time or ampm string");
-
-      const [hStr, mStr] = timePart.split(":");
-      if (!hStr || !mStr)
-        return("Invalid hour or minute string");
-
-      let hours = parseInt(hStr, 10);
-      const minutes = parseInt(mStr, 10);
-
-      // Convertir a formato 24h (UTC)
-      if (ampm === "pm" && hours !== 12) {
-        hours += 12;
-      }
-      if (ampm === "am" && hours === 12) {
-        hours = 0;
-      }
-
-      // Crear nueva fecha en UTC manteniendo la fecha base
-      const dateUTC = new Date(
-        Date.UTC(
-          baseDate.getUTCFullYear(),
-          baseDate.getUTCMonth(),
-          baseDate.getUTCDate(),
-          hours,
-          minutes,
-          0,
-          0
-        )
-      );
-
-      return dateUTC.toISOString();
-    }
-
-    // 1. Construir el payload según el contrato `CreatePaymentRequest`
-    const ticket: TicketInput = {
-      serviceId: serviceInfo?.id || "",
-      name: passengerData.nombreCompleto,
-      email: passengerData.correo,
-      phoneNumber: passengerData.celular,
-      peopleCount: selectedSeats.length,
-      date: tripSelection.fecha,
-      schedule: fromTimeString(tripSelection.horario), // Convertimos al formato HH:mm:ss
-      seatID: selectedSeats.map(seat => seat.id),
-      orderBus: busToDisplay?.ordenBus || "",
-    };
-
-    const payload: CreatePaymentRequest = {
-      buyerInfo: {
+      setBuyerInfo({
         email: passengerData.correo,
-        firstName: passengerData.nombreCompleto.split(' ')[0] || '',
-        lastName: passengerData.nombreCompleto.split(' ').slice(1).join(' ') || '',
-      },
-      tickets: [ticket],
-    };
-
-    console.log("Payload para /boletos/payment:", JSON.stringify(payload, null, 2));
-
-    try {
-      // 2. Primero, obtenemos el formToken del backend.
-      // Esto crea la orden de pago en nuestra base de datos y en Izipay.
-      const responseData = await apiPost<CreatePaymentResponse>(
-        "/boletos/payment",
-        payload
-      );
-      console.log("Respuesta del backend:", responseData);
-
-      if (!responseData.formToken) {
-        throw new Error("La respuesta del servidor no incluyó un token de pago.");
-      }
-
-      // 3. AHORA, y solo ahora, notificamos al socket que el pago ha comenzado.
-      // El backend usará esto para marcar los asientos como 'en pago' y no liberarlos
-      // si el usuario se desconecta (cierra la pestaña para ir a Izipay).
-      const paymentInitiationResponse = await new Promise<{ success: boolean; error?: string }>((resolve) => {
-        initiatePayment((response) => resolve(response));
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: passengerData.celular,
+        // Aquí podrías añadir documentType y documentNumber si los pides en el formulario
+        // documentType: passengerData.tipoDocumento,
+        // documentNumber: passengerData.numeroDocumento,
       });
 
-      if (!paymentInitiationResponse.success) {
-        // Esto es raro, pero podría pasar si los asientos fueron tomados en el último segundo.
-        throw new Error(
-          paymentInitiationResponse.error || "No se pudieron asegurar los asientos para el pago final."
-        );
-      }
+      // El backend espera el horario en formato HH:mm:ss
+      const scheduleTimeParts = tripSelection.horario.split(" ")[0].split(":"); // "8:00 AM" -> ["8", "00"]
+      const scheduleHHMMSS = `${scheduleTimeParts[0]}:${scheduleTimeParts[1]}:00`;
 
-      // 4. Si todo fue exitoso, guardamos el token para renderizar el botón de Izipay.
-      setFormToken(responseData.formToken);
+      const ticket: TicketItemInput = {
+        serviceId: serviceInfo.id,
+        name: passengerData.nombreCompleto,
+        email: passengerData.correo,
+        phoneNumber: passengerData.celular,
+        peopleCount: selectedSeats.length,
+        price: priceDetails.finalPricePerSeat, // Usamos el precio final calculado
+        date: tripSelection.fecha,
+        schedule: scheduleHHMMSS,
+        seatID: selectedSeats.map(seat => seat.id),
+        orderBus: busToDisplay?.ordenBus || "",
+      };
+      setTickets([ticket]);
 
-    } catch (error: any) {
-      console.error("Error en la reserva:", error);
-      setReservationError(
-        error.message || "Ocurrió un error inesperado al procesar la reserva."
-      );
-    } finally {
-      setReservationLoading(false);
+    } else {
+      // Si las condiciones no se cumplen, reseteamos los datos de pago
+      setBuyerInfo(null);
+      setTickets([]);
     }
-  }, [
-    tripSelection,
-    passengerData,
-    selectedSeats,
-    busToDisplay,
-    auth, // <-- Añadir auth a las dependencias
-    serviceInfo,
-    disconnectFromTrip,
-    initiatePayment,
-  ]);
+  }, [isSelecting, allFormsFilled, selectedSeats, tripSelection, serviceInfo, passengerData, busToDisplay, priceDetails.finalPricePerSeat]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
 
@@ -464,6 +374,31 @@ export default function FormularioMirabus() {
             {/* --- BOTON DE RESERVAR --- */}
             {isSelecting && selectedSeats.length > 0 && (
               <div className="mt-8 border-t pt-6">
+                {/* --- INICIO: Desglose de Precio --- */}
+                <div className="mb-4 p-4 border rounded-lg bg-blue-50 border-blue-200 space-y-2">
+                  <h3 className="font-bold text-lg text-blue-800">Precio por Asiento</h3>
+                  {priceDetails.isActive && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Precio Original:</span>
+                      <span className="font-semibold line-through">S/ {serviceInfo?.price.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 font-medium">Precio Final por Asiento:</span>
+                    <span className="font-bold text-xl text-blue-700">S/ {priceDetails.finalPricePerSeat.toFixed(2)}</span>
+                  </div>
+                  {priceDetails.isActive && !priceDetails.applyDiscount && priceDetails.stockLimit && (
+                    <div className="pt-2 text-xs text-orange-700 bg-orange-100 p-2 rounded-md">
+                      <strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> asientos. Al seleccionar más, se aplica el precio original a todos.
+                    </div>
+                  )}
+                   {priceDetails.expirationMessage && (
+                    <div className="text-xs text-gray-500 text-center pt-1">
+                      {priceDetails.expirationMessage}
+                    </div>
+                  )}
+                </div>
+                {/* --- FIN: Desglose de Precio --- */}
                 {/* --- INICIO: Resumen de la Reserva --- */}
                 <div className="mt-6 p-4 border rounded-lg bg-gray-50 space-y-2">
                   <h3 className="font-bold text-lg">Resumen de tu Reserva</h3>
@@ -482,43 +417,27 @@ export default function FormularioMirabus() {
                   <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
                     <span>Total:</span>
                     <span>
-                      S/{" "}
-                      {(serviceInfo!.price * selectedSeats.length).toFixed(2)}
+                      S/ {priceDetails.total.toFixed(2)}
                     </span>
                   </div>
                 </div>
                 {/* --- FIN: Resumen de la Reserva --- */}
 
-                <div className="mt-6 text-center">
-                  {reservationError && (
-                    <div className="p-2 mb-4 text-red-700 bg-red-100 rounded-lg">
-                      {reservationError}
-                    </div>
-                  )}
-                  
-                  {formToken ? (
+                <div className="mt-6 text-center">                  
+                  {buyerInfo && tickets.length > 0 ? (
                     <>
-                      <IzipayButton formToken={formToken} />
+                      <IzipayButton 
+                        buyerInfo={buyerInfo}
+                        tickets={tickets}
+                        disabled={!allFormsFilled}
+                      />
                       <p className="mt-4 text-sm text-gray-600">
-                        Tus asientos han sido guardados por 10 minutos. Completa el pago en la pasarela segura para confirmarlos definitivamente.
+                        Serás redirigido a la pasarela de pago segura de Izipay.
                       </p>
                     </>
                   ) : (
-                    <button
-                      onClick={handleReservation}
-                      disabled={reservationLoading}
-                      className={`w-full p-3 bg-green-600 text-white rounded-lg text-lg font-semibold transition-colors ${
-                        reservationLoading
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-green-700"
-                      }`}
-                    >
-                      {reservationLoading
-                        ? "Procesando Reserva..."
-                        : "Confirmar y Pagar"}
-                    </button>
+                    <p className="text-sm text-gray-500">Completa tus datos para continuar con el pago.</p>
                   )}
-
                 </div>
               </div>
             )}

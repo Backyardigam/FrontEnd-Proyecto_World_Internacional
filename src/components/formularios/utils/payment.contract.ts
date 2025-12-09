@@ -1,6 +1,7 @@
 //=========================================
 //Nuevas interfaces para el hosted checkout
 //=========================================
+export type PaymentStatus='PENDING'|'PAID'|'FAILED'|'CANCELLED'|'EXPIRED';
 
 // Salidas Frontend ->> Backend   =========
 

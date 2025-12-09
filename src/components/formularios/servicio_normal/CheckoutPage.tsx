@@ -4,9 +4,12 @@ import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
 import { IzipayButton } from "../IziPayButton";
 import type { BuyerInfo, TicketItemInput } from "../utils/payment.contract";
+import { $discounts } from "../../../utils/discountStore";
+import { getDiscountInfo } from "../../../utils/discountUtils";
 
 export default function CheckoutPage() {
   const cart = useStore($cart);
+  const allDiscounts = useStore($discounts);
   
   // Estados para almacenar los datos que se pasarán al botón de pago
   const [buyerInfo, setBuyerInfo] = useState<BuyerInfo | null>(null);
@@ -19,10 +22,22 @@ export default function CheckoutPage() {
   }, []);
 
   const subtotal = useMemo(() => {
-    return cart.items.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
+    // Recalculamos el subtotal real considerando los descuentos y sus stocks
+    return cart.items.reduce((acc, item) => {
+      const itemDiscount = allDiscounts[item.uuid];
+      const discountInfo = getDiscountInfo(item.price, itemDiscount);
+      const stockLimit = itemDiscount?.discountStock;
+
+      const applyDiscount = discountInfo.isActive && (
+      stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
     );
+
+      const finalPricePerUnit = applyDiscount
+        ? discountInfo.finalPrice
+        : item.price;
+
+      return acc + finalPricePerUnit * item.quantity;
+    }, 0);
   }, [cart.items]);
 
   const allFormsFilled = useMemo(() => {
@@ -48,13 +63,24 @@ export default function CheckoutPage() {
       });
 
       setTickets(cart.items.map((item) => {
-        const scheduleTime = item.horario ? item.horario.split(" - ")[0] : "00:00";
+        // Reutilizamos la misma lógica de cálculo de precio para el payload
+        const itemDiscount = allDiscounts[item.uuid];
+        const discountInfo = getDiscountInfo(item.price, itemDiscount);
+        const stockLimit = itemDiscount?.discountStock;
+        const applyDiscount = discountInfo.isActive && (
+      stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
+    );
+        const finalPricePerUnit = applyDiscount ? discountInfo.finalPrice : item.price;
+
+        const scheduleTime = item.horario ? item.horario.split(" - ")[0] : "00:00"; // "10:00"
+        const scheduleHHMMSS = `${scheduleTime}:00`;
+
         return {
           serviceId: item.uuid,
           peopleCount: item.quantity,
-          price: item.price,
+          price: finalPricePerUnit, // ¡Importante! Enviamos el precio final unitario
           date: item.fecha || new Date().toISOString().split("T")[0],
-          schedule: `${scheduleTime}:00`,
+          schedule: scheduleHHMMSS,
           name: item.buyerData?.nombreCompleto || "",
           email: item.buyerData?.correo || "",
           phoneNumber: item.buyerData?.celular || "",
