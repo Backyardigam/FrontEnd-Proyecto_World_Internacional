@@ -133,18 +133,32 @@ export default function CheckoutPage() {
             <h2 className="text-2xl font-bold border-b pb-4 mb-4">
               Resumen del Pedido
             </h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>S/ {subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Impuestos (IGV 18%)</span>
-                <span>S/ {(subtotal * 0.18).toFixed(2)}</span>
-              </div>
+            <div className="space-y-3">
+              {cart.items.map((item) => {
+                // Reutilizamos la misma lógica de cálculo de precio para el resumen
+                const itemDiscount = allDiscounts[item.uuid];
+                const discountInfo = getDiscountInfo(item.price, itemDiscount);
+                const stockLimit = itemDiscount?.discountStock;
+                const applyDiscount =
+                  discountInfo.isActive &&
+                  (stockLimit === null ||
+                    (typeof stockLimit === "number" &&
+                      item.quantity <= stockLimit));
+                const finalPricePerUnit = applyDiscount
+                  ? discountInfo.finalPrice
+                  : item.price;
+                const itemTotal = finalPricePerUnit * item.quantity;
+
+                return (
+                  <div key={item.id} className="flex justify-between text-gray-700">
+                    <span className="truncate pr-2">{`${item.serviceName} x${item.quantity}`}</span>
+                    <span className="font-medium">S/ {itemTotal.toFixed(2)}</span>
+                  </div>
+                );
+              })}
               <div className="flex justify-between font-bold text-xl border-t pt-4 mt-4">
                 <span>Total</span>
-                <span>S/ {(subtotal * 1.18).toFixed(2)}</span>
+                <span>S/ {subtotal.toFixed(2)}</span>
               </div>
             </div>
 

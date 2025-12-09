@@ -1,7 +1,8 @@
 ---
 import Card, { type CardData } from "./Card.astro";
 import { apiGet } from "../../../utils/apiClient";
-
+import Image from "astro/components/Image.astro";
+import image from "../../../images/tours-background.jpg"
 let servicios: CardData[] = [];
 let error: string | null = null;
 
@@ -16,6 +17,14 @@ try {
 <section id="servicios" class="w-full bg-gray-200 flex flex-col items-center">
   <div class="relative w-full font-redhat text-white text-center overflow-hidden">
     <img src="src/images/tours-background.jpg" alt="Paisaje impresionante durante un tour" class="absolute inset-0 w-full h-full object-cover" loading="eager" />
+    <Image
+      src={image}
+      alt={`Seccion de servicio`}
+      class="aspect-video w-full object-cover"
+      width={320}
+      height={180}
+      format="webp"
+    />
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="relative z-10 flex flex-col justify-center items-center p-16 md:p-24">
       <h2 class="text-4xl md:text-5xl font-bold drop-shadow-md">Explora el Mundo con Nuestros Tours</h2>

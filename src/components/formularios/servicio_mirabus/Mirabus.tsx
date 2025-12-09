@@ -25,15 +25,10 @@ export default function Mirabus({
   onRequestSeatDeselection,
   onAdminSeatToggle,
 }: MirabusProps) {
-  // usamos useState para que React pueda re-renderizar el componente cuando los asientos cambien
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  // Efecto 1: Sincroniza el estado local con los datos del servidor (fusión inteligente y pesimista).
   React.useEffect(() => { 
-    // FUSIÓN INTELIGENTE: No reemplazamos el estado, lo fusionamos.
     setSeats(currentLocalSeats => {
-      // Identificamos qué asientos *nosotros* hemos puesto en 'pending'
-      // para mantener ese estado visualmente mientras el servidor procesa la petición.
       const ourPendingRequests = new Set<string>();
       currentLocalSeats.forEach(seat => {
         if (seat.status === 'pending') {
@@ -41,32 +36,21 @@ export default function Mirabus({
         }
       });
       
-      // Creamos el nuevo estado fusionado.
       const newMergedSeats = initialSeatsData.map(serverSeat => {
-        // Si el servidor ya ha confirmado nuestra selección (status: 'selected')
-        // o si el asiento está ocupado/reservado (por nosotros o por otros),
-        // el estado del servidor es la verdad y tiene prioridad.
-        // En estos casos, el estado del servidor tiene prioridad absoluta.
-        // 'blocked' es un estado de UI, no debería venir del servidor, por lo que se elimina de esta condición.
         if (
           serverSeat.status === 'selected' ||
           serverSeat.status === 'occupied' ||
           serverSeat.status === 'reserved' ||
-          // Si el servidor dice 'pending', es porque otro usuario lo tiene en ese estado.
-          // Según la lógica, el servidor NUNCA debería enviar 'pending'.
           serverSeat.status === 'pending'
         ) {
           return serverSeat;
         }
 
-        // Si el servidor dice 'available', pero nosotros tenemos una petición 'pending' para este asiento,
-        // mantenemos nuestro estado 'pending' local hasta que el servidor responda.
         if (serverSeat.status === 'available' && ourPendingRequests.has(serverSeat.id)) {
           const valid:SeatStatus='pending'
           return { ...serverSeat, status: valid };
         }
 
-        // En cualquier otro caso (ej: el servidor ahora dice 'occupied'), el estado del servidor gana.
         return serverSeat;
       });
 
@@ -74,8 +58,6 @@ export default function Mirabus({
     });
   }, [initialSeatsData]);
 
-  // Efecto 2: Notifica al componente padre cuando la selección local ha cambiado.
-  // Esto se ejecuta DESPUÉS de que el estado 'seats' se ha actualizado y el componente se ha renderizado.
   React.useEffect(() => {
     if (onSelectionChange) {
       const currentSelection = seats.filter(s => s.status === 'selected');
@@ -83,7 +65,6 @@ export default function Mirabus({
     }
   }, [seats, onSelectionChange]);
   
-  // Efecto 3: Limpia el mensaje de advertencia después de un tiempo.
   React.useEffect(() => {
     if (warningMessage) {
       const timer = setTimeout(() => {
@@ -104,9 +85,7 @@ export default function Mirabus({
       const seatToToggle = seats.find(s => s.id === seatId);
       if (!seatToToggle) return;
 
-      // Lógica para el modo Administrador
       if (mode === 'admin') {
-        // El admin puede hacer toggle en 'available' y en los que él mismo ha reservado ('adminReserved').
         if (seatToToggle.status === 'available' || seatToToggle.status === 'adminReserved') {
           onAdminSeatToggle?.(seatId, busOrden);
         } else {
@@ -126,7 +105,6 @@ export default function Mirabus({
         return;
       }
 
-      // Lógica para el modo Cliente: 'blocked' es un estado de UI, no debe impedir el click inicial. La lógica de 'displaySeats' lo maneja.
       if (['occupied', 'reserved', 'adminReserved', 'blocked', 'pending'].includes(seatToToggle.status)) {
         setWarningMessage(`El asiento ${seatId} no está disponible en este momento.`);
         return;
@@ -137,7 +115,8 @@ export default function Mirabus({
       // 2. Validaciones locales de cliente ANTES de enviar la petición
       if (isSelecting) {
         const currentSelectionCount = seats.filter(s => s.status === 'selected').length;
-        const MAX_SELECTION_LIMIT = 10;
+        // ========= Limite de asientos ===========
+        const MAX_SELECTION_LIMIT = 15;
 
         if (onRequestSeatSelection && currentSelectionCount >= MAX_SELECTION_LIMIT) {
           setWarningMessage(`No se pueden seleccionar más de ${MAX_SELECTION_LIMIT} asientos.`);
@@ -164,8 +143,6 @@ export default function Mirabus({
         // Ahora pasamos el ID del bus junto con el del asiento
         onRequestSeatSelection(seatId, busOrden);
       } else if (!isSelecting && onRequestSeatDeselection) {
-        // Para deseleccionar, también podríamos tener un estado 'pending_deselection'
-        // pero por simplicidad, llamamos directamente a la acción.
         onRequestSeatDeselection(seatId, busOrden);
       }
     },
