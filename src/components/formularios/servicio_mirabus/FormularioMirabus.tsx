@@ -61,7 +61,7 @@ export default function FormularioMirabus() {
       };
       // Mapeamos la respuesta de la API a nuestro estado interno
       setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: parseFloat(data.precio), schedules: data.schedules });
-      console.log(serviceInfo)
+      console.log(data)
     } catch (error: any) {
       setServiceError(
         error.message || "No se pudo cargar la información del servicio."
