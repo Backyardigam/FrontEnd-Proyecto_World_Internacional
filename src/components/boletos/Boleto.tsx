@@ -258,7 +258,7 @@ export default function Boleto({}: BoletoProps) {
                 </div>
               </div>
 
-              {/* QR Code Placeholder */}
+              {/* QR Code Placeholder
               <div
                 className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg"
                 data-html2canvas-ignore="true"
@@ -282,7 +282,7 @@ export default function Boleto({}: BoletoProps) {
                 <p className="text-xs text-gray-600 mt-2 text-center">
                   Presenta este código al abordar
                 </p>
-              </div>
+              </div> */}
             </section>
 
             {/* Detalles del Servicio */}

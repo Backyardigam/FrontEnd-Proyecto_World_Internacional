@@ -16,7 +16,7 @@ interface TicketSummary {
 
 // Interfaz para los datos de los servicios que usamos para los filtros
 interface ServiceInfo {
-  id_name: string; // ej: 'valle_viejo'
+  id: string;      // ID del servicio (ej: 'cmi...')
   name: string;    // ej: 'Valle Viejo'
   schedules: string[];
 }
@@ -39,25 +39,30 @@ export default function VistaBoletos() {
   // Carga inicial de todos los boletos y la lista de servicios para los filtros
   useEffect(() => {
     const fetchInitialData = async () => {
-      try {
-        setLoading(true);
-        
-        // Hacemos ambas llamadas en paralelo para más eficiencia
-        const [ticketsData, servicesData] = await Promise.all([
-          apiGet<TicketSummary[]>('/boletos/admin'),
-          apiGet<ServiceInfo[]>('/manage/mirabus-services') // Endpoint hipotético
-        ]);
-        setTickets(ticketsData);
-        setServices(servicesData);
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("Ocurrió un error inesperado al cargar los datos.");
-        }
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      setError(null);
+
+      // Manejamos las promesas por separado para que un error en una no bloquee la otra
+      const servicesPromise = apiGet<ServiceInfo[]>('/manage/mirabus-services')
+        .then(data => setServices(data))
+        .catch(err => console.error("Error cargando servicios:", err));
+
+      const ticketsPromise = apiGet<TicketSummary[]>('/boletos/admin')
+        .then(data => setTickets(data))
+        .catch(err => {
+          // Si es error 404, asumimos que no hay boletos aún (lista vacía) y no bloqueamos la UI
+          if (err instanceof ApiError && err.status === 404) {
+            setTickets([]);
+          } else if (err instanceof ApiError) {
+            setError(err.message);
+          } else {
+            setError("Ocurrió un error inesperado al cargar los boletos.");
+          }
+        });
+
+      // Esperamos a que ambas terminen (independientemente de si fallaron o no)
+      await Promise.all([servicesPromise, ticketsPromise]);
+      setLoading(false);
     };
     fetchInitialData();
   }, []);
@@ -107,8 +112,9 @@ export default function VistaBoletos() {
   // Horarios disponibles basados en el servicio seleccionado
   const availableSchedules = useMemo(() => {
     if (!selectedService) return [];
-    const service = services.find(s => s.id_name === selectedService);
-    return service?.schedules || [];
+    const service = services.find(s => s.id === selectedService);
+    // Verificamos que el servicio exista y que schedules sea un array válido
+    return (service && Array.isArray(service.schedules)) ? service.schedules : [];
   }, [selectedService, services]);
 
   // Efecto para resetear el horario si el servicio cambia y el horario actual no es válido
@@ -129,12 +135,12 @@ export default function VistaBoletos() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <select value={selectedService} onChange={e => setSelectedService(e.target.value)} className="w-full p-2 border rounded-md">
             <option value="">Todos los Servicios</option>
-            {services.map(s => <option key={s.id_name} value={s.id_name}>{s.name}</option>)}
+            {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-2 border rounded-md" />
           <select value={selectedSchedule} onChange={e => setSelectedSchedule(e.target.value)} disabled={!selectedService} className="w-full p-2 border rounded-md disabled:bg-gray-200">
             <option value="">Cualquier Horario</option>
-            {availableSchedules.map(h => <option key={h} value={h}>{h}</option>)}
+            {availableSchedules.map((h, index) => <option key={`${h}-${index}`} value={h}>{h}</option>)}
           </select>
           <div className="flex gap-2">
             <button onClick={handleFilterSubmit} className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">Filtrar</button>

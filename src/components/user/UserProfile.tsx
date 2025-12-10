@@ -2,14 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../utils/authStore";
 import { updateUserProfile } from "../../utils/authActions";
+import { apiGet, ApiError } from "../../utils/apiClient";
+import type { TicketSummary } from "../formularios/utils/payment.contract";
+import BoletoDetalleModal from "./BoletoDetalleModal";
 
 export default function UserProfile() {
-  const { user, loading } = useStore($auth);
+  const { user, loading: authLoading } = useStore($auth);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: "", phoneNumber: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // --- Estados para el historial de boletos ---
+  const [tickets, setTickets] = useState<TicketSummary[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState<string | null>(null);
+  const [viewingTicketId, setViewingTicketId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -17,7 +26,34 @@ export default function UserProfile() {
     }
   }, [user, isEditing]);
 
-  if (loading || !user) {
+  // --- Efecto para cargar el historial de boletos ---
+  useEffect(() => {
+    // Solo buscar boletos si el usuario está autenticado y no es un invitado
+    if (user && user.role === 'user') {
+      const fetchTickets = async () => {
+        setTicketsLoading(true);
+        setTicketsError(null);
+        try {
+          const data = await apiGet<TicketSummary[]>('/boletos/cliente');
+          setTickets(data);
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 404) {
+            setTickets([]); // No es un error, simplemente no hay boletos
+          } else {
+            setTicketsError(err instanceof ApiError ? err.message : "No se pudo cargar el historial de boletos.");
+          }
+        } finally {
+          setTicketsLoading(false);
+        }
+      };
+      fetchTickets();
+    } else {
+      // Si no es un usuario logueado, no hay nada que cargar
+      setTicketsLoading(false);
+    }
+  }, [user]);
+
+  if (authLoading || !user) {
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 animate-pulse">
         <div className="bg-white shadow-md rounded-lg p-6">
@@ -59,6 +95,49 @@ export default function UserProfile() {
   };
 
   const hasChanges = user.name !== formData.name || user.phoneNumber !== formData.phoneNumber;
+
+  const renderTicketHistory = () => {
+    if (ticketsLoading) {
+      return <div className="text-center p-8"><p className="text-gray-500">Cargando historial de boletos...</p></div>;
+    }
+
+    if (ticketsError) {
+      return <div className="text-center p-8 text-red-500">{ticketsError}</div>;
+    }
+
+    if (tickets.length === 0) {
+      return (
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <p className="text-gray-500">
+            Aún no has comprado ningún boleto.
+          </p>
+          <a href="/servicios" className="mt-4 inline-block px-6 py-2 bg-naranja-c text-white font-semibold rounded-md hover:bg-naranja-f transition-colors">
+            Explorar Servicios
+          </a>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {tickets.map(ticket => (
+          <div key={ticket.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="flex-grow">
+              <p className="font-semibold text-gray-800 text-lg">{ticket.service}</p>
+              <p className="text-sm text-gray-600">
+                {new Date(ticket.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+                <span className="font-bold"> | {ticket.schedule}</span>
+              </p>
+              <p className="text-xs font-mono text-gray-500 mt-1">Código: {ticket.ticketCode}</p>
+            </div>
+            <div className="flex-shrink-0 self-end sm:self-center">
+              <button onClick={() => setViewingTicketId(ticket.id)} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Ver Detalles</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen py-10">
@@ -142,17 +221,17 @@ export default function UserProfile() {
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Historial de Boletos
             </h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <p className="text-gray-500">
-                Aquí se mostrará tu historial de boletos comprados.
-              </p>
-              <p className="text-sm text-gray-400 mt-2">
-                (Funcionalidad en desarrollo)
-              </p>
-            </div>
+            {renderTicketHistory()}
           </div>
         </div>
       </div>
+
+      {viewingTicketId && (
+        <BoletoDetalleModal 
+          ticketId={viewingTicketId} 
+          onClose={() => setViewingTicketId(null)} 
+        />
+      )}
     </div>
   );
 }

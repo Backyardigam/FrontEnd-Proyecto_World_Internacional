@@ -104,14 +104,11 @@ export interface TicketData {
   service: string;
 }
 
-// respuesta de la ruta /boletos/admin
-
 // Interfaz para los datos del boleto que esperamos de la API
 export interface TicketSummary {
   id: string;
   ticketCode: string;
   name: string;
-  email: string;
   service: string;
   date: string;
   schedule: string;
