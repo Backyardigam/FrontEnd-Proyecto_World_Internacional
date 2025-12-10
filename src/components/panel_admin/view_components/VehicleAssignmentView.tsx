@@ -58,49 +58,6 @@ export default function VehicleAssignmentView({ mirabusId, onBack, onSaveSuccess
 
   // --- Lógica de Negocio ---
 
-  // Generar el siguiente código (ej: B-01 -> B-02)
-  const getNextBusOrder = (baseAssignments: LocalAssignmentState[]): string => {
-    // Encontramos el número más alto, incluyendo solo las asignaciones originales
-    const originalCount = baseAssignments.filter(a => a.isOriginal).length;
-
-    // Si hay tarjetas agregadas, tomamos el último número de la lista (originales + agregadas)
-    // para encontrar el siguiente índice.
-    const nextNum = baseAssignments.length + 1;
-
-    // Si solo hay originales, empezamos a partir de ese número + 1
-    // Si tenemos B-01, B-02 (originales), el siguiente es B-03
-    if (baseAssignments.length === 0) return "B-01";
-
-    const lastOrder = baseAssignments[baseAssignments.length - 1].busOrder;
-
-    // Calculamos el índice base para el nuevo elemento
-    const baseIndex = baseAssignments.length + 1;
-
-    return `B-${baseIndex.toString().padStart(2, '0')}`;
-  };
-
-  // Implementación simplificada de la renumeración
-  const renumberAssignments = (assignmentsList: LocalAssignmentState[]) => {
-    let currentNumber = 1;
-    return assignmentsList.map(item => {
-      if (item.isOriginal) {
-        // Mantenemos el orden de bus original
-        return item;
-      } else {
-        // Renombramos los agregados para mantener la secuencia
-        const newOrder = `B-${currentNumber.toString().padStart(2, '0')}`;
-        currentNumber++; // Incrementamos para el siguiente agregado
-        // Nota: Esto funciona mejor si la lista de agregados va al final.
-        // Si no, necesitamos un conteo más sofisticado.
-        // Por el formato B-01, B-02, asumiremos que los agregados se añaden al final.
-        return {
-          ...item,
-          busOrder: newOrder
-        };
-      }
-    });
-  };
-
   const handleAddBus = () => {
     // Usamos el número total de ítems + 1 para calcular el nuevo B-XX
     const nextNum = assignments.length + 1;
@@ -116,34 +73,42 @@ export default function VehicleAssignmentView({ mirabusId, onBack, onSaveSuccess
     ]);
   };
 
-  const handleRemoveBus = (indexToRemove: number) => {
-    const itemToRemove = assignments[indexToRemove];
+const handleRemoveBus = (indexToRemove: number) => {
+  const itemToRemove = assignments[indexToRemove];
 
-    // Solo permitir borrar si NO es original
-    if (!itemToRemove.isOriginal) {
+  // Solo permitir borrar si NO es original
+  if (!itemToRemove.isOriginal) {
+    // 1. Eliminamos el ítem de la lista temporalmente
+    const filteredAssignments = assignments.filter((_, idx) => idx !== indexToRemove);
 
-      // 1. Eliminamos el ítem de la lista temporalmente
-      const filteredAssignments = assignments.filter((_, idx) => idx !== indexToRemove);
+    // 2. Determinar la base de la numeración.
+    // Buscamos el número del último bus original.
+    const originalCount = filteredAssignments.filter(item => item.isOriginal).length;
+    
+    // Si hay 2 originales (B-01, B-02), el siguiente agregado debe ser B-03.
+    // Por lo tanto, el índice de renumeración debe comenzar en 1 + originalCount.
+    let nextBusNumber = originalCount + 1;
 
-      // 2. Renumeramos solo los elementos *no originales* restantes para mantener la secuencia
-      let nextRenumberIndex = 1;
-      const renumberedAssignments = filteredAssignments.map(item => {
-        if (item.isOriginal) {
-          return item; // Los originales NO cambian
-        } else {
-          // Renombramos los que NO son originales
-          const newOrder = `B-${nextRenumberIndex.toString().padStart(2, '0')}`;
-          nextRenumberIndex++;
-          return {
-            ...item,
-            busOrder: newOrder
-          };
-        }
-      });
+    // 3. Renumeramos solo los elementos *no originales* restantes para mantener la secuencia
+    const renumberedAssignments = filteredAssignments.map(item => {
+      if (item.isOriginal) {
+        return item; // Los originales NO cambian
+      } else {
+        // Renombramos los que NO son originales
+        // Usamos el contador basado en la cantidad de originales
+        const newOrder = `B-${nextBusNumber.toString().padStart(2, '0')}`;
+        nextBusNumber++; // Incrementamos el número para el siguiente bus
+        
+        return {
+          ...item,
+          busOrder: newOrder
+        };
+      }
+    });
 
-      setAssignments(renumberedAssignments);
-    }
-  };
+    setAssignments(renumberedAssignments);
+  }
+};
 
   const handleChangeVehicle = (index: number, newVehicleId: string) => {
     const updated = [...assignments];
