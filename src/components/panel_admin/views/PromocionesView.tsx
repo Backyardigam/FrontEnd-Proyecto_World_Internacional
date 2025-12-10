@@ -248,7 +248,11 @@ export default function PromocionesView() {
                     <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
                       <p><span className="font-semibold">Precio Final:</span> <span className="font-bold text-green-700">S/ {(parseFloat(item.cost) - parseFloat(item.promotion.discountAmount as any)).toFixed(2)}</span></p>
                       <p><span className="font-semibold">Descuento:</span> S/ {item.promotion.discountAmount} (~{calculateDiscountPercentage(item.cost, parseFloat(item.promotion.discountAmount as any))}%)</p>
-                      <p><span className="font-semibold">Expira:</span> {new Date(item.promotion.discountExpiration).toLocaleDateString()}</p>
+                      <p><span className="font-semibold">Expira:</span> {new Date(
+                        item.promotion.discountExpiration.includes('T') 
+                          ? item.promotion.discountExpiration 
+                          : `${item.promotion.discountExpiration}T00:00:00`
+                      ).toLocaleDateString()}</p>
                       <p><span className="font-semibold">Stock:</span> {item.promotion.discountStock ?? 'Ilimitado'}</p>
                     </div>
                   ) : (

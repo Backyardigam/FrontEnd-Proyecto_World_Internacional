@@ -26,7 +26,7 @@ interface ServiceSearch{ //Respuesta de la API, solo llegaran en base al servici
 
 // --- Interfaces para el componente ---
 interface ServiceInfo {
-  id_name: string;
+  id: string;
   name: string;
   schedules: string[];
 }
@@ -45,28 +45,7 @@ export default function AgrupacionBoletos() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // --- MOCK DATA ---
-        await new Promise(resolve => setTimeout(resolve, 300)); // Simular red
-        const mockServices: ServiceInfo[] = [
-          {
-            id_name: 'mirabus_city_tour',
-            name: 'Mirabus City Tour',
-            schedules: ['10:00 AM', '02:00 PM']
-          },
-          {
-            id_name: 'tour_ica_paracas',
-            name: 'Tour Ica-Paracas',
-            schedules: ['09:00 AM']
-          },
-          {
-            id_name: 'valle_viejo',
-            name: 'Valle Viejo',
-            schedules: ['11:00 AM']
-          }
-        ];
-        const servicesData = mockServices;
-        // --- FIN MOCK DATA ---
-        // const servicesData = await apiGet<ServiceInfo[]>('/manage/service-schedule');
+        const servicesData = await apiGet<ServiceInfo[]>('/manage/mirabus-services',{handle401:true,redirectPath:'/core-tacana-wits-7b345/'});
         setServices(servicesData);
       } catch (err) {
         setError("No se pudo cargar la lista de servicios.");
@@ -149,7 +128,7 @@ export default function AgrupacionBoletos() {
 
   const availableSchedules = useMemo(() => {
     if (!selectedService) return [];
-    const service = services.find(s => s.id_name === selectedService);
+    const service = services.find(s => s.id === selectedService);
     return service?.schedules || [];
   }, [selectedService, services]);
 
@@ -168,7 +147,7 @@ export default function AgrupacionBoletos() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <select value={selectedService} onChange={e => setSelectedService(e.target.value)} className="w-full p-2 border rounded-md">
             <option value="">-- Seleccione Servicio --</option>
-            {services.map(s => <option key={s.id_name} value={s.id_name}>{s.name}</option>)}
+            {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-2 border rounded-md" />
           <select value={selectedSchedule} onChange={e => setSelectedSchedule(e.target.value)} disabled={!selectedService} className="w-full p-2 border rounded-md disabled:bg-gray-200">

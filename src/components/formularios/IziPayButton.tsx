@@ -71,7 +71,7 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
           showButtonProcessForm: false,
         },
         appearance: {
-          logo: "https://worldinternacional.com/assets/logo-color.png" // URL del logo
+          logo: "https://ik.imagekit.io/if2foot75kw/assets/logosolo0.png"
         }
       };
 

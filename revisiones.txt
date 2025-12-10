@@ -6,4 +6,4 @@ no te considera que estes tratando de reservar el servicio, y te muestra un carr
 - agregar elementos visuales que indiquen la orientacion del bus 
 - la validacion de asientos en la base de datos, 
 - hacer el manejo de stock al momento de las reservas en los formularios
-- retirar el IPN del backoffice
+- Usar la API real para agrupacion de boletos
