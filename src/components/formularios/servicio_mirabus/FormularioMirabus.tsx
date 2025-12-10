@@ -243,7 +243,7 @@ export default function FormularioMirabus() {
         peopleCount: selectedSeats.length,
         price: priceDetails.finalPricePerSeat, // Usamos el precio final calculado
         date: tripSelection.fecha,
-        schedule: scheduleHHMMSS,
+        schedule: tripSelection.horario,
         seatID: selectedSeats.map(seat => seat.id),
         orderBus: busToDisplay?.ordenBus || "",
       };
