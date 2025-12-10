@@ -66,9 +66,22 @@ export default function MirabusReservationView({ initialData, onBack }: Props) {
       }
     };
     fetchServices();
+
+    // Cleanup: Desconectar al desmontar el componente (Doble seguridad)
+    return () => {
+        if (isConnected) {
+            disconnectFromTrip(); 
+        }
+    };
   }, []); // Solo al montar
 
   // --- MANEJADORES ---
+  const handleBack = () => {
+    if (isConnected) {
+        disconnectFromTrip(); // 1. Forzar la desconexión del WebSocket
+    }
+    onBack(); // 2. Ejecutar la función para cambiar de vista (ir al componente principal)
+  }
 
   const handleSelectionChange = () => {
     if (isConnected) disconnectFromTrip();
@@ -120,7 +133,7 @@ export default function MirabusReservationView({ initialData, onBack }: Props) {
       {/* --- BOTÓN DE RETROCESO Y TÍTULO --- */}
       <div className="flex items-center gap-4 border-b pb-2">
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
           title="Volver al Listado"
         >

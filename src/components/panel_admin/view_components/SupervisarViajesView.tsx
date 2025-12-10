@@ -15,7 +15,6 @@ export default function SupervisarViajesView() {
   const [view, setView] = useState<ViewState>('LIST');
   const [reserveData, setReserveData] = useState<any>(null);
   const [assignId, setAssignId] = useState<string>('');
-  // 1. Estado para el ID
   const [assignMirabusId, setAssignMirabusId] = useState<string>('');
 
   // Handlers de navegación
