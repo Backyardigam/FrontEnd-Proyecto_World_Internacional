@@ -16,7 +16,7 @@ import { getDiscountInfo } from "../../../utils/discountUtils";
 interface APIScheduleResponse{
   id:string,
   name:string,
-  precio:string, // El backend devuelve 'precio' como string
+  cost:string, // El backend devuelve 'precio' como string
   schedules:string[]
 }
 
@@ -60,7 +60,7 @@ export default function FormularioMirabus() {
           .join(" ");
       };
       // Mapeamos la respuesta de la API a nuestro estado interno
-      setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: parseFloat(data.precio), schedules: data.schedules });
+      setServiceInfo({ id: data.id, name: formatServiceName(data.name), price: parseFloat(data.cost), schedules: data.schedules });
       console.log(data)
     } catch (error: any) {
       setServiceError(
