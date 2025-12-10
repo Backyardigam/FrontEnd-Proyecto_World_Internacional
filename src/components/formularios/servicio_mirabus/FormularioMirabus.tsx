@@ -232,8 +232,8 @@ export default function FormularioMirabus() {
       });
 
       // El backend espera el horario en formato HH:mm:ss
-      const scheduleTimeParts = tripSelection.horario.split(" ")[0].split(":"); // "8:00 AM" -> ["8", "00"]
-      const scheduleHHMMSS = `${scheduleTimeParts[0]}:${scheduleTimeParts[1]}:00`;
+      // const scheduleTimeParts = tripSelection.horario.split(" ")[0].split(":"); // "8:00 AM" -> ["8", "00"]
+      const scheduleHHMMSS = `${tripSelection.horario}:00`;
 
       const ticket: TicketItemInput = {
         serviceId: serviceInfo.id,
@@ -243,7 +243,7 @@ export default function FormularioMirabus() {
         peopleCount: selectedSeats.length,
         price: priceDetails.finalPricePerSeat, // Usamos el precio final calculado
         date: tripSelection.fecha,
-        schedule: tripSelection.horario,
+        schedule: scheduleHHMMSS,
         seatID: selectedSeats.map(seat => seat.id),
         orderBus: busToDisplay?.ordenBus || "",
       };
