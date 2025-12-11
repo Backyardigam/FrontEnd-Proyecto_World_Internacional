@@ -7,7 +7,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [showGuestTerms, setShowGuestTerms] = useState(false);
   const [guestTermsAccepted, setGuestTermsAccepted] = useState(false);
 
@@ -17,13 +17,12 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      await loginUser(email, password,{handle401:false});
+      await loginUser(email, password, { handle401: false });
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect") || "/";
       setTimeout(() => {
         window.location.replace(redirectTo);
       }, 0);
-
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -112,14 +111,30 @@ export default function LoginForm() {
         </div>
 
         <div className="flex items-center justify-between text-sm text-naranja-c">
-          <a href="/reset-password" className="font-medium hover:underline underline-offset-4 hover:text-naranja-f">¿Olvidaste tu contraseña?</a>
-          <a href="/register" className="font-medium hover:underline underline-offset-4 hover:text-naranja-f">Registrar usuario</a>
+          <a
+            href="/reset-password"
+            className="font-medium hover:underline underline-offset-4 hover:text-naranja-f"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
+          <a
+            href="/register"
+            className="font-medium hover:underline underline-offset-4 hover:text-naranja-f"
+          >
+            Registrar usuario
+          </a>
         </div>
       </form>
 
       <div className="mt-6 relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="w-full border-t border-gray-300" /></div>
-        <div className="relative flex justify-center text-sm"><span className="px-2 bg-gray-50 text-gray-500">o si prefieres ...</span></div>
+        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+          <div className="w-full border-t border-gray-300" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-gray-50 text-gray-500">
+            o si prefieres ...
+          </span>
+        </div>
       </div>
 
       <div className="mt-6">
@@ -144,8 +159,29 @@ export default function LoginForm() {
               onChange={(e) => setGuestTermsAccepted(e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="guest-terms" className="ml-2 block text-sm text-gray-900">
-              Acepto los <a href="/terms" className="font-medium text-blue-600 hover:text-blue-500">Términos y Condiciones</a>
+            <label
+              htmlFor="terms-and-conditions"
+              className="ml-2 block text-sm text-gray-900"
+            >
+              He leído y acepto los{" "}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-naranja-c hover:text-naranja-f"
+              >
+                Términos y Condiciones
+              </a>{" "}
+              y la{" "}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-naranja-c hover:text-naranja-f"
+              >
+                Política de Privacidad
+              </a>
+              .
             </label>
           </div>
         </div>
