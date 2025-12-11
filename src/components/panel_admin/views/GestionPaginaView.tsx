@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiGet, apiPut } from "../../../utils/apiClient";
+import { apiGet, apiPut, apiDelete } from "../../../utils/apiClient";
 import ServiceForm from "../view_components/ServiceForm";
 import ServicePreview from "../view_components/ServicePreview";
 import Boton from "../admin_utils/Boton";
@@ -25,6 +25,11 @@ export default function GestionPaginaView() {
     null
   );
   const [previewServiceId, setPreviewServiceId] = useState<string | null>(null);
+
+  // Estado para el modal de eliminación
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [deleteConfirmationName, setDeleteConfirmationName] = useState("");
 
   const fetchServices = () => {
     setLoading(true);
@@ -132,6 +137,30 @@ export default function GestionPaginaView() {
     }
   };
 
+  const handleDeleteClick = (service: Service) => {
+    setServiceToDelete(service);
+    setDeleteConfirmationName("");
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setServiceToDelete(null);
+    setDeleteConfirmationName("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!serviceToDelete || deleteConfirmationName !== serviceToDelete.name) return;
+
+    try {
+      await apiDelete(`/manage/service/${serviceToDelete.id}`);
+      setServices((prev) => prev.filter((s) => s.id !== serviceToDelete!.id));
+      handleCancelDelete();
+    } catch (err: any) {
+      alert(`Error al eliminar el servicio: ${err.message || "Error desconocido"}`);
+    }
+  };
+
   return (
     previewServiceId ? (
       // --- VISTA DE VISTA PREVIA ---
@@ -203,11 +232,47 @@ export default function GestionPaginaView() {
                       styleClass={service.serviceState === 'visible' ? 'bg-gray-600' : 'bg-teal-600'}
                       onPress={() => handleToggleState(service)}
                     />
-                    <Boton text="Eliminar" styleClass="bg-red-600" onPress={() => ""} />
+                    <Boton text="Eliminar" styleClass="bg-red-600" onPress={() => handleDeleteClick(service)} />
                   </div>
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Modal de Confirmación de Eliminación */}
+          {isDeleteModalOpen && serviceToDelete && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Eliminar Servicio</h3>
+                <p className="text-gray-600 mb-4">
+                  Esta acción es irreversible. Para confirmar, escribe el nombre del servicio: 
+                  <span className="font-bold select-all ml-1">"{serviceToDelete.name}"</span>
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmationName}
+                  onChange={(e) => setDeleteConfirmationName(e.target.value)}
+                  placeholder="Nombre del servicio"
+                  className="w-full p-2 border border-gray-300 rounded mb-6 focus:ring-2 focus:ring-red-500 outline-none"
+                  autoFocus
+                />
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleCancelDelete}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    disabled={deleteConfirmationName !== serviceToDelete.name}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    Eliminar Definitivamente
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
