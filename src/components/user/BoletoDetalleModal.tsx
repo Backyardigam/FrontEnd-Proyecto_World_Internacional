@@ -26,6 +26,13 @@ const formatDateTime = (dateString: string) =>
 
 const formatCurrency = (amount: number) => `S/ ${amount.toFixed(2)}`;
 
+const formatServiceName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 export default function BoletoDetalleModal({ ticketId, onClose }: BoletoDetalleModalProps) {
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,7 +88,7 @@ export default function BoletoDetalleModal({ ticketId, onClose }: BoletoDetalleM
             {/* Cabecera */}
             <header className="bg-naranja-f text-white p-6 flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">{ticket.service}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{formatServiceName(ticket.service)}</h1>
                 <p className="text-orange-100">Boleto Electrónico</p>
               </div>
               <div className="text-right">
@@ -109,9 +116,9 @@ export default function BoletoDetalleModal({ ticketId, onClose }: BoletoDetalleM
                   <p className="font-medium text-gray-900">{ticket.phoneNumber}</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg">
+              {/* <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Código QR (Próximamente)</p>
-              </div>
+              </div> */}
             </section>
 
             {/* Detalles del Servicio */}

@@ -1,11 +1,50 @@
-<section id="nosotros" class="py-20 lg:py-32">
-  <div class="container mx-auto px-6 text-center">
-    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sobre World International</h2>
-    <p class="max-w-3xl mx-auto text-lg text-gray-600 leading-relaxed">
-      En World International, nuestra pasión es crear viajes que no solo te lleven a un destino, sino que te transformen. Con años de experiencia y un profundo amor por la exploración, diseñamos cada itinerario para ofrecerte autenticidad, confort y aventura.
-    </p>
-    <div class="mt-12">
-      <a href="/nosotros" class="inline-block px-8 py-3 bg-naranja-c text-white font-semibold rounded-full shadow-md hover:bg-naranja-f transition-colors duration-300">Conoce más sobre nuestra historia</a>
+<section id="nosotros" class="py-16 lg:py-24 bg-white">
+  <div class="container mx-auto px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sobre World International</h2>
+      <p class="max-w-2xl mx-auto text-gray-600">Descubre nuestra esencia y lo que nos impulsa a ofrecerte las mejores experiencias en Tacna.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 lg:gap-12 mb-16">
+      <div class="bg-gray-50 p-8 rounded-2xl shadow-sm border-l-4 border-naranja-c">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Misión</h3>
+        <p class="text-gray-700 leading-relaxed">
+          Ser una agencia mayorista innovadora de los servicios turísticos en Tacna con calidad y presencia en el mercado local.
+        </p>
+      </div>
+      <div class="bg-gray-50 p-8 rounded-2xl shadow-sm border-l-4 border-naranja-c">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Visión</h3>
+        <p class="text-gray-700 leading-relaxed">
+          Ser una agencia de viajes reconocida a nivel local y regional por la confianza, variedad y seguridad de nuestros servicios ofertados. Desarrollar actividades turísticas sostenibles, cumpliendo con nuestra responsabilidad social.
+        </p>
+      </div>
+    </div>
+
+    <div class="text-center mb-10">
+      <h3 class="text-2xl font-bold text-gray-800">Nuestros Valores</h3>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[
+        { title: "Compromiso", desc: "Estamos comprometidos en brindar un servicio que satisfaga y supere las expectativas de nuestros clientes." },
+        { title: "Tolerancia", desc: "Respetar, aceptar y valorar las diferencias individuales, resolviendo inconvenientes de forma constructiva." },
+        { title: "Sostenibilidad", desc: "Generar valor económico cuidando del medio ambiente y el bienestar social a largo plazo." },
+        { title: "Empatía", desc: "Entender las necesidades de nuestros clientes para brindarles información y una mejor experiencia." },
+        { title: "Respeto", desc: "Compromiso con el respeto mutuo entre nuestros colaboradores y en la atención al cliente." },
+        { title: "Trabajo en Equipo", desc: "Colaboración constante para asegurar el correcto funcionamiento y la calidad del servicio." }
+      ].map((valor) => (
+        <div class="p-6 border rounded-xl hover:shadow-md transition-shadow bg-white">
+          <h4 class="font-bold text-lg text-naranja-c mb-2">{valor.title}</h4>
+          <p class="text-sm text-gray-600">{valor.desc}</p>
+        </div>
+      ))}
+      
+      <div class="p-6 border rounded-xl hover:shadow-md transition-shadow bg-white sm:col-span-2 lg:col-span-3 lg:w-2/3 lg:mx-auto">
+        <h4 class="font-bold text-lg text-naranja-c mb-2">Vocación de Servicio</h4>
+        <p class="text-sm text-gray-600">
+          Nuestra pasión es acompañar al turista ofreciendo toda la información y atención que pueda necesitar. Buscamos que cada cliente se lleve la mejor impresión de la ciudad y de nosotros.
+        </p>
+      </div>
     </div>
   </div>
 </section>

@@ -19,28 +19,32 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   const allDiscounts = useStore($discounts);
   const itemDiscount = allDiscounts[item.uuid];
 
+  const [fecha, setFecha] = useState(item.fecha || "");
+  const [horario, setHorario] = useState(item.horario || "");
+  const [buyerData, setBuyerData] = useState<PassengerFormData | null>(
+    item.buyerData
+  );
+
   const priceDetails = useMemo(() => {
     const originalPrice = item.price;
     const discountInfo = getDiscountInfo(originalPrice, itemDiscount);
     const stockLimit = itemDiscount?.discountStock;
+    const expirationDate = itemDiscount?.discountExpiration;
+
+    // Validamos si la fecha seleccionada está dentro del rango de la promoción
+    const isDateValid = !expirationDate || !fecha || fecha <= expirationDate.split("T")[0];
 
     // Lógica clave: si se supera el stock, el descuento no aplica.
-    // Se aplica si: 1) el descuento está activo Y 2) el stock es ilimitado (null) O la cantidad es menor o igual al stock (que debe ser un número).
-    const applyDiscount = discountInfo.isActive && (
+    // Se aplica si: 1) el descuento está activo, 2) la fecha es válida Y 3) el stock es ilimitado (null) O la cantidad es menor o igual al stock.
+    const applyDiscount = discountInfo.isActive && isDateValid && (
       stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
     );
 
     const finalPricePerUnit = applyDiscount ? discountInfo.finalPrice : originalPrice;
     const total = finalPricePerUnit * item.quantity;
 
-    return { ...discountInfo, finalPricePerUnit, total, applyDiscount, stockLimit };
-  }, [item.price, item.quantity, itemDiscount]);
-
-  const [fecha, setFecha] = useState(item.fecha || "");
-  const [horario, setHorario] = useState(item.horario || "");
-  const [buyerData, setBuyerData] = useState<PassengerFormData | null>(
-    item.buyerData
-  );
+    return { ...discountInfo, finalPricePerUnit, total, applyDiscount, stockLimit, isDateValid };
+  }, [item.price, item.quantity, itemDiscount, fecha]);
 
   // Cuando los datos del formulario cambian, actualizamos el store de nanostores.
   useEffect(() => {
@@ -136,9 +140,13 @@ export default function CartItemCard({ item }: CartItemCardProps) {
               />
             </div>
           </div>
-          {priceDetails.isActive && !priceDetails.applyDiscount && priceDetails.stockLimit && (
+          {priceDetails.isActive && !priceDetails.applyDiscount && (
             <div className="mt-3 text-xs text-orange-700 bg-orange-100 p-2 rounded-md">
-              <strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> pasajeros. Al seleccionar más, se aplica el precio original a todos.
+              {!priceDetails.isDateValid ? (
+                <span><strong>Nota:</strong> La oferta no es válida para la fecha seleccionada.</span>
+              ) : priceDetails.stockLimit && item.quantity > priceDetails.stockLimit ? (
+                <span><strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> pasajeros. Al seleccionar más, se aplica el precio original a todos.</span>
+              ) : null}
             </div>
           )}
         </div>

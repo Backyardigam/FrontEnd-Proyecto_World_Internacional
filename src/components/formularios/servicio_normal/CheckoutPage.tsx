@@ -27,8 +27,10 @@ export default function CheckoutPage() {
       const itemDiscount = allDiscounts[item.uuid];
       const discountInfo = getDiscountInfo(item.price, itemDiscount);
       const stockLimit = itemDiscount?.discountStock;
+      const expirationDate = itemDiscount?.discountExpiration;
+      const isDateValid = !expirationDate || !item.fecha || item.fecha <= expirationDate.split("T")[0];
 
-      const applyDiscount = discountInfo.isActive && (
+      const applyDiscount = discountInfo.isActive && isDateValid &&(
       stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
     );
 
@@ -38,7 +40,7 @@ export default function CheckoutPage() {
 
       return acc + finalPricePerUnit * item.quantity;
     }, 0);
-  }, [cart.items]);
+  }, [cart.items, allDiscounts]);
 
   const allFormsFilled = useMemo(() => {
     return cart.items.every((item) => item.status === "filled");
@@ -67,7 +69,9 @@ export default function CheckoutPage() {
         const itemDiscount = allDiscounts[item.uuid];
         const discountInfo = getDiscountInfo(item.price, itemDiscount);
         const stockLimit = itemDiscount?.discountStock;
-        const applyDiscount = discountInfo.isActive && (
+        const expirationDate = itemDiscount?.discountExpiration;
+        const isDateValid = !expirationDate || !item.fecha || item.fecha <= expirationDate.split("T")[0];
+        const applyDiscount = discountInfo.isActive && isDateValid && (
       stockLimit === null || (typeof stockLimit === 'number' && item.quantity <= stockLimit)
     );
         const finalPricePerUnit = applyDiscount ? discountInfo.finalPrice : item.price;
@@ -139,11 +143,11 @@ export default function CheckoutPage() {
                 const itemDiscount = allDiscounts[item.uuid];
                 const discountInfo = getDiscountInfo(item.price, itemDiscount);
                 const stockLimit = itemDiscount?.discountStock;
+                const expirationDate = itemDiscount?.discountExpiration;
+                const isDateValid = !expirationDate || !item.fecha || item.fecha <= expirationDate.split("T")[0];
                 const applyDiscount =
-                  discountInfo.isActive &&
-                  (stockLimit === null ||
-                    (typeof stockLimit === "number" &&
-                      item.quantity <= stockLimit));
+                  discountInfo.isActive && isDateValid &&
+                  (stockLimit === null || (typeof stockLimit === "number" && item.quantity <= stockLimit));
                 const finalPricePerUnit = applyDiscount
                   ? discountInfo.finalPrice
                   : item.price;

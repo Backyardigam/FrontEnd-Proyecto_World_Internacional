@@ -21,6 +21,13 @@ interface ServiceInfo {
   schedules: string[];
 }
 
+const formatServiceName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 export default function VistaBoletos() {
   const [tickets, setTickets] = useState<TicketSummary[]>([]);
   const [services, setServices] = useState<ServiceInfo[]>([]);
@@ -225,7 +232,7 @@ export default function VistaBoletos() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {ticket.name}
+                        {formatServiceName(ticket.name)}
                       </div>
                       <div className="text-sm text-gray-500">
                         {ticket.email}
@@ -240,7 +247,7 @@ export default function VistaBoletos() {
                           ? ticket.date
                           : `${ticket.date}T00:00:00`
                       ).toLocaleDateString()}
-                      <span className="font-semibold">{ticket.schedule}</span>
+                      <span className="font-semibold"> {ticket.schedule}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-800">
                       {ticket.peopleCount}

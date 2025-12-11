@@ -125,17 +125,21 @@ export default function FormularioMirabus() {
     const originalPrice = serviceInfo?.price || 0;
     const discountInfo = getDiscountInfo(originalPrice, serviceDiscount);
     const stockLimit = serviceDiscount?.discountStock;
+    const expirationDate = serviceDiscount?.discountExpiration;
+
+    // Validamos si la fecha seleccionada está dentro del rango de la promoción
+    const isDateValid = !expirationDate || !tripSelection?.fecha || tripSelection.fecha <= expirationDate.split("T")[0];
 
     // Lógica clave: si se supera el stock, el descuento no aplica.
-    const applyDiscount = discountInfo.isActive && (
-      stockLimit === null || (typeof stockLimit === 'number' && selectSeat.length <= stockLimit)
+    const applyDiscount = discountInfo.isActive && isDateValid && (
+      stockLimit === null || (typeof stockLimit === 'number' && selectedSeats.length <= stockLimit)
     );
 
     const finalPricePerSeat = applyDiscount ? discountInfo.finalPrice : originalPrice;
     const total = finalPricePerSeat * selectedSeats.length;
 
-    return { ...discountInfo, finalPricePerSeat, total, applyDiscount, stockLimit };
-  }, [serviceInfo, serviceDiscount, selectedSeats.length]);
+    return { ...discountInfo, finalPricePerSeat, total, applyDiscount, stockLimit, isDateValid };
+  }, [serviceInfo, serviceDiscount, selectedSeats.length, tripSelection?.fecha]);
 
   const allFormsFilled = useMemo(() => {
     return !!(passengerData?.nombreCompleto && passengerData.celular && passengerData.correo);
@@ -388,9 +392,13 @@ export default function FormularioMirabus() {
                     <span className="text-gray-700 font-medium">Precio Final por Asiento:</span>
                     <span className="font-bold text-xl text-blue-700">S/ {priceDetails.finalPricePerSeat.toFixed(2)}</span>
                   </div>
-                  {priceDetails.isActive && !priceDetails.applyDiscount && priceDetails.stockLimit && (
+                  {priceDetails.isActive && !priceDetails.applyDiscount && (
                     <div className="pt-2 text-xs text-orange-700 bg-orange-100 p-2 rounded-md">
-                      <strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> asientos. Al seleccionar más, se aplica el precio original a todos.
+                      {!priceDetails.isDateValid ? (
+                        <span><strong>Nota:</strong> La oferta no es válida para la fecha seleccionada.</span>
+                      ) : priceDetails.stockLimit && selectedSeats.length > priceDetails.stockLimit ? (
+                        <span><strong>Nota:</strong> La oferta es válida hasta <strong>{priceDetails.stockLimit}</strong> asientos. Al seleccionar más, se aplica el precio original a todos.</span>
+                      ) : null}
                     </div>
                   )}
                    {priceDetails.expirationMessage && (

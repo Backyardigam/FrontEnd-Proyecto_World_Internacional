@@ -6,6 +6,13 @@ import { apiGet, ApiError } from "../../utils/apiClient";
 import type { TicketSummary } from "../formularios/utils/payment.contract";
 import BoletoDetalleModal from "./BoletoDetalleModal";
 
+const formatServiceName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 export default function UserProfile() {
   const { user, loading: authLoading } = useStore($auth);
 
@@ -123,7 +130,7 @@ export default function UserProfile() {
         {tickets.map(ticket => (
           <div key={ticket.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow">
             <div className="flex-grow">
-              <p className="font-semibold text-gray-800 text-lg">{ticket.service}</p>
+              <p className="font-semibold text-gray-800 text-lg">{formatServiceName(ticket.service)}</p>
               <p className="text-sm text-gray-600">
                 {new Date(ticket.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
                 <span className="font-bold"> | {ticket.schedule}</span>

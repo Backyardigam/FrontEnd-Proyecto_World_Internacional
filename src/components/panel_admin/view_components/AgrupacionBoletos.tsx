@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { apiGet, ApiError } from "../../../utils/apiClient";
-import type { ISeatDistributionItem } from "../admin_utils/mirabusAdmin";
+
+interface SeatDistributionItem {
+  x: number;
+  y: number;
+  id: string;
+}
 
 interface BusService{
   //Como esto pueden llegar en array, cada uno es un bus en el que pueden ir multiples asientos
-  distribution:ISeatDistributionItem[];
+  distribution:SeatDistributionItem[];
   orderBus:string;//B-01
 }
 
@@ -66,55 +71,8 @@ export default function AgrupacionBoletos() {
     });
 
     try {
-      // --- MOCK DATA ---
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simular red
-      let result: ServiceSearch;
-      if (selectedService === 'mirabus_city_tour') {
-        // Mock para un servicio tipo Mirabus
-        result = {
-          buses: [
-            {
-              orderBus: 'B-01',
-              distribution: [
-                { id: 1, x: 1, y: 1 }, { id: 2, x: 2, y: 1 }, { id: 3, x: 4, y: 1 }, { id: 4, x: 5, y: 1 },
-                { id: 5, x: 1, y: 2 }, { id: 6, x: 2, y: 2 }, { id: 7, x: 4, y: 2 }, { id: 8, x: 5, y: 2 },
-                { id: 9, x: 1, y: 3 }, { id: 10, x: 2, y: 3 }, { id: 11, x: 4, y: 3 }, { id: 12, x: 5, y: 3 },
-              ]
-            },
-            {
-              orderBus: 'B-02',
-              distribution: [
-                { id: 1, x: 1, y: 1 }, { id: 2, x: 2, y: 1 }, { id: 3, x: 4, y: 1 }, { id: 4, x: 5, y: 1 },
-                { id: 5, x: 1, y: 2 }, { id: 6, x: 2, y: 2 }, { id: 7, x: 4, y: 2 }, { id: 8, x: 5, y: 2 },
-                { id: 9, x: 1, y: 3 }, { id: 10, x: 2, y: 3 }, { id: 11, x: 4, y: 3 }, { id: 12, x: 5, y: 3 },
-              ]
-            }
-          ],
-          boletos: [
-            { nombre: 'Familia García', peopleCount: 2, orderBus: 'B-01', idSeat: ['1', '2'] },
-            { nombre: 'Juan Pérez', peopleCount: 1, orderBus: 'B-01', idSeat: ['5'] },
-            { nombre: 'Grupo Amigos', peopleCount: 3, orderBus: 'B-01', idSeat: ['3', '4', '7'] },
-            { nombre: 'Lucía Fernández', peopleCount: 1, orderBus: 'B-01', idSeat: ['10'] },
-            { nombre: 'Grupo Otros', peopleCount: 3, orderBus: 'B-02', idSeat: ['3', '4', '7'] },
-            { nombre: 'Pepito', peopleCount: 1, orderBus: 'B-02', idSeat: ['10'] },
-          ]
-        };
-      } else {
-        // Mock para un servicio normal
-        result = {
-          boletos: [
-            { nombre: 'Carlos Mendoza', peopleCount: 4 },
-            { nombre: 'Ana Torres', peopleCount: 2 },
-            { nombre: 'Grupo Aventura', peopleCount: 8 },
-            { nombre: 'Pareja Viajera', peopleCount: 2 },
-            { nombre: 'Explorador Solitario', peopleCount: 1 },
-            { nombre: 'Familia Soto', peopleCount: 5 },
-          ]
-        };
-      }
-      // --- FIN MOCK DATA ---
-      setSearchResult(result);
-      // const result = await apiGet<ServiceSearch>(`/manage/tours-clients?${params.toString()}`);
+      const result = await apiGet<ServiceSearch>(`/boletos/agrupacion?${params.toString()}`);
+      setSearchResult(result)
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -193,9 +151,13 @@ function MirabusGroupingView({ result }: { result: ServiceSearch }) {
   return (
     <div className="space-y-8">
       {buses.map(bus => {
-        const grid = Array(Math.max(...bus.distribution.map(s => s.y))).fill(null)
-          .map(() => Array(Math.max(...bus.distribution.map(s => s.x))).fill(null));
-        bus.distribution.forEach(seat => { grid[seat.y - 1][seat.x - 1] = seat; });
+        if (!bus.distribution || bus.distribution.length === 0) return null;
+
+        const maxY = Math.max(...bus.distribution.map(s => s.y));
+        const maxX = Math.max(...bus.distribution.map(s => s.x));
+        
+        const grid = Array(maxY).fill(null).map(() => Array(maxX).fill(null));
+        bus.distribution.forEach(seat => { if (seat.y > 0 && seat.x > 0) grid[seat.y - 1][seat.x - 1] = seat; });
 
         return (
           <div key={bus.orderBus} className="p-4 border rounded-lg">

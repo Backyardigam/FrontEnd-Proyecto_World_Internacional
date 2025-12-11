@@ -106,10 +106,9 @@ export default function BoletoDetalleView({ ticketId, onClose }: BoletoDetallePr
           </div>
 
           {/* QR Code Placeholder */}
-          <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg">
+          {/* <div className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Código QR</p>
-            {/* Aquí iría el componente de QR si se implementa */}
-          </div>
+          </div> */}
         </section>
 
         {/* Detalles del Servicio */}
