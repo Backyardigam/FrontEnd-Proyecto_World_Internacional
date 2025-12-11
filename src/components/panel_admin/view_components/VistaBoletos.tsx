@@ -232,14 +232,14 @@ export default function VistaBoletos() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatServiceName(ticket.name)}
+                        {ticket.name}
                       </div>
                       <div className="text-sm text-gray-500">
                         {ticket.email}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                      {ticket.service}
+                      {formatServiceName(ticket.service)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(

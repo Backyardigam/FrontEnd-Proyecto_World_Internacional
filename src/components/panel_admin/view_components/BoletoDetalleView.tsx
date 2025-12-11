@@ -26,6 +26,13 @@ const formatDateTime = (dateString: string) =>
 
 const formatCurrency = (amount: number) => `S/ ${amount.toFixed(2)}`;
 
+const formatServiceName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 export default function BoletoDetalleView({ ticketId, onClose }: BoletoDetalleProps) {
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +83,7 @@ export default function BoletoDetalleView({ ticketId, onClose }: BoletoDetallePr
         {/* Cabecera del Boleto */}
         <header className="bg-naranja-f text-white p-6 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{ticket.service}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{formatServiceName(ticket.service)}</h1>
             <p className="text-orange-100">Boleto Electrónico (Vista Admin)</p>
           </div>
           <div className="text-right">
