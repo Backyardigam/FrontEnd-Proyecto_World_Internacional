@@ -62,7 +62,7 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
              // 3. FORZAR REDIRECCIÓN MANUALMENTE
              // Usamos el ID de la orden que ya tenemos en el estado o props
              // (Asegúrate de tener el orderId disponible aquí)
-             window.location.href = `/boleto/${event.clientAnswer.orderDetails.orderId}?status=success`;
+             window.location.href = `/boleto?id=${event.clientAnswer.orderDetails.orderId}`;
              return false; 
           }
           
