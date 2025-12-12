@@ -8,12 +8,12 @@ interface BoletoDetalleProps {
 }
 
 // Funciones de formato reutilizadas
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+// const formatDate = (dateString: string) =>
+//   new Date(dateString).toLocaleDateString("es-ES", {
+//     year: "numeric",
+//     month: "long",
+//     day: "numeric",
+//   });
 
 const formatDateTime = (dateString: string) =>
   new Date(dateString).toLocaleString("es-ES", {
@@ -122,7 +122,7 @@ export default function BoletoDetalleView({ ticketId, onClose }: BoletoDetallePr
         <section className="p-6 md:p-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <p className="text-sm text-gray-500">Fecha del Tour</p>
-            <p className="font-semibold text-lg text-gray-900">{formatDate(ticket.date)}</p>
+            <p className="font-semibold text-lg text-gray-900">{ticket.date}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Horario</p>

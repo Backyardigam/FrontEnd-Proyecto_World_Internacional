@@ -19,12 +19,12 @@ export interface TicketData {
 
 interface BoletoProps {}
 // Funciones para formatear los datos
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+// const formatDate = (dateString: string) =>
+//   new Date(dateString).toLocaleDateString("es-ES", {
+//     year: "numeric",
+//     month: "long",
+//     day: "numeric",
+//   });
 
 const formatDateTime = (dateString: string) =>
   new Date(dateString).toLocaleString("es-ES", {
@@ -265,7 +265,7 @@ export default function Boleto({}: BoletoProps) {
                 </div>
               </div>
 
-              {/* QR Code Placeholder
+              {/* QR Code Placeholder */}
               <div
                 className="flex flex-col items-center justify-center bg-gray-50 p-4 rounded-lg"
                 data-html2canvas-ignore="true"
@@ -289,7 +289,7 @@ export default function Boleto({}: BoletoProps) {
                 <p className="text-xs text-gray-600 mt-2 text-center">
                   Presenta este código al abordar
                 </p>
-              </div> */}
+              </div>
             </section>
 
             {/* Detalles del Servicio */}
@@ -297,7 +297,7 @@ export default function Boleto({}: BoletoProps) {
               <div>
                 <p className="text-sm text-gray-500">Fecha del Tour</p>
                 <p className="font-semibold text-lg text-gray-900">
-                  {formatDate(ticketData.date)}
+                  {ticketData.date}
                 </p>
               </div>
               <div>

@@ -33,20 +33,25 @@ import "../styles/global.css";
   >
     <main class="w-full max-w-2xl">
       <BoletoComponent client:load />
-
-      <div class="no-print mt-8 flex flex-col sm:flex-row justify-center gap-4">
-        <button 
-          onclick="window.print()"
-          class="w-full sm:w-auto px-8 py-3 bg-naranja-c text-white font-semibold rounded-lg shadow-md hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 transition-colors"
-        >
-          Imprimir / Guardar PDF
-        </button>
-        <a
-          href="/"
-          class="w-full sm:w-auto text-center px-8 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
-        >
-          Volver al Inicio
-        </a>
+      <div class="no-print mt-8 flex flex-col justify-center gap-4">
+        <div>
+          Revisa tu correo con el que te registraste para recibir tu boleto. Tambien revisa en 
+          spam si no lo encuentras en tu bandeja de entrada.
+        </div>
+        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <button 
+            onclick="window.print()"
+            class="w-full sm:w-auto px-8 py-3 bg-naranja-c text-white font-semibold rounded-lg shadow-md hover:bg-naranja-f focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 transition-colors"
+          >
+            Imprimir / Guardar PDF
+          </button>
+          <a
+            href="/"
+            class="w-full sm:w-auto text-center px-8 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+          >
+            Volver al Inicio
+          </a>
+        </div>
       </div>
     </main>
   </body>
