@@ -109,6 +109,7 @@ export default function FormularioMirabus() {
     deselectSeat,
     initiatePayment,
     stopSessionTimer,
+    resumeSessionTimer,
   } = useSocketTrip();
 
   // Estado local para guardar los asientos que el usuario ha seleccionado
@@ -177,10 +178,8 @@ export default function FormularioMirabus() {
       setUiStatus({ status: "connecting", message: "Conectando..." });
 
       // Llamamos a connectToTrip. El backend identificará al usuario por su cookie.
-      connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => { // El callback ahora solo maneja el error
+      connectToTrip({ ...tripSelection, servicio: serviceId }, (result) => {
         if (!result.success) {
-          // Si la conexión falla, el hook se limpiará y `isConnected` será false.
-          // El useEffect se encargará de actualizar la UI a 'error'.
           setUiStatus({ status: "error", message: result.error });
         }
       });
@@ -200,11 +199,9 @@ export default function FormularioMirabus() {
   // Efecto centralizado para reaccionar a los cambios de estado del socket.
   useEffect(() => {
     if (isConnected) {
-      // Si estamos conectados, entramos en modo selección y limpiamos el estado de la UI.
       setIsSelecting(true);
       setUiStatus({ status: "idle" });
     } else if (sessionExpired) {
-      // Si la sesión expiró, reseteamos la UI y mostramos un mensaje.
       setIsSelecting(false);
       setUiStatus({ status: "error", message: "Tu sesión ha expirado. Por favor, selecciona los asientos de nuevo." });
     } else {
@@ -212,7 +209,6 @@ export default function FormularioMirabus() {
     }
   }, [isConnected, sessionExpired]);
 
-  // Formatear el tiempo restante para mostrarlo como MM:SS
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -237,7 +233,8 @@ export default function FormularioMirabus() {
         // documentNumber: passengerData.numeroDocumento,
       });
 
-      // El backend espera el horario en formato HH:mm:ss
+      // El backend espera el horario en formato HH:mm:ss pero se envia un 12:00 am:00 y aun asi
+      // funciona se sugiere dejarlo asi pero corregirlo en un futuro 
       // const scheduleTimeParts = tripSelection.horario.split(" ")[0].split(":"); // "8:00 AM" -> ["8", "00"]
       const scheduleHHMMSS = `${tripSelection.horario}:00`;
 
@@ -282,6 +279,13 @@ export default function FormularioMirabus() {
       });
     });
   }, [initiatePayment]);
+
+  const handlePaymentCancelled = useCallback(() => {
+    // 1. Desbloquear la UI
+    setIsPaymentProcessing(false);
+    // 2. Reanudar el temporizador de sesión
+    resumeSessionTimer();
+  }, [resumeSessionTimer]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
 
@@ -334,6 +338,7 @@ export default function FormularioMirabus() {
               <FechaHorarioSelector
                 schedules={serviceInfo?.schedules || []}
                 onSelectionChange={handleTripSelection}
+                disabled={isPaymentProcessing}
               />
               {/* --- INICIO: Nuevo Cuadro de Estado Dinámico --- */}
               {tripSelection && !isSelecting && uiStatus.status === "idle" && (
@@ -391,7 +396,8 @@ export default function FormularioMirabus() {
                     <select
                       value={selectedBusOrden || ""}
                       onChange={(e) => setSelectedBusOrden(e.target.value)}
-                      className="mt-4 p-2 border rounded"
+                      className="mt-4 p-2 border rounded disabled:bg-gray-200 disabled:cursor-not-allowed"
+                      disabled={isPaymentProcessing}
                     >
                       {buses.map((bus) => (
                         <option key={bus.ordenBus} value={bus.ordenBus}>
@@ -468,6 +474,7 @@ export default function FormularioMirabus() {
                         disabled={!allFormsFilled}
                         onPaymentFormLoaded={handlePaymentFormLoaded}
                         onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentCancelled={handlePaymentCancelled}
                       />
                     </>
                   ) : (

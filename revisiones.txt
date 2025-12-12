@@ -5,4 +5,7 @@ no te considera que estes tratando de reservar el servicio, y te muestra un carr
 - agregar elementos visuales que indiquen la orientacion del bus 
 - Corregir los parametros correctos en el reset password
 
-- Validar la reserva 
+- Validar la reserva en el webhook adicionalmente, aparte del evento
+- Ajustar el ISR para mejorar el rendimiento de la pagina
+
+- en el ws bloquear la seleccion de buses

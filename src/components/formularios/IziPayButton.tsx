@@ -8,13 +8,14 @@ interface PaymentButtonProps {
   disabled?: boolean;
   onPaymentFormLoaded?: () => void;
   onPaymentSuccess?: (orderId: string) => Promise<void>;
+  onPaymentCancelled?: () => void;
 }
 
 /**
  * Un botón que encapsula toda la lógica para iniciar el proceso de pago
  * con el Hosted Checkout de Izipay.
  */
-export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFormLoaded, onPaymentSuccess }: PaymentButtonProps) => {
+export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFormLoaded, onPaymentSuccess, onPaymentCancelled }: PaymentButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formToken, setFormToken] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -46,6 +47,16 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFo
       console.error("Error al iniciar el pago:", error);
       setPaymentError(error.message || "Hubo un error al procesar tu solicitud.");
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelPayment = () => {
+    // Limpiamos el token para desmontar el formulario
+    setFormToken(null);
+    setIsLoading(false);
+    // Notificamos al padre para que desbloquee los inputs
+    if (onPaymentCancelled) {
+      onPaymentCancelled();
     }
   };
 
@@ -109,7 +120,15 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFo
       ) : (
         // AQUÍ IZIPAY DIBUJARÁ EL FORMULARIO NEON
         // La clase 'kr-embedded' le dice a Izipay dónde pintar
-        <div className="kr-smart-form" kr-popin kr-form-token={formToken}></div>
+        <div className="flex flex-col gap-3">
+          <div className="kr-smart-form" kr-popin kr-form-token={formToken}></div>
+          <button
+            onClick={handleCancelPayment}
+            className="text-red-500 hover:text-red-700 underline text-sm font-medium py-2 self-center transition-colors"
+          >
+            Cancelar pago y editar datos
+          </button>
+        </div>
       )}
     </div>
   );

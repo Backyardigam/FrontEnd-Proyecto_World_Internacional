@@ -35,6 +35,7 @@ interface UseSocketTripReturn {
   ) => void;
   adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
   stopSessionTimer: () => void;
+  resumeSessionTimer: () => void;
 }
 
 // La URL del servidor de Socket.IO. En un proyecto real, esto debería
@@ -300,6 +301,24 @@ export function useSocketTrip(): UseSocketTripReturn {
     }
   }, []);
 
+  /**
+   * Reanuda el temporizador de sesión si fue detenido (por ejemplo, al cancelar un pago).
+   */
+  const resumeSessionTimer = useCallback(() => {
+    // Solo reanudamos si no hay un timer activo y queda tiempo
+    if (!timerRef.current && sessionTimeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setSessionTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timerRef.current!);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+  }, [sessionTimeLeft]);
+
   // El hook devuelve el estado actual y las funciones para que los componentes interactúen.
   return {
     buses, // Devuelve el array de buses
@@ -314,5 +333,6 @@ export function useSocketTrip(): UseSocketTripReturn {
     initiatePayment,
     adminToggleSeat,
     stopSessionTimer,
+    resumeSessionTimer,
   };
 }
