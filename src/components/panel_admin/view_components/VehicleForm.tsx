@@ -63,7 +63,7 @@ export default function VehicleForm({ vehicleId, onClose, onSave }: VehicleFormP
         await apiPut(`/manage/mirabus/vehicle/${vehicleId}`, payload);
       } else {
         // Ruta POST para crear
-        await apiPost('/manage/mirabus', payload);
+        await apiPost('/manage/mirabus/vehicle', payload);
       }
       onSave(); // Notifica al padre para que refresque la lista
     } catch (err) {
