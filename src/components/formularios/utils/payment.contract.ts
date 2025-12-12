@@ -40,29 +40,16 @@ export interface CreatePaymentRequest {
 
 // Salidas Backend ->> Frontend  ========================
 
-export interface IzipaySessionData {
-  token: string;          // El token de sesión que devolvió Izipay (security/v1/Token/Generate)
-  merchantCode: string;   // Tu código de comercio (necesario para configurar el SDK)
-  orderId: string;        // Tu ID de transacción (Prisma ID)
-  amount: string;         // El monto final como STRING con 2 decimales ("150.00")
-  currency: string;       // "PEN" o "USD"
-  
-  // Datos del comprador formateados para rellenar el billing del SDK
-  customerContext: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    documentType: string; // Mapeado al Enum de Izipay (ej: 0 para DNI)
-    documentNumber: string;
-  };
-  publicKey: string;
-}
-
-// La respuesta HTTP completa
 export interface CreatePaymentResponse {
   success: boolean;
-  data: IzipaySessionData;
-  message?: string; // Mensaje opcional en caso de error o advertencia
+  
+  // Datos vitales para Izipay
+  formToken: string;       // El token encriptado que genera Izipay
+  orderId: string;         // Tu UUID (cuid) generado en Prisma
+  
+  // Datos de contexto (opcional, por si quieres mostrar resumen antes de redirigir)
+  totalAmount: number;     // El monto total calculado por el backend
+  currency: string;        // "PEN"
 }
 
 // --- Contratos para el Web Polling del estado del pago ---
