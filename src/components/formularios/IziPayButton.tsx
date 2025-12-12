@@ -32,7 +32,8 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
 
       // Verificamos si la respuesta fue exitosa y tenemos el formToken
       if (response.success && response.formToken) {
-        setFormToken(response.formToken);
+        const tokenReal = (response.formToken as any).formToken || response.formToken;
+        setFormToken(tokenReal);
         // El formulario se renderizará automáticamente gracias al useEffect
       } else {
         throw new Error("No se pudo generar el token de pago.");
