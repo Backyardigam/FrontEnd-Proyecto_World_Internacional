@@ -49,12 +49,32 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
   useEffect(() => {
     // @ts-ignore
     if (formToken && window.KR) {
-      // 2. Inyectar Token en Izipay (Lyra)
-      // @ts-ignore
-      window.KR.setFormToken(formToken)
+      async function setupIzipay() {
         // @ts-ignore
-        .then(({ KR }) => KR.render()) // Esto dibuja el formulario Neon
-        .then(() => console.log("Formulario Izipay listo"));
+        let { KR } = await window.KR.setFormToken(formToken);
+        // @ts-ignore
+        KR.onSubmit(async (event) => {
+          
+          // Verificamos si el pago fue exitoso
+          if (event.clientAnswer.orderStatus === "PAID" || event.clientAnswer.orderStatus === "RUNNING") {
+             console.log("Pago exitoso detectado en Front!");
+             
+             // 3. FORZAR REDIRECCIÓN MANUALMENTE
+             // Usamos el ID de la orden que ya tenemos en el estado o props
+             // (Asegúrate de tener el orderId disponible aquí)
+             window.location.href = `/boleto/${event.clientAnswer.orderDetails.orderId}?status=success`;
+             return false; 
+          }
+          
+          // Si hubo error, dejamos que Izipay muestre el mensaje rojo
+          return true; 
+        });
+
+        // 3. Renderizar formulario
+        await KR.render();
+      }
+
+      setupIzipay();
     }
   }, [formToken]);
 
