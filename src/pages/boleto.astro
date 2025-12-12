@@ -9,7 +9,7 @@ import "../styles/global.css";
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Tu Boleto de Viaje - World Internacional</title>
-    <style>
+    <style is:global>
       @media print {
         body {
           -webkit-print-color-adjust: exact;
@@ -24,6 +24,14 @@ import "../styles/global.css";
           margin: 0;
           width: 100%;
           max-width: 100%;
+          break-inside: avoid;
+          page-break-inside: avoid;
+          break-after: page;
+          page-break-after: always;
+        }
+        .ticket-container:last-child {
+          break-after: auto;
+          page-break-after: auto;
         }
       }
     </style>

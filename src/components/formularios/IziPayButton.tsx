@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { BuyerInfo, CreatePaymentRequest, CreatePaymentResponse, TicketItemInput } from './utils/payment.contract';
 import { apiPost } from '../../utils/apiClient';
+import { clearCart } from '../../utils/cartStore';
 
 interface PaymentButtonProps {
   buyerInfo: BuyerInfo;
@@ -80,6 +81,9 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFo
                // Esperamos un momento para asegurar que el socket tenga tiempo de procesar antes de redirigir
                await new Promise(resolve => setTimeout(resolve, 2000));
              }
+
+             // Limpiamos el carrito ya que la compra fue exitosa
+             clearCart();
 
              // 3. FORZAR REDIRECCIÓN MANUALMENTE
              // Usamos el ID de la orden que ya tenemos en el estado o props
