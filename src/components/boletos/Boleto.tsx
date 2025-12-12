@@ -37,6 +37,13 @@ const formatDateTime = (dateString: string) =>
 
 const formatCurrency = (amount: number) => `S/ ${amount.toFixed(2)}`;
 
+const formatServiceName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 const POLLING_INTERVAL = 3000; // 3 segundos
 const MAX_POLLING_ATTEMPTS = 20; // Máximo 20 intentos (1 minuto)
 
@@ -224,7 +231,7 @@ export default function Boleto({}: BoletoProps) {
             <header className="bg-naranja-f text-white p-6 flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">
-                  {ticketData.service}
+                  {formatServiceName(ticketData.service)}
                 </h1>
                 <p className="text-orange-100">Boleto Electrónico</p>
               </div>

@@ -14,6 +14,7 @@ interface MirabusProps {
   onRequestSeatDeselection?: (seatId: string, busOrden: string) => void;
   // Callback para modo admin
   onAdminSeatToggle?: (seatId: string, busOrden: string) => void;
+  disabled?: boolean;
 }
 
 export default function Mirabus({
@@ -24,6 +25,7 @@ export default function Mirabus({
   onRequestSeatSelection,
   onRequestSeatDeselection,
   onAdminSeatToggle,
+  disabled = false,
 }: MirabusProps) {
   const [seats, setSeats] = useState<Seat[]>(initialSeatsData);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
@@ -81,6 +83,10 @@ export default function Mirabus({
   // funcion que maneja el click en un asiento
   const seatSelectHandler = useCallback(
     (seatId: string) => {
+      if (disabled) {
+        return;
+      }
+
       // 1. Encontrar el asiento en el estado local actual
       const seatToToggle = seats.find(s => s.id === seatId);
       if (!seatToToggle) return;
@@ -151,6 +157,7 @@ export default function Mirabus({
       seats,
       busOrden,
       areSeatsContiguous,
+      disabled,
       wouldSplitBlock,
       onRequestSeatSelection,
       onRequestSeatDeselection,
@@ -225,7 +232,7 @@ export default function Mirabus({
           {warningMessage}
         </div>
       )}
-      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} mode={mode} />
+      <AsientoBus seats={displaySeats} onSeatSelect={seatSelectHandler} mode={mode} disabled={disabled} />
     </div>
   );
 }

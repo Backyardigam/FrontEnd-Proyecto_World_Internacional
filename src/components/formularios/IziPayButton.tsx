@@ -6,13 +6,15 @@ interface PaymentButtonProps {
   buyerInfo: BuyerInfo;
   tickets: TicketItemInput[];
   disabled?: boolean;
+  onPaymentFormLoaded?: () => void;
+  onPaymentSuccess?: (orderId: string) => Promise<void>;
 }
 
 /**
  * Un botón que encapsula toda la lógica para iniciar el proceso de pago
  * con el Hosted Checkout de Izipay.
  */
-export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentButtonProps) => {
+export const IzipayButton = ({ buyerInfo, tickets, disabled = false, onPaymentFormLoaded, onPaymentSuccess }: PaymentButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formToken, setFormToken] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
       if (response.success && response.formToken) {
         const tokenReal = (response.formToken as any).formToken || response.formToken;
         setFormToken(tokenReal);
+        if (onPaymentFormLoaded) onPaymentFormLoaded();
         // El formulario se renderizará automáticamente gracias al useEffect
       } else {
         throw new Error("No se pudo generar el token de pago.");
@@ -59,6 +62,14 @@ export const IzipayButton = ({ buyerInfo, tickets, disabled = false }: PaymentBu
           if (event.clientAnswer.orderStatus === "PAID" || event.clientAnswer.orderStatus === "RUNNING") {
              console.log("Pago exitoso detectado en Front!");
              
+             // Notificamos al padre (FormularioMirabus) para que emita el evento de socket
+             if (onPaymentSuccess) {
+               // Pasamos el ID de la orden explícitamente
+               await onPaymentSuccess(event.clientAnswer.orderDetails.orderId);
+               // Esperamos un momento para asegurar que el socket tenga tiempo de procesar antes de redirigir
+               await new Promise(resolve => setTimeout(resolve, 2000));
+             }
+
              // 3. FORZAR REDIRECCIÓN MANUALMENTE
              // Usamos el ID de la orden que ya tenemos en el estado o props
              // (Asegúrate de tener el orderId disponible aquí)

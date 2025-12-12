@@ -160,14 +160,14 @@ export const requestPasswordReset = async (email: string) => {
  * @param code El código recibido.
  */
 export const verifyResetCode = async (email: string, code: string) => {
-  await apiPost("/auth/verify-reset-code", { email, code });
+  await apiPost("/auth/verify-reset-code", { email, code });//me retorna un resetToken del post
 };
 
 /**
  * Paso 3 de recuperación: Establece la nueva contraseña.
  */
 export const resetPassword = async (email: string, code: string, newPassword: string) => {
-  await apiPost("/auth/reset-password", { email, code, newPassword });
+  await apiPost("/auth/reset-password", { email, code, newPassword });//el resetToken tengo que enviarlo en el header, con Bearer resetToken
 };
 
 /**

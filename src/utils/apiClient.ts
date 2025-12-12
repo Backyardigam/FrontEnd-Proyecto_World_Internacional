@@ -93,8 +93,10 @@ export async function apiGet<T = any>(url: string, options: AuthenticatedFetchOp
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      // Priorizamos el mensaje de error del backend.
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      // Priorizamos 'message' (usuario) sobre 'error' (técnico) y aseguramos que sea string
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText que es más descriptivo.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
@@ -133,7 +135,9 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
@@ -165,7 +169,9 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
@@ -198,7 +204,9 @@ export async function apiPatch<T = any>(url: string, body: any, options: Authent
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
@@ -234,7 +242,9 @@ export async function apiDelete<T = any>(url: string, body?: any, options: Authe
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
@@ -291,7 +301,9 @@ export async function apiPostFormData<T = any>(url: string, data: any, files: Re
   if (!response.ok) {
     try {
       const errorData = await response.json();
-      throw new ApiError(errorData.error || errorData.message || `Error HTTP: ${response.status}`, response.status);
+      const msg = errorData.message || errorData.error;
+      const finalMsg = typeof msg === 'string' ? msg : (msg ? JSON.stringify(msg) : `Error HTTP: ${response.status}`);
+      throw new ApiError(finalMsg, response.status);
     } catch (e) {
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);

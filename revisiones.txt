@@ -1,9 +1,8 @@
-- El login de invitados y la redireccion a formulario mirabus(en algun punto no va a /reservar)
 - mostrar correctamente mensajes de error de lado del usuario
 - Al hacer click en reservar ya y no estas sesion iniciada, luego de iniciar 
 no te considera que estes tratando de reservar el servicio, y te muestra un carrito vacio
 - que la agrupacion de boletos tenga una mejor interfaz grafica
 - agregar elementos visuales que indiquen la orientacion del bus 
-- la validacion de asientos en la base de datos, 
-- hacer el manejo de stock al momento de las reservas en los formularios
-- Usar la API real para agrupacion de boletos
+- Corregir los parametros correctos en el reset password
+
+- Validar la reserva 

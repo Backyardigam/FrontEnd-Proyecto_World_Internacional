@@ -107,7 +107,8 @@ export default function FormularioMirabus() {
     disconnectFromTrip,
     selectSeat,
     deselectSeat,
-    initiatePayment, // <-- Importamos la nueva función
+    initiatePayment,
+    stopSessionTimer,
   } = useSocketTrip();
 
   // Estado local para guardar los asientos que el usuario ha seleccionado
@@ -116,6 +117,9 @@ export default function FormularioMirabus() {
   // --- ESTADOS PARA PREPARAR DATOS PARA EL BOTÓN DE PAGO ---
   const [buyerInfo, setBuyerInfo] = useState<BuyerInfo | null>(null);
   const [tickets, setTickets] = useState<TicketItemInput[]>([]);
+
+  // Estado para controlar si el proceso de pago está activo (formulario cargado)
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
 
   // --- LÓGICA DE DESCUENTOS Y PRECIOS ---
   const allDiscounts = useStore($discounts);
@@ -193,7 +197,6 @@ export default function FormularioMirabus() {
     }
   }, [buses, selectedBusOrden]);
 
-  // --- ¡CAMBIO CLAVE! --- 
   // Efecto centralizado para reaccionar a los cambios de estado del socket.
   useEffect(() => {
     if (isConnected) {
@@ -230,7 +233,6 @@ export default function FormularioMirabus() {
         firstName: firstName,
         lastName: lastName,
         phoneNumber: passengerData.celular,
-        // Aquí podrías añadir documentType y documentNumber si los pides en el formulario
         // documentType: passengerData.tipoDocumento,
         // documentNumber: passengerData.numeroDocumento,
       });
@@ -259,6 +261,27 @@ export default function FormularioMirabus() {
       setTickets([]);
     }
   }, [isSelecting, allFormsFilled, selectedSeats, tripSelection, serviceInfo, passengerData, busToDisplay, priceDetails.finalPricePerSeat]);
+
+  // --- HANDLERS PARA EL FLUJO DE PAGO ---
+  const handlePaymentFormLoaded = useCallback(() => {
+    // 1. Bloquear la UI de selección
+    setIsPaymentProcessing(true);
+    // 2. Detener el temporizador para evitar desconexión por timeout mientras el usuario paga
+    stopSessionTimer();
+  }, [stopSessionTimer]);
+
+  const handlePaymentSuccess = useCallback(async (orderId: string) => {
+    // 1. Emitir evento de socket para reservar asientos (initiatePayment)
+    return new Promise<void>((resolve) => {
+      initiatePayment(orderId, (response) => {
+        if (!response.success) {
+          console.warn("El socket no pudo confirmar el pago, pero la redirección verificará el estado.", response.error);
+        }
+        console.log("Respuesta de initiatePayment:", response);
+        resolve();
+      });
+    });
+  }, [initiatePayment]);
 
   // --- RENDERIZADO CONDICIONAL PRINCIPAL ---
 
@@ -304,6 +327,9 @@ export default function FormularioMirabus() {
             <div className="flex items-center align-center flex-col my-5">
               <div className="font-bold text-lg mt-5 mb-5 self-start">
                 Seleccione sus asientos
+              </div>
+              <div className="text-sm text-gray-500 mt-5 mb-5 self-start">
+                Porfavor seleccione la fecha y horario en la que desee reservar para poder proceder a la reserva de asientos.
               </div>
               <FechaHorarioSelector
                 schedules={serviceInfo?.schedules || []}
@@ -355,6 +381,7 @@ export default function FormularioMirabus() {
                       initialSeatsData={busToDisplay.seats}
                       busOrden={busToDisplay.ordenBus}
                       onSelectionChange={setSelectedSeats}
+                      disabled={isPaymentProcessing} // Bloqueamos si se está pagando
                       onRequestSeatSelection={selectSeat}
                       onRequestSeatDeselection={deselectSeat}
                     />
@@ -439,10 +466,9 @@ export default function FormularioMirabus() {
                         buyerInfo={buyerInfo}
                         tickets={tickets}
                         disabled={!allFormsFilled}
+                        onPaymentFormLoaded={handlePaymentFormLoaded}
+                        onPaymentSuccess={handlePaymentSuccess}
                       />
-                      <p className="mt-4 text-sm text-gray-600">
-                        Serás redirigido a la pasarela de pago segura de Izipay.
-                      </p>
                     </>
                   ) : (
                     <p className="text-sm text-gray-500">Completa tus datos para continuar con el pago.</p>

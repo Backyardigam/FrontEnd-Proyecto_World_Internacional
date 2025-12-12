@@ -30,9 +30,11 @@ interface UseSocketTripReturn {
   selectSeat: (seatId: string, busOrden: string) => void;
   deselectSeat: (seatId: string, busOrden: string) => void;
   initiatePayment: (
+    orderId: string,
     callback: (response: { success: boolean; error?: string }) => void
   ) => void;
   adminToggleSeat: (seatId: string, busOrden: string) => void; // <-- Nueva función
+  stopSessionTimer: () => void;
 }
 
 // La URL del servidor de Socket.IO. En un proyecto real, esto debería
@@ -264,12 +266,11 @@ export function useSocketTrip(): UseSocketTripReturn {
    * @param callback - Función que se ejecuta con la respuesta del servidor.
    */
   const initiatePayment = useCallback(
-    (callback: (response: { success: boolean; error?: string }) => void) => {
-      console.log("[Socket] Notificando al servidor inicio de proceso de pago.");
-      socketRef.current?.emit(SocketEvents.INITIATE_PAYMENT, (response) => {
-        console.log("[Socket] Respuesta del servidor a INITIATE_PAYMENT:", response);
-        callback(response);
-      });
+    (orderId: string, callback: (response: { success: boolean; error?: string }) => void) => {
+      console.log(`[Socket] Notificando pago exitoso para orden ${orderId}`);
+      socketRef.current?.emit(SocketEvents.INITIATE_PAYMENT, { orderId });
+      // Como el backend no responde con un callback, asumimos que se envió y continuamos el flujo.
+      callback({ success: true });
     },
     []
   );
@@ -287,6 +288,18 @@ export function useSocketTrip(): UseSocketTripReturn {
       busOrden,
     });
   }, []);
+
+  /**
+   * Detiene el temporizador de sesión localmente.
+   * Útil cuando el usuario está en proceso de pago y no queremos que la sesión expire visualmente.
+   */
+  const stopSessionTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   // El hook devuelve el estado actual y las funciones para que los componentes interactúen.
   return {
     buses, // Devuelve el array de buses
@@ -300,5 +313,6 @@ export function useSocketTrip(): UseSocketTripReturn {
     deselectSeat,
     initiatePayment,
     adminToggleSeat,
+    stopSessionTimer,
   };
 }

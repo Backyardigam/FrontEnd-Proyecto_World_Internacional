@@ -6,9 +6,10 @@ interface AsientoBusProps {
   seats: Seat[];
   onSeatSelect: (seatId: string) => void;
   mode: 'customer' | 'admin'; // Añadimos el modo para diferenciar estilos/comportamiento
+  disabled?: boolean;
 }
 
-export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProps) {
+export default function AsientoBus({ seats, onSeatSelect, mode, disabled = false }: AsientoBusProps) {
   const [grid, setGrid] = useState<(Seat | null)[][]>([]);
   useEffect(() => {
     if (seats.length === 0) {
@@ -50,7 +51,7 @@ export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProp
                   let seatClassName = "p-1 m-0 rounded-md";
                   let iconClassName = "w-8 h-8 relative";
                   let ariaLabel = `Asiento ${seat.id}`;
-                  let isDisabled = false;
+                  let isSeatDisabled = disabled; // Hereda el estado deshabilitado del componente padre
 
                   switch (seat.status) {
                     //no borren el espacio inicial
@@ -68,19 +69,19 @@ export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProp
                       seatClassName += " bg-gray-300 cursor-wait animate-pulse";
                       iconClassName += " text-gray-600";
                       ariaLabel += " procesando selección";
-                      isDisabled = true;
+                      isSeatDisabled = true;
                       break;
                     case "occupied":
                       seatClassName += " bg-yellow-200 cursor-not-allowed";
                       iconClassName += " text-yellow-700"; //el color del trazo, no pregunten porque se pide con el text, funciona y ya
                       ariaLabel += " ocupado por otra persona";
-                      isDisabled = true;
+                      isSeatDisabled = true;
                       break;
                     case "reserved":
                       seatClassName += " bg-red-100 cursor-not-allowed";
                       iconClassName += " text-red-500";
                       ariaLabel += " reservado";
-                      isDisabled = true;
+                      isSeatDisabled = true;
                       break;
                     case "adminReserved":
                       if (mode === 'admin') {
@@ -91,16 +92,20 @@ export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProp
                         seatClassName += " bg-red-100 cursor-not-allowed"; // Mismo estilo que 'reserved' para el cliente
                         iconClassName += " text-red-500";
                         ariaLabel += " reservado";
-                        isDisabled = true;
+                        isSeatDisabled = true;
                       }
                       break;
                     case "blocked":
                       seatClassName += " bg-gray-100 cursor-not-allowed";
                       iconClassName += " text-gray-400";
-                      isDisabled = true;
+                      isSeatDisabled = true;
                       break;
                     default:
                       iconClassName += " text-gray-400";
+                  }
+
+                  if (disabled && !isSeatDisabled) {
+                    seatClassName += " cursor-not-allowed opacity-50";
                   }
 
                   return (
@@ -110,7 +115,7 @@ export default function AsientoBus({ seats, onSeatSelect, mode }: AsientoBusProp
                         onClick={() => onSeatSelect(seat.id)}
                         className={seatClassName}
                         aria-label={ariaLabel}
-                        disabled={isDisabled}
+                        disabled={isSeatDisabled}
                       >
                         <Asiento
                           className={iconClassName}

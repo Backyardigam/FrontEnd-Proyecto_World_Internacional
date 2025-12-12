@@ -38,6 +38,10 @@ export interface RequestSeatDeselectionPayload {
   busOrden: string;
 }
 
+export interface InitiatePaymentPayload {
+  orderId: string;
+}
+
 export interface AdminToggleSeatPayload {
   seatId: string;
   busOrden: string;
@@ -85,7 +89,7 @@ export interface ClientToServerEvents {
     payload: RequestSeatDeselectionPayload
   ) => void;
   [SocketEvents.INITIATE_PAYMENT]: (
-    callback: (response: { success: boolean; error?: string }) => void
-  ) => void; // <-- NUEVO EVENTO
+    payload: InitiatePaymentPayload
+  ) => void;
   [SocketEvents.ADMIN_TOGGLE_SEAT]: (payload: AdminToggleSeatPayload) => void;
 }
