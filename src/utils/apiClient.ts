@@ -149,7 +149,8 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
     return Promise.resolve(undefined as T);
   }
 
-  return response.json() as Promise<T>;
+  const text = await response.text();
+  return text ? JSON.parse(text) : (undefined as T);
 }
 
 /**
