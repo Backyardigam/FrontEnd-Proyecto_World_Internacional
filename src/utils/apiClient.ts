@@ -144,6 +144,11 @@ export async function apiPost<T = any>(url: string, body: any, options: Authenti
     }
   }
   
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T);
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -178,6 +183,11 @@ export async function apiPut<T = any>(url: string, body: any, options: Authentic
     }
   }
   
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T);
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -213,6 +223,11 @@ export async function apiPatch<T = any>(url: string, body: any, options: Authent
     }
   }
   
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T);
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -308,6 +323,11 @@ export async function apiPostFormData<T = any>(url: string, data: any, files: Re
       // Si la respuesta no es JSON, usamos el statusText.
       throw new ApiError(response.statusText || `Error HTTP: ${response.status}`, response.status);
     }
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (response.status === 204 || !contentType || !contentType.includes("application/json")) {
+    return Promise.resolve(undefined as T);
   }
 
   return response.json() as Promise<T>;
