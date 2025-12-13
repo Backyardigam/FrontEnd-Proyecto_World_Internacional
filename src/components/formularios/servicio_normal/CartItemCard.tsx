@@ -132,7 +132,6 @@ export default function CartItemCard({ item }: CartItemCardProps) {
               <label htmlFor={`quantity-${item.id}`} className="block text-sm font-medium text-gray-700">Pasajeros</label>
               <input
                 type="number"
-                min="1"
                 id={`quantity-${item.id}`}
                 value={item.quantity}
                 onChange={handleQuantityChange}
