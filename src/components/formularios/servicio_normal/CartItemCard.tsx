@@ -24,6 +24,11 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   const [buyerData, setBuyerData] = useState<PassengerFormData | null>(
     item.buyerData
   );
+  const [localQuantity, setLocalQuantity] = useState<string>(item.quantity.toString());
+
+  useEffect(() => {
+    setLocalQuantity(item.quantity.toString());
+  }, [item.quantity]);
 
   const priceDetails = useMemo(() => {
     const originalPrice = item.price;
@@ -69,12 +74,20 @@ export default function CartItemCard({ item }: CartItemCardProps) {
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newQuantity = parseInt(e.target.value, 10);
-    if (isNaN(newQuantity) || newQuantity < 1) {
-      newQuantity = 1;
-    }
+    const val = e.target.value;
+    setLocalQuantity(val);
 
-    updateServiceQuantity(item.id, newQuantity);
+    const newQuantity = parseInt(val, 10);
+    if (!isNaN(newQuantity) && newQuantity >= 1) {
+      updateServiceQuantity(item.id, newQuantity);
+    }
+  };
+
+  const handleBlur = () => {
+    const val = parseInt(localQuantity, 10);
+    if (isNaN(val) || val < 1) {
+      setLocalQuantity(item.quantity.toString());
+    }
   };
 
   return (
@@ -133,8 +146,9 @@ export default function CartItemCard({ item }: CartItemCardProps) {
               <input
                 type="number"
                 id={`quantity-${item.id}`}
-                value={item.quantity}
+                value={localQuantity}
                 onChange={handleQuantityChange}
+                onBlur={handleBlur}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
               />
             </div>
