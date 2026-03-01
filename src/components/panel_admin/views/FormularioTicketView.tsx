@@ -3,6 +3,7 @@ import { apiGet, apiPost, ApiError } from "../../../utils/apiClient";
 import Boton from "../admin_utils/Boton";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../../utils/authStore";
+import { type CreatePaymentRequest } from "../../../utils/contracts/payment.contract";
 
 // Interfaces para los datos
 interface ServiceOption {
@@ -81,7 +82,7 @@ export default function FormularioTicketView() {
     try {
       // 1. Validaciones básicas
       if (!formData.serviceId) throw new Error("Debes seleccionar un servicio.");
-      if (!formData.clientName || !formData.clientEmail) throw new Error("Datos del cliente incompletos.");
+      if (!formData.clientName) throw new Error("El nombre del cliente es obligatorio.");
 
       // 2. Preparar Payload
       // Convertimos la cadena de asientos "01, 02" a array ["01", "02"]
@@ -95,18 +96,28 @@ export default function FormularioTicketView() {
         ? formData.clientPhone 
         : `+51?${formData.clientPhone.replace(/\D/g, '')}`; // Limpia caracteres no numéricos
 
-      const payload = {
+      const finalEmail = formData.clientEmail.trim() || "ventas@oficina.com";
+
+      const payload: CreatePaymentRequest = {
+        buyerInfo: {
+          firstName: formData.clientName,
+          lastName: "(Venta Oficina)",
+          email: finalEmail,
+          phoneNumber: phoneFormatted,
+          documentType: 'DNI',
+          documentNumber: '00000000'
+        },
         tickets: [
           {
             serviceId: formData.serviceId,
             name: formData.clientName,
-            email: formData.clientEmail,
+            email: finalEmail,
             phoneNumber: phoneFormatted,
             peopleCount: formData.peopleCount,
             date: formData.date,
             schedule: formData.time, // El backend espera HH:mm o HH:mm:ss
             seatID: seatArray,
-            orderBus: formData.orderBus || null,
+            orderBus: formData.orderBus || undefined,
             // El precio se recalcula en el backend, enviamos 0 o el costo base referencial
             price: 0 
           }
@@ -114,7 +125,7 @@ export default function FormularioTicketView() {
       };
 
       // 3. Enviar Petición
-      await apiPost('/admin/create', payload);
+      await apiPost('/boletos/admin/create', payload);
 
       // 4. Éxito
       setMessage({ type: 'success', text: "¡Venta registrada exitosamente! El ticket ha sido generado." });
@@ -227,9 +238,8 @@ export default function FormularioTicketView() {
                     name="clientEmail"
                     value={formData.clientEmail}
                     onChange={handleChange}
-                    placeholder="cliente@ejemplo.com"
+                    placeholder="cliente@ejemplo.com (Opcional)"
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
                   />
                 </div>
 

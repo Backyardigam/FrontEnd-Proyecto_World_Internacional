@@ -135,7 +135,7 @@ export default function PanelAdmin() {
           <h1 className="text-xl font-semibold text-gray-700 capitalize">{activeView}</h1>
           <div className="text-right">
             <p className="font-semibold text-gray-800">{user?.name || "Administrador"}</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
+            <p className="text-sm text-gray-500 capitalize">{user?.role || user?.email}</p>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
