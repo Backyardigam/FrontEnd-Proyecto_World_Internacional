@@ -98,6 +98,13 @@ export default function FormularioTicketView() {
 
       const finalEmail = formData.clientEmail.trim() || "ventas@oficina.com";
 
+      // Construcción del formato de hora específico requerido por el backend: "8:00 am:00"
+      const [hoursStr, minutesStr] = formData.time.split(':');
+      let hours = parseInt(hoursStr, 10);
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12 || 12; // Convierte 0 o 12 a 12, y 13-23 a 1-11
+      const formattedSchedule = `${hours}:${minutesStr} ${ampm}:00`;
+
       const payload: CreatePaymentRequest = {
         buyerInfo: {
           firstName: formData.clientName,
@@ -115,7 +122,7 @@ export default function FormularioTicketView() {
             phoneNumber: phoneFormatted,
             peopleCount: formData.peopleCount,
             date: formData.date,
-            schedule: formData.time, // El backend espera HH:mm o HH:mm:ss
+            schedule: formattedSchedule,
             seatID: seatArray,
             orderBus: formData.orderBus || undefined,
             // El precio se recalcula en el backend, enviamos 0 o el costo base referencial
