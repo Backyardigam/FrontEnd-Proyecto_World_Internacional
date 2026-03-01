@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 import { apiGet, ApiError } from "../../utils/apiClient";
-import type { PaymentStatus, PaymentStatusResponse } from "../formularios/utils/payment.contract";
+import type { PaymentStatus, PaymentStatusResponse } from "../../utils/contracts/payment.contract";
 export interface TicketData {
   ticketCode: string;
   peopleCount: number;

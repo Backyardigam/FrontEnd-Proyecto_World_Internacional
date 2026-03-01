@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { $auth } from "../../utils/authStore";
 import { updateUserProfile } from "../../utils/authActions";
 import { apiGet, ApiError } from "../../utils/apiClient";
-import type { TicketSummary } from "../formularios/utils/payment.contract";
+import type { TicketSummary } from "../../utils/contracts/payment.contract";
 import BoletoDetalleModal from "./BoletoDetalleModal";
 
 const formatServiceName = (name: string) => {

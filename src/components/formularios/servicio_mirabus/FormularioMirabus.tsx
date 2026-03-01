@@ -6,7 +6,7 @@ import type { Seat } from "./seatUtils/interfaceBus";
 import Formulario, { type PassengerFormData } from "./Formulario"; // Importar el nuevo componente y su interfaz
 import { useAuth } from "../../../utils/authContext";
 import { IzipayButton } from "../IziPayButton";
-import type { BuyerInfo, TicketItemInput } from "../utils/payment.contract";
+import type { BuyerInfo, TicketItemInput } from "../../../utils/contracts/payment.contract";
 import { apiGet} from "../../../utils/apiClient";
 import { useSocketTrip } from "../../../hooks/useSocketTrip";
 import { $discounts } from "../../../utils/discountStore";

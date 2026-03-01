@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { BuyerInfo, CreatePaymentRequest, CreatePaymentResponse, TicketItemInput } from './utils/payment.contract';
+import type { BuyerInfo, CreatePaymentRequest, CreatePaymentResponse, TicketItemInput } from '../../utils/contracts/payment.contract';
 import { apiPost } from '../../utils/apiClient';
 import { clearCart } from '../../utils/cartStore';
 

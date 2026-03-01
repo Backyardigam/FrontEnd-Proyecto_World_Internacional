@@ -3,7 +3,7 @@ import { useStore } from "@nanostores/react";
 import { $cart } from "../../../utils/cartStore";
 import CartItemCard from "./CartItemCard";
 import { IzipayButton } from "../IziPayButton";
-import type { BuyerInfo, TicketItemInput } from "../utils/payment.contract";
+import type { BuyerInfo, TicketItemInput } from "../../../utils/contracts/payment.contract";
 import { $discounts } from "../../../utils/discountStore";
 import { getDiscountInfo } from "../../../utils/discountUtils";
 

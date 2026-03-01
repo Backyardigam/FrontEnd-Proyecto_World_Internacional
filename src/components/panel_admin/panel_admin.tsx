@@ -15,8 +15,9 @@ import AuditoriaView  from './views/AuditoriaView';
 import PromocionesView from './views/PromocionesView';
 import MirabusDashboard  from './views/MirabusDashboard';
 import type { JSX } from "astro/jsx-runtime";
+import FormularioTicketView from "./views/FormularioTicketView";
 
-type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus';
+type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus' | 'formulario';
 
 const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -63,6 +64,7 @@ export default function PanelAdmin() {
   }, [isSidebarOpen]);
 
   const menuItems: MenuItem[] = [
+    { id: 'formulario', label: 'Realizar Venta', icon:<Dashboard/>},
     { id: 'dashboard', label: 'Dashboard', icon:<Dashboard/>},
     { id: 'mirabus', label: 'Mirabus', icon:<MirabusIcon />},
     { id: 'boletos', label: 'Boletos', icon: <Boleto />},
@@ -145,6 +147,7 @@ export default function PanelAdmin() {
           {activeView === 'promociones' && <PromocionesView />}
           {activeView === 'usuarios' && <UsuariosView />}
           {activeView === 'auditoria' && <AuditoriaView />}
+          {activeView === 'formulario' && <FormularioTicketView />}
         </main>
       </div>
     </div>
