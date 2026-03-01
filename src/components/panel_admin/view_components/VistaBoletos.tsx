@@ -12,6 +12,7 @@ interface TicketSummary {
   date: string;
   schedule: string;
   peopleCount: number;
+  seller:string;
 }
 
 // Interfaz para los datos de los servicios que usamos para los filtros
@@ -218,6 +219,9 @@ export default function VistaBoletos() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Personas
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Vendedor
+                </th>
                 <th className="relative px-6 py-3">
                   <span className="sr-only">Acciones</span>
                 </th>
@@ -251,6 +255,9 @@ export default function VistaBoletos() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-800">
                       {ticket.peopleCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-bold text-gray-800">
+                      {ticket.seller}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
