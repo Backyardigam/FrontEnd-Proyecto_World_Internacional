@@ -125,7 +125,7 @@ export default function FormularioTicketView() {
       };
 
       // 3. Enviar Petición
-      await apiPost('/boletos/admin/create', payload);
+      await apiPost('/boletos/admin_create', payload);
 
       // 4. Éxito
       setMessage({ type: 'success', text: "¡Venta registrada exitosamente! El ticket ha sido generado." });
