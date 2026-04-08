@@ -19,6 +19,7 @@
     "@types/react-dom": "^19.2.0",
     "@vercel/speed-insights": "^1.2.0",
     "astro": "^5.14.1",
+    "exceljs": "^4.4.0",
     "nanostores": "^1.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -38,6 +38,13 @@ export interface CreatePaymentRequest {
   tickets: TicketItemInput[];
 }
 
+// El cuerpo del POST /api/create-payment (Solo para oficina)
+export interface CreatePaymentOfficeRequest {
+  buyerInfo: BuyerInfo;
+  tickets: TicketItemInput[];
+  seller :string
+}
+
 // Salidas Backend ->> Frontend  ========================
 
 export interface CreatePaymentResponse {

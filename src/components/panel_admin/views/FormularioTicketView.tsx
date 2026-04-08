@@ -3,7 +3,8 @@ import { apiGet, apiPost, ApiError } from "../../../utils/apiClient";
 import Boton from "../admin_utils/Boton";
 import { useStore } from "@nanostores/react";
 import { $auth } from "../../../utils/authStore";
-import { type CreatePaymentRequest } from "../../../utils/contracts/payment.contract";
+import {type CreatePaymentOfficeRequest } from "../contracts/payment.contract";
+import type { getSellerResponse } from "../contracts/sellerContracts";
 
 // Interfaces para los datos
 interface ServiceOption {
@@ -14,6 +15,7 @@ interface ServiceOption {
 }
 
 interface TicketFormData {
+  sellerName: string;
   serviceId: string;
   date: string;
   time: string;
@@ -28,6 +30,7 @@ interface TicketFormData {
 }
 
 const INITIAL_FORM_STATE: TicketFormData = {
+  sellerName: "",
   serviceId: "",
   date: new Date().toISOString().split("T")[0], // Fecha de hoy por defecto
   time: "10:00",
@@ -42,6 +45,7 @@ const INITIAL_FORM_STATE: TicketFormData = {
 export default function FormularioTicketView() {
   const { user } = useStore($auth);
   const [services, setServices] = useState<ServiceOption[]>([]);
+  const [sellers, setSellers] = useState<getSellerResponse[]>([]);
   const [formData, setFormData] = useState<TicketFormData>(INITIAL_FORM_STATE);
   
   // Estados de UI
@@ -51,19 +55,23 @@ export default function FormularioTicketView() {
 
   // Cargar servicios al montar
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
-        const data = await apiGet<ServiceOption[]>("/manage/service/");
-        // Filtramos solo los visibles para evitar vender servicios ocultos/eliminados
-        setServices(data);
+        // Cargamos servicios y vendedores en paralelo
+        const [servicesData, sellersData] = await Promise.all([
+          apiGet<ServiceOption[]>("/manage/service/"),
+          apiGet<getSellerResponse[]>("/users/sellers")
+        ]);
+        setServices(servicesData);
+        setSellers(sellersData.filter(s => s.active)); // Solo vendedores activos
       } catch (error) {
-        console.error("Error cargando servicios:", error);
-        setMessage({ type: 'error', text: "No se pudieron cargar los servicios disponibles." });
+        console.error("Error cargando datos:", error);
+        setMessage({ type: 'error', text: "No se pudieron cargar los datos iniciales (servicios o vendedores)." });
       } finally {
         setLoadingServices(false);
       }
     };
-    fetchServices();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -80,32 +88,28 @@ export default function FormularioTicketView() {
     setMessage(null);
 
     try {
-      // 1. Validaciones básicas
+      if (!formData.sellerName) throw new Error("Debes seleccionar un vendedor.");
       if (!formData.serviceId) throw new Error("Debes seleccionar un servicio.");
       if (!formData.clientName) throw new Error("El nombre del cliente es obligatorio.");
 
-      // 2. Preparar Payload
-      // Convertimos la cadena de asientos "01, 02" a array ["01", "02"]
       const seatArray = formData.seatIds 
         ? formData.seatIds.split(',').map(s => s.trim()).filter(s => s !== "") 
         : [];
 
-      // Formatear teléfono: +51?987654321 (formato esperado por el backend)
-      // Asumimos código de país +51 por defecto si no se incluye
       const phoneFormatted = formData.clientPhone.includes('?') 
         ? formData.clientPhone 
-        : `+51?${formData.clientPhone.replace(/\D/g, '')}`; // Limpia caracteres no numéricos
+        : `+51?${formData.clientPhone.replace(/\D/g, '')}`;
 
       const finalEmail = formData.clientEmail.trim() || "ventas@oficina.com";
 
-      // Construcción del formato de hora específico requerido por el backend: "8:00 am:00"
       const [hoursStr, minutesStr] = formData.time.split(':');
       let hours = parseInt(hoursStr, 10);
       const ampm = hours >= 12 ? 'pm' : 'am';
-      hours = hours % 12 || 12; // Convierte 0 o 12 a 12, y 13-23 a 1-11
+      hours = hours % 12 || 12;
       const formattedSchedule = `${hours}:${minutesStr} ${ampm}:00`;
 
-      const payload: CreatePaymentRequest = {
+      const payload: CreatePaymentOfficeRequest & { seller?: string } = {
+        seller: formData.sellerName,
         buyerInfo: {
           firstName: formData.clientName,
           lastName: "(Venta Oficina)",
@@ -173,9 +177,33 @@ export default function FormularioTicketView() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* SECCIÓN 1: DETALLES DEL SERVICIO */}
+            {/* SECCIÓN 1: DATOS DEL VENDEDOR */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">1. Detalles del Servicio</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">1. Datos del Vendedor</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vendedor Asignado <span className="text-red-500">*</span></label>
+                  <select
+                    name="sellerName"
+                    value={formData.sellerName}
+                    onChange={handleChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                    required
+                  >
+                    <option value="">-- Seleccione el vendedor --</option>
+                    {sellers.map(seller => (
+                      <option key={seller.code} value={seller.name}>
+                        {seller.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 2: DETALLES DEL SERVICIO */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">2. Detalles del Servicio</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Servicio Turístico</label>
@@ -221,9 +249,9 @@ export default function FormularioTicketView() {
               </div>
             </div>
 
-            {/* SECCIÓN 2: DATOS DEL CLIENTE */}
+            {/* SECCIÓN 3: DATOS DEL CLIENTE */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">2. Datos del Cliente</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">3. Datos del Cliente</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
@@ -265,9 +293,9 @@ export default function FormularioTicketView() {
               </div>
             </div>
 
-            {/* SECCIÓN 3: DETALLES DEL TICKET */}
+            {/* SECCIÓN 4: DETALLES DEL TICKET */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">3. Asignación</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">4. Asignación</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad de Personas</label>

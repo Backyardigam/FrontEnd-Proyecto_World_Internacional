@@ -16,8 +16,9 @@ import PromocionesView from './views/PromocionesView';
 import MirabusDashboard  from './views/MirabusDashboard';
 import type { JSX } from "astro/jsx-runtime";
 import FormularioTicketView from "./views/FormularioTicketView";
+import SellersView from "./views/SellersView";
 
-type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus' | 'formulario';
+type AdminView = 'dashboard' | 'boletos' | 'gestion' | 'promociones' | 'usuarios' | 'auditoria' | 'mirabus' | 'formulario' | 'vendedores';
 
 const Icon = ({ path, className = "w-6 h-6" }: { path: string; className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
@@ -71,6 +72,7 @@ export default function PanelAdmin() {
     { id: 'gestion', label: 'Gestión de Página', icon: "M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" },
     { id: 'promociones', label: 'Promociones', icon: "M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" },
     { id: 'usuarios', label: 'Usuarios', icon: <Usuario/> },
+    { id: 'vendedores', label: 'Vendedores', icon: <Usuario/> },
     { id: 'auditoria', label: 'Auditoría', icon: "M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" },
   ];
 
@@ -148,6 +150,7 @@ export default function PanelAdmin() {
           {activeView === 'usuarios' && <UsuariosView />}
           {activeView === 'auditoria' && <AuditoriaView />}
           {activeView === 'formulario' && <FormularioTicketView />}
+          {activeView === 'vendedores' && <SellersView />}
         </main>
       </div>
     </div>
