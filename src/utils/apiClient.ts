@@ -45,14 +45,19 @@ export async function authenticatedFetch(
   });
 
   if (response.status === 401 && handle401) {
-    console.error(`Error 401: No autorizado. Redirigiendo a ${redirectPath}...`);
     if (isBrowser) {
+      const pathParts = window.location.pathname.split('/'); 
+            
+      const isAdminContext = pathParts[1] === "core-tacana-wits-7b345";
       const currentPath = window.location.pathname + window.location.search;
-      // Mantenemos la lógica de `redirect` para el login de clientes, pero no para el de admin.
-      const finalRedirectUrl = redirectPath === '/login'
-        ? `${redirectPath}?session_expired=true&redirect=${encodeURIComponent(currentPath)}`
-        : redirectPath;
-      window.location.href = finalRedirectUrl;
+
+      // 3. Decidimos la ruta de redirección según el contexto
+      if (isAdminContext) {
+        window.location.href = `/${pathParts[1]}`; // Te manda a la raíz del admin
+      } else {
+        const loginPath = '/login';
+        window.location.href = `${loginPath}?session_expired=true&redirect=${encodeURIComponent(currentPath)}`;
+      }
     }
     return new Promise(() => {});
   }

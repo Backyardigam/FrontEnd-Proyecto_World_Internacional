@@ -60,7 +60,8 @@ export default function FormularioTicketView() {
         // Cargamos servicios y vendedores en paralelo
         const [servicesData, sellersData] = await Promise.all([
           apiGet<ServiceOption[]>("/manage/service/"),
-          apiGet<getSellerResponse[]>("/users/sellers")
+          //traer solo los que esten activos
+          apiGet<getSellerResponse[]>("/users/sellers?active=true")
         ]);
         setServices(servicesData);
         setSellers(sellersData.filter(s => s.active)); // Solo vendedores activos
