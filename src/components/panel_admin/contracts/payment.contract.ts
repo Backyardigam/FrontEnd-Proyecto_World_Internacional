@@ -43,6 +43,7 @@ export interface CreatePaymentOfficeRequest {
   buyerInfo: BuyerInfo;
   tickets: TicketItemInput[];
   seller :string
+  sellerObservation :string
 }
 
 // Salidas Backend ->> Frontend  ========================

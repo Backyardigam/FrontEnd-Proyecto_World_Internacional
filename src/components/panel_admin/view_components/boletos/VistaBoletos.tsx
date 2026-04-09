@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { apiGet, ApiError } from "../../../utils/apiClient";
-import BoletoDetalleView from "./BoletoDetalleView";
+import { apiGet, ApiError } from "../../../../utils/apiClient";
+import BoletoDetalleView from "./../BoletoDetalleView";
 
 // Interfaz para los datos del boleto que esperamos de la API
 interface TicketSummary {

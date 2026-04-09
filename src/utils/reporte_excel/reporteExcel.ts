@@ -1,21 +1,67 @@
-// import ExcelJS from "exceljs";
+import ExcelJS from "exceljs";
 
-// async function generarExcel(datos: any) {
-//   const workbook = new ExcelJS.Workbook();
+export interface DatosReporte {
+  fechaInicio: string;
+  fechaFin: string;
+  horaInicio: string;
+  horaFin: string;
+  registros: any[];
+}
 
-//   await workbook.xlsx.readFile("./template.xlsx");
+export async function generarExcel(datos: DatosReporte) {
+  const workbook = new ExcelJS.Workbook();
 
-//   const worksheet = workbook.getWorksheet(1);
+  try {
+    // En el navegador cargamos el archivo mediante un ArrayBuffer (debe estar en tu carpeta 'public/')
+    const response = await fetch("/template.xlsx");
+    if (!response.ok) throw new Error("No se pudo encontrar el template.xlsx en la carpeta pública.");
+    
+    const arrayBuffer = await response.arrayBuffer();
+    await workbook.xlsx.load(arrayBuffer);
 
-//   worksheet.getCell("B2").value = datos.vendedor;
-//   worksheet.getCell("B3").value = new Date();
+    const worksheet = workbook.getWorksheet(1);
+    if (!worksheet) throw new Error("El archivo Excel no tiene una hoja válida.");
 
-//   // O puedes agregar filas al final de una tabla ya estilizada
-//   // Si la fila 5 ya tiene bordes y colores, las nuevas filas pueden heredarlo
-//   datos.productos.forEach((prod, index) => {
-//     worksheet.addRow([prod.nombre, prod.cantidad, prod.precio]);
-//   });
+    // 1. Asignamos los filtros a las celdas correspondientes
+    worksheet.getCell("B4").value = datos.fechaInicio || "---";
+    worksheet.getCell("C4").value = datos.fechaFin || "---";
+    worksheet.getCell("D4").value = datos.horaInicio || "---";
+    worksheet.getCell("E4").value = datos.horaFin || "---";
 
-//   // 3. Guardas el resultado como un nuevo archivo
-//   await workbook.xlsx.writeFile("./salida/reporte_final.xlsx");
-// }
+    // 2. Insertamos los registros empezando desde la fila 6 (A6 - J6)
+    let currentRow = 6;
+    datos.registros.forEach((ticket) => {
+      const row = worksheet.getRow(currentRow);
+      row.getCell("A").value = ticket.ticketCode;
+      row.getCell("B").value = ticket.name;
+      row.getCell("C").value = ticket.email;
+      row.getCell("D").value = ticket.service;
+      row.getCell("E").value = ticket.date;
+      row.getCell("F").value = ticket.schedule;
+      row.getCell("G").value = ticket.peopleCount;
+      row.getCell("H").value = ticket.seller;
+      row.getCell("I").value = ticket.sellerObservation;
+      row.getCell("J").value = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString("es-PE") : "";
+      
+      row.commit();
+      currentRow++;
+    });
+
+    // 3. Generamos el archivo para descarga en el navegador
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Reporte_Boletos_${new Date().toISOString().split("T")[0]}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error("Error al generar el Excel:", error);
+    alert("Hubo un error al procesar o descargar el reporte en Excel. Verifica la consola.");
+  }
+}

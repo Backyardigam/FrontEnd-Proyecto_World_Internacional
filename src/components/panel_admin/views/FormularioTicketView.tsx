@@ -15,6 +15,7 @@ interface ServiceOption {
 }
 
 interface TicketFormData {
+  sellerObservation:string;
   sellerName: string;
   serviceId: string;
   date: string;
@@ -30,6 +31,7 @@ interface TicketFormData {
 }
 
 const INITIAL_FORM_STATE: TicketFormData = {
+  sellerObservation:" ",
   sellerName: "",
   serviceId: "",
   date: new Date().toISOString().split("T")[0], // Fecha de hoy por defecto
@@ -52,6 +54,7 @@ export default function FormularioTicketView() {
   const [loading, setLoading] = useState(false);
   const [loadingServices, setLoadingServices] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [isManualSeller, setIsManualSeller] = useState(false);
 
   // Cargar servicios al montar
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function FormularioTicketView() {
     fetchData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -109,6 +112,7 @@ export default function FormularioTicketView() {
       const formattedSchedule = `${hours}:${minutesStr} ${ampm}:00`;
 
       const payload: CreatePaymentOfficeRequest & { seller?: string } = {
+        sellerObservation:formData.sellerObservation,
         seller: formData.sellerName,
         buyerInfo: {
           firstName: formData.clientName,
@@ -182,21 +186,58 @@ export default function FormularioTicketView() {
               <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">1. Datos del Vendedor</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vendedor Asignado <span className="text-red-500">*</span></label>
-                  <select
-                    name="sellerName"
-                    value={formData.sellerName}
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Vendedor Asignado <span className="text-red-500">*</span></label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsManualSeller(!isManualSeller);
+                        setFormData(prev => ({ ...prev, sellerName: "" })); // Limpiamos el campo al cambiar de modo
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      {isManualSeller ? "Seleccionar de la lista" : "Ingresar manualmente"}
+                    </button>
+                  </div>
+                  
+                  {isManualSeller ? (
+                    <input
+                      type="text"
+                      name="sellerName"
+                      value={formData.sellerName}
+                      onChange={handleChange}
+                      placeholder="Nombre del vendedor"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                      required
+                    />
+                  ) : (
+                    <select
+                      name="sellerName"
+                      value={formData.sellerName}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                      required
+                    >
+                      <option value="">-- Seleccione el vendedor --</option>
+                      {sellers.map(seller => (
+                        <option key={seller.code} value={seller.name}>
+                          {seller.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones de Venta (Opcional)</label>
+                  <textarea
+                    name="sellerObservation"
+                    value={formData.sellerObservation}
                     onChange={handleChange}
+                    placeholder="Anotaciones adicionales sobre la venta..."
+                    rows={2}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
-                  >
-                    <option value="">-- Seleccione el vendedor --</option>
-                    {sellers.map(seller => (
-                      <option key={seller.code} value={seller.name}>
-                        {seller.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
             </div>

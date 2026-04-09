@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { apiGet, ApiError } from "../../../utils/apiClient";
+import { apiGet, ApiError } from "../../../../utils/apiClient";
 
 interface SeatDistributionItem {
   x: number;
