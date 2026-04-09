@@ -30,7 +30,7 @@ export async function generarExcel(datos: DatosReporte) {
 
     // 2. Insertamos los registros empezando desde la fila 6 (A6 - J6)
     let currentRow = 6;
-    datos.registros.forEach((ticket) => {
+    datos.registros.forEach((ticket, index) => {
       const row = worksheet.getRow(currentRow);
       row.getCell("A").value = ticket.ticketCode;
       row.getCell("B").value = ticket.name;
@@ -43,6 +43,23 @@ export async function generarExcel(datos: DatosReporte) {
       row.getCell("I").value = ticket.sellerObservation;
       row.getCell("J").value = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString("es-PE") : "";
       
+      // --- Estilos de la Fila ---
+      row.height = 25; // Altura más grande
+      row.font = { name: 'Segoe UI', size: 10 }; // Fuente más moderna y limpia
+      
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: 'middle', wrapText: true }; // Centrado vertical por la nueva altura
+        
+        // Fondo cebra: pintamos solo las filas impares (index 1, 3, 5...)
+        if (index % 2 !== 0) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF0F0F0' } // Gris claro
+          };
+        }
+      });
+
       row.commit();
       currentRow++;
     });
