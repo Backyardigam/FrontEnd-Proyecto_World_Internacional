@@ -23,10 +23,10 @@ export async function generarExcel(datos: DatosReporte) {
     if (!worksheet) throw new Error("El archivo Excel no tiene una hoja válida.");
 
     // 1. Asignamos los filtros a las celdas correspondientes
-    worksheet.getCell("B4").value = datos.fechaInicio || "---";
-    worksheet.getCell("C4").value = datos.fechaFin || "---";
-    worksheet.getCell("D4").value = datos.horaInicio || "---";
-    worksheet.getCell("E4").value = datos.horaFin || "---";
+    worksheet.getCell("B4").value = `Del: ${datos.fechaInicio}` || "---";
+    worksheet.getCell("C4").value = `Hasta: ${datos.fechaFin}`|| "---";
+    worksheet.getCell("D4").value = `Del: ${datos.horaInicio}` || "---";
+    worksheet.getCell("E4").value = `Hasta: ${datos.horaFin}` || "---";
 
     // 2. Insertamos los registros empezando desde la fila 6 (A6 - J6)
     let currentRow = 6;
