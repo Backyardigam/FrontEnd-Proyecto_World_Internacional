@@ -5,6 +5,8 @@ import { useStore } from "@nanostores/react";
 import { $auth } from "../../../utils/authStore";
 import {type CreatePaymentOfficeRequest } from "../contracts/payment.contract";
 import type { getSellerResponse } from "../contracts/sellerContracts";
+import Mirabus from "../../formularios/servicio_mirabus/Mirabus"; // Ajustar ruta si es necesario
+import { useSocketTrip } from "../../../hooks/useSocketTrip";
 
 // Interfaces para los datos
 interface ServiceOption {
@@ -55,6 +57,66 @@ export default function FormularioTicketView() {
   const [loadingServices, setLoadingServices] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [isManualSeller, setIsManualSeller] = useState(false);
+
+  // --- NUEVOS ESTADOS Y HOOKS PARA MIRABUS ---
+  const [uiStatus, setUiStatus] = useState<{ status: "idle" | "loading" | "connecting" | "error"; message?: string; }>({ status: "idle" });
+  const [selectedBusOrden, setSelectedBusOrden] = useState<string | null>(null);
+
+  const { buses, isConnected, connectToTrip, disconnectFromTrip, adminToggleSeat } = useSocketTrip();
+
+  // --- EFECTOS PARA MIRABUS ---
+  // 1. Desconectar si el usuario cambia el servicio, fecha o la hora
+  useEffect(() => {
+    if (isConnected) {
+      disconnectFromTrip();
+      setUiStatus({ status: "idle" });
+      setSelectedBusOrden(null);
+    }
+  }, [formData.serviceId, formData.date, formData.time]);
+
+  // 2. Auto-seleccionar primer bus al conectar y sincronizar con formData
+  useEffect(() => {
+    if (buses.length > 0 && !selectedBusOrden) {
+      const firstBus = buses[0].ordenBus;
+      setSelectedBusOrden(firstBus);
+      setFormData(prev => ({ ...prev, orderBus: firstBus }));
+    }
+  }, [buses, selectedBusOrden]);
+
+  // 3. Desconectar al desmontar
+  useEffect(() => {
+    return () => {
+      if (isConnected) disconnectFromTrip();
+    };
+  }, [isConnected]);
+
+  // --- FUNCIONES PARA MIRABUS ---
+  const handleConnect = () => {
+    if (formData.serviceId && formData.date && formData.time) {
+      setUiStatus({ status: "connecting", message: "Sincronizando con el bus..." });
+      const tripToConnect = {
+        servicio: formData.serviceId,
+        fecha: formData.date,
+        horario: formData.time, 
+      };
+
+      connectToTrip(tripToConnect, (result) => {
+        if (!result.success) {
+          setUiStatus({ status: "error", message: result.error });
+        } else {
+          setUiStatus({ status: "idle" });
+        }
+      });
+    }
+  };
+
+  const handleAdminSeatToggle = (seatId: string, busOrden: string) => {
+    adminToggleSeat(seatId, busOrden);
+    // Nota: El backend de sockets actualiza los asientos. Si necesitas 
+    // mapearlos a formData.seatIds, se haría aquí.
+  };
+
+  const busToDisplay = buses.find((b) => b.ordenBus === selectedBusOrden);
 
   // Cargar servicios al montar
   useEffect(() => {
@@ -156,6 +218,8 @@ export default function FormularioTicketView() {
   };
 
   const selectedServiceInfo = services.find(s => s.id === formData.serviceId);
+  // Variable de validación rápida
+  const isMirabus = selectedServiceInfo?.type === "mirabus";
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -335,6 +399,52 @@ export default function FormularioTicketView() {
               </div>
             </div>
 
+            {/* --- RENDERIZADO CONDICIONAL DEL COMPONENTE MIRABUS --- */}
+            {isMirabus && (
+              <div className="md:col-span-3 mt-6 border-t pt-4">
+                <h4 className="text-md font-semibold text-gray-700 mb-4">Selección de Asientos y Estado de Mirabus</h4>
+                
+                {uiStatus.status === "error" && !isConnected && (
+                  <div className="text-red-500 font-medium bg-red-50 p-4 rounded text-center mb-4">
+                    <p>⚠️ {uiStatus.message}</p>
+                  </div>
+                )}
+
+                {!isConnected ? (
+                  <div className="text-center bg-white p-6 rounded border border-gray-200">
+                    {formData.serviceId && formData.date && formData.time ? (
+                      <>
+                        <p className="text-gray-500 mb-4 text-sm">Conéctate para ver la disponibilidad de los asientos en tiempo real.</p>
+                        <Boton
+                          text={uiStatus.status === 'connecting' ? "Conectando..." : "Cargar Estado del Bus"}
+                          styleClass={`mx-auto px-6 py-2 ${uiStatus.status === 'connecting' ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          onPress={handleConnect}
+                          disabled={uiStatus.status === 'connecting'}
+                          type="button"
+                        />
+                      </>
+                    ) : (
+                      <p className="text-gray-400 text-sm">Completa el Servicio, Fecha y Hora (Sección 2) para cargar el bus.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white p-4 rounded border border-gray-200 flex flex-col justify-center overflow-auto min-h-[300px]">
+                    {busToDisplay ? (
+                      <Mirabus
+                        key={busToDisplay.ordenBus}
+                        initialSeatsData={busToDisplay.seats}
+                        busOrden={busToDisplay.ordenBus}
+                        mode="admin"
+                        onAdminSeatToggle={handleAdminSeatToggle}
+                      />
+                    ) : (
+                      <p className="text-center text-gray-500">Cargando datos del bus...</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* SECCIÓN 4: DETALLES DEL TICKET */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">4. Asignación</h3>
@@ -347,8 +457,9 @@ export default function FormularioTicketView() {
                     name="peopleCount"
                     value={formData.peopleCount}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                    required={!isMirabus}
+                    disabled={isMirabus} // Se deshabilita si es mirabus
                   />
                 </div>
 
@@ -365,7 +476,7 @@ export default function FormularioTicketView() {
                       onChange={handleChange}
                       placeholder="Ej: A1, A2, B1"
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-                      disabled={selectedServiceInfo?.type === 'tour'} // Opcional: deshabilitar para tours si no usan asientos
+                      disabled={isMirabus || selectedServiceInfo?.type === 'tour'} // Opcional: deshabilitar para tours si no usan asientos
                     />
                     {selectedServiceInfo?.type === 'tour' && (
                       <p className="text-xs text-gray-500 mt-1">Generalmente no requerido para Tours.</p>
@@ -374,6 +485,25 @@ export default function FormularioTicketView() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Orden de Bus</label>
+                    {isMirabus ? (
+                    <select
+                      name="orderBus"
+                      value={selectedBusOrden || ""}
+                      onChange={(e) => {
+                        setSelectedBusOrden(e.target.value);
+                        handleChange(e); // Actualiza el formData.orderBus también
+                      }}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                      disabled={!isConnected} // Se bloquea si no está conectado al socket
+                    >
+                      <option value="">-- Seleccione Bus --</option>
+                      {buses.map(b => (
+                        <option key={b.ordenBus} value={b.ordenBus}>
+                          Bus {b.ordenBus}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
                     <input
                       type="text"
                       name="orderBus"
@@ -382,6 +512,7 @@ export default function FormularioTicketView() {
                       placeholder="Ej: A, B, 1"
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
                     />
+                  )}
                   </div>
                 </div>
               </div>
